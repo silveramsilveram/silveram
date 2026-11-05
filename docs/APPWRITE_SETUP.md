@@ -91,7 +91,7 @@ Use one Vercel project for storefront and API:
 | Install Command | `npm ci && npm --prefix server ci` (in `vercel.json`) |
 | Build Command | `npm run build` |
 | Output Directory | `dist` |
-| API function | `api/[...path].js` imports `server/app.js` |
+| API function | `api/index.js` imports `server/app.js` |
 
 Add backend variables in Vercel Project → Settings → Environment Variables for the required environments. Do not set `APPWRITE_SETUP_API_KEY` in Vercel. At minimum configure:
 
@@ -116,7 +116,7 @@ The API is same-origin under `/api`, so session cookies remain first-party. If a
 Inspect the latest Vercel deployment’s runtime logs and the failing function path:
 
 - The storefront `/` must be served by Vite static output; it should not invoke Express.
-- `/api/*` should invoke only `api/[...path].js`. Do not set the Vercel project root to `server/`.
+- `/api/*` should invoke only `api/index.js`. Do not set the Vercel project root to `server/`.
 - A missing Appwrite key/database or unreachable Appwrite service should return the API’s generic 503 startup response; the actual reason is logged server-side.
 - Verify root framework is Vite, `server/` dependencies are installed, required server variables exist, and the latest source commit was deployed.
 

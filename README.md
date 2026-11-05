@@ -48,7 +48,7 @@ The browser never receives an Appwrite server API key or connects to the private
 
 ```text
 api/
-  [...path].js                    Vercel catch-all API function entry
+  index.js                         Vercel API function entry (vercel.json rewrites /api/* here)
 src/
   app/                             Storefront assembly and hash routing
   features/
@@ -173,7 +173,7 @@ Follow [docs/APPWRITE_SETUP.md](./docs/APPWRITE_SETUP.md) for the full guided se
 
 Product media files must use a supported image format (`.webp`, `.png`, `.jpg`, `.jpeg`, `.avif`) and names such as `silver-frame-07.webp`, or a supported video format (`.mp4`, `.mov`, `.webm`, `.m4v`) named `silver-frame-video-01.mp4`. This checkout has a pre-push hook that detects changed product media, uploads it to Cloudinary, and saves references in Appwrite before pushing. To enable it in another clone, run `git config core.hooksPath .githooks`. You can also run the sync command manually. Admin uploads use the signed `/api/uploads/sign` endpoint and upload directly to Cloudinary. In both paths, Appwrite stores references/metadata only; never upload media binaries to Appwrite Storage.
 
-The Vercel project was previously configured with the `server` directory and Express preset, causing Vercel to load the Express app factory as a serverless function. The storefront project must instead use the repository root and Vite preset. The API entry is now `api/[...path].js`; do not set the Vercel Root Directory to `server`.
+The Vercel project was previously configured with the `server` directory and Express preset, causing Vercel to load the Express app factory as a serverless function. The storefront project must instead use the repository root and Vite preset. The API entry is now `api/index.js`; do not set the Vercel Root Directory to `server`.
 
 ## Storefront data and catalog
 
