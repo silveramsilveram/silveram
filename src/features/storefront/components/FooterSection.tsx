@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { InstagramIcon, WhatsAppIcon } from '@/shared/ui/icons';
 import { SITE } from '@/shared/config/site';
 import { PRODUCTS, productPath } from '@/features/products/data/products';
-import { buildGeneralMessage, buildWhatsAppUrl } from '@/features/whatsapp';
+import { WHATSAPP_DISPLAY, buildGeneralMessage, buildWhatsAppUrl } from '@/features/whatsapp';
 import { POLICIES, type PolicyId } from '@/features/policies/data/policies';
 import { apiRequest, isNewsletterEnabled } from '@/shared/lib/api';
 
@@ -80,12 +80,31 @@ export default function FooterSection({ onOpenPolicy }: FooterSectionProps) {
         </nav>
 
         <div>
-          <h2 className="type-eyebrow text-accent-silver">Contact</h2>
-          <ul className="mt-3">
+          <h2 className="type-eyebrow text-accent-silver">Visit &amp; contact</h2>
+          <address className="type-body mt-3 not-italic text-surface-primary/80">
+            <strong className="font-semibold text-surface-primary">Silveram</strong>
+            <br />
+            {SITE.address.lines.map((line) => (
+              <span key={line}>
+                {line}
+                <br />
+              </span>
+            ))}
+            {SITE.address.locality}, {SITE.address.region} {SITE.address.postalCode}
+          </address>
+          <p className="mt-1 flex flex-wrap gap-x-4">
+            <a href={SITE.directionsUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              Get directions<span className="sr-only"> (opens Google Maps in a new tab)</span>
+            </a>
+            <a href={SITE.googleListingUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              Find us on Google<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+          <ul className="mt-2">
             {whatsappUrl && (
               <li>
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className={`${linkClass} gap-2`}>
-                  <WhatsAppIcon size={18} /> WhatsApp
+                  <WhatsAppIcon size={18} /> WhatsApp{WHATSAPP_DISPLAY ? ` ${WHATSAPP_DISPLAY}` : ''}
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </li>
@@ -93,7 +112,7 @@ export default function FooterSection({ onOpenPolicy }: FooterSectionProps) {
             {SITE.instagramUrl && (
               <li>
                 <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" className={`${linkClass} gap-2`}>
-                  <InstagramIcon size={18} /> Instagram
+                  <InstagramIcon size={18} /> {SITE.instagramHandle}
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </li>

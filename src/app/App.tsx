@@ -48,7 +48,23 @@ function HomePage() {
 
   useEffect(() => {
     setPageMeta(HOME_META);
-    setStructuredData(null);
+    setStructuredData({
+      '@context': 'https://schema.org',
+      '@type': 'JewelryStore',
+      name: SITE.name,
+      url: SITE.url,
+      telephone: '+917766911777',
+      sameAs: [SITE.instagramUrl],
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: SITE.address.lines.join(', '),
+        addressLocality: SITE.address.locality,
+        addressRegion: SITE.address.region,
+        postalCode: SITE.address.postalCode,
+        addressCountry: SITE.address.country,
+      },
+      hasMap: SITE.directionsUrl,
+    });
     // Arriving from a product page via "#collection" etc.: the browser tried to
     // scroll before this page existed, so scroll to the section now.
     const id = window.location.hash.slice(1);

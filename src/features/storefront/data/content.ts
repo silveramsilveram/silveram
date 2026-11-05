@@ -160,6 +160,12 @@ export const FAQS: FaqItem[] = [
   {
     id: 'faq-contact',
     question: 'How can I contact the store?',
-    answer: 'The quickest way is WhatsApp. Our contact details are listed at the bottom of this page.',
+    answer: 'The quickest way is WhatsApp on +91 77669 11777, or message us on Instagram @silveram__. Our address and contact details are at the bottom of this page.',
+  },
+  {
+    id: 'faq-visit',
+    question: 'Can I visit the store?',
+    answer:
+      'Yes. Silveram is at Pani Tanki, Main Rd, beside Bank of Baroda, beside Meena Bazar Bridge, Rajendra Nagar, Motihari, Bihar 845401. Use “Get directions” in the footer to open Google Maps.',
   },
 ];

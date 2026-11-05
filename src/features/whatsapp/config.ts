@@ -1,7 +1,7 @@
 /**
- * WhatsApp configuration. Set VITE_WHATSAPP_NUMBER in .env (Indian mobile, e.g.
- * 9XXXXXXXXX or 919XXXXXXXXX). No number is hardcoded; when it is missing or
- * invalid the UI shows a "contact pending" state instead of a broken link.
+ * WhatsApp configuration. The store's public WhatsApp number is the default;
+ * VITE_WHATSAPP_NUMBER (Indian mobile, e.g. 9XXXXXXXXX or 919XXXXXXXXX) overrides it.
+ * If the value is invalid the UI shows a "contact pending" state instead of a broken link.
  */
 export function normalizeWhatsAppNumber(raw: string | undefined): string | null {
   const digits = (raw ?? '').replace(/\D/g, '');
@@ -10,5 +10,10 @@ export function normalizeWhatsAppNumber(raw: string | undefined): string | null 
   return null;
 }
 
-export const WHATSAPP_NUMBER = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER);
+const DEFAULT_WHATSAPP_NUMBER = '7766911777';
+
+export const WHATSAPP_NUMBER = normalizeWhatsAppNumber(import.meta.env.VITE_WHATSAPP_NUMBER?.trim() || DEFAULT_WHATSAPP_NUMBER);
+
+/** Number formatted for display, e.g. "+91 77669 11777". */
+export const WHATSAPP_DISPLAY = WHATSAPP_NUMBER ? `+91 ${WHATSAPP_NUMBER.slice(2, 7)} ${WHATSAPP_NUMBER.slice(7)}` : null;
 export const isWhatsAppConfigured = WHATSAPP_NUMBER !== null;
