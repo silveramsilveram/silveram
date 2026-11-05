@@ -7,19 +7,19 @@ export const APPWRITE_SCHEMA = {
       ['createdAt', 'integer', true],
       ['lastLoginAt', 'integer', true],
     ],
-    indexes: [['email_expiry_idx', 'key', ['expiresAt']]],
+    indexes: [],
   },
   authChallenges: {
     name: 'Email verification challenges',
     attributes: [
       ['email', 'string', true, 254],
       ['codeDigest', 'string', true, 64],
-      ['attempts', 'integer', true],
+      ['nonce', 'string', true, 64],
       ['createdAt', 'integer', true],
       ['lastSentAt', 'integer', true],
       ['expiresAt', 'integer', true],
     ],
-    indexes: [['consumed_at_idx', 'key', ['consumedAt']]],
+    indexes: [['expires_at_idx', 'key', ['expiresAt']]],
   },
   authConsumptions: {
     name: 'Consumed verification codes',
@@ -27,7 +27,7 @@ export const APPWRITE_SCHEMA = {
       ['emailHash', 'string', true, 64],
       ['consumedAt', 'integer', true],
     ],
-    indexes: [],
+    indexes: [['consumed_at_idx', 'key', ['consumedAt']]],
   },
   sessions: {
     name: 'Opaque customer sessions',

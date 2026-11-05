@@ -148,7 +148,8 @@ The seed script creates products **inactive with zero inventory** and will not a
 - The Appwrite API key is server-only. Public collection permissions stay empty; Vercel’s API performs authorization. Use a separate temporary setup key to provision schema, then revoke it.
 - User sessions use random opaque tokens in `HttpOnly`, `SameSite=Lax` cookies; only a hash is stored in Appwrite. OTPs are HMAC-digested, short-lived, attempt-limited, and rate-limited.
 - Email, database and Cloudinary failures return explicit API errors; do not enable checkout as a way to test missing integrations.
-- Appwrite database transactions protect stock/order writes. Online payment reservation cleanup and email retry jobs run in the long-running local server only; do not enable Razorpay on Vercel until a scheduled job is configured and tested.
+- Appwrite database transactions protect stock/order writes. Vercel Cron calls the secret-protected `/api/cron/cleanup` route daily to prune expired sessions, challenges, rate-limit records, webhook records, and stale email claims. `CRON_SECRET` must be a random value of at least 32 bytes.
+- Payment reservation expiry and email retry jobs run in the long-running local server only; do not enable Razorpay on Vercel until those jobs are migrated to a verified scheduler.
 - Appwrite is not configured in this workspace and no live Appwrite, Cloudinary or Mailjet call has been verified. A green local build is not proof of production readiness.
 - The privacy/terms/shipping/returns text is marked as a draft and requires business/legal review. The domain, commercial terms, product claims and stock must be confirmed before launch.
 - Previously exposed credentials must be revoked/rotated. Never re-use credentials that were pasted into chat.

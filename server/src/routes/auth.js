@@ -60,7 +60,7 @@ export function createAuthRouter(config) {
       const challenge = {
         email,
         codeDigest: otpDigest(email, code, config.otpPepper),
-        attempts: 0,
+        nonce: createOpaqueToken(),
         createdAt: now.getTime(),
         lastSentAt: now.getTime(),
         expiresAt: now.getTime() + config.otpTtlMinutes * 60 * 1000,
@@ -98,34 +98,42 @@ export function createAuthRouter(config) {
       const { email, code, name } = parsed.data;
       const id = challengeId(email);
       const challenge = await getDocument('authChallenges', id);
-      if (!challenge || challenge.expiresAt <= Date.now()) {
-        const consumptionId = hashToken(`${email}:${challenge.codeDigest}`).slice(0, 36);
-        try {
-          await createDocument('authConsumptions', consumptionId, {
-            emailHash: hashToken(email),
-            consumedAt: Date.now(),
-          });
-        } catch (error) {
-          if (error?.code === 409) {
-            return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
-          }
-          throw error;
-        }
+      if (!challenge) return res.status(400).json({ error: 'That code has expired. Request a new code.' });
+      if (challenge.expiresAt <= Date.now()) {
         await deleteDocument('authChallenges', id);
         return res.status(400).json({ error: 'That code has expired. Request a new code.' });
       }
 
+      if (!(await consumeRateLimit(
+        `${email}:${challenge.nonce}`,
+        'otp-verify-challenge',
+        config.otpMaxAttempts,
+        24 * 60 * 60 * 1000,
+      ))) {
+        return res.status(429).json({ error: 'Too many verification attempts. Request a new code.' });
+      }
+
       const submittedDigest = otpDigest(email, code, config.otpPepper);
       if (!safeEqualHex(submittedDigest, challenge.codeDigest)) {
-        if (challenge.attempts < config.otpMaxAttempts) {
-          await updateDocument('authChallenges', id, { attempts: challenge.attempts + 1 });
-        }
         return res.status(400).json({ error: 'That verification code is incorrect.' });
       }
 
-      if (challenge.attempts >= config.otpMaxAttempts || challenge.expiresAt <= Date.now()) {
+      if (challenge.expiresAt <= Date.now()) {
         await deleteDocument('authChallenges', id);
         return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
+      }
+
+      const consumptionId = hashToken(`${email}:${challenge.nonce}:${challenge.codeDigest}`).slice(0, 36);
+      try {
+        await createDocument('authConsumptions', consumptionId, {
+          emailHash: hashToken(email),
+          consumedAt: Date.now(),
+        });
+      } catch (error) {
+        if (error?.code === 409) {
+          return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
+        }
+        throw error;
       }
       await deleteDocument('authChallenges', id);
 

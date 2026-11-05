@@ -94,11 +94,14 @@ Add backend variables in Vercel Project → Settings → Environment Variables f
 - `OTP_PEPPER` (random, at least 32 bytes)
 - `FRONTEND_ORIGINS` (exact HTTPS storefront origins; no `*`)
 - `ADMIN_EMAILS` (before admin routes are used)
+- `CRON_SECRET` (random, at least 32 bytes, for the daily Vercel cleanup cron)
 - Mailjet SMTP values if OTP or transactional email is used
 - Cloudinary server values only if signed uploads are enabled
 - Public build variable `VITE_CLOUDINARY_CLOUD_NAME` only after images are available there
 
 `VITE_*` variables are public and baked into the storefront build. Never place secrets in them. A change to a `VITE_*` variable requires a new build/deployment.
+
+The scheduled cleanup runs daily at 03:00 UTC and authenticates with `Authorization: Bearer <CRON_SECRET>`. Do not expose this route with a public bypass or log the secret. Payment-reservation expiry and email retries are separate jobs and are not yet scheduled on Vercel.
 
 The API is same-origin under `/api`, so session cookies remain first-party. If a separate frontend/API host is introduced later, revisit CORS, cookie `SameSite`/domain policy, CSRF defenses, and origin allowlists before deploying.
 

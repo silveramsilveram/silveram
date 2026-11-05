@@ -1,9 +1,9 @@
-// Usage: node --env-file=.env src/scripts/upload-catalog-images.js <imagesDir> [--no-db]
+// Usage: node --env-file=.env src/scripts/upload-catalog-images.js <imagesDir> [--no-appwrite]
 // Uploads launch catalogue photographs (WebP, PNG, or JPEG) to this environment's
 // Cloudinary product folders, using
 // the fixed public id <root>/<env>/products/<sku>/<file name without extension>.
-// Re-running overwrites the same ids, so it is idempotent. Unless --no-db is passed it
-// then stores the Cloudinary REFERENCES (never image data) on the three product records.
+// Re-running overwrites the same ids, so it is idempotent. Unless --no-appwrite is passed it
+// then stores the Cloudinary REFERENCES (never image data) in Appwrite.
 // It does not touch price, stock or the active flag.
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -25,7 +25,7 @@ const ALT = {
 
 const [dir, ...flags] = process.argv.slice(2);
 if (!dir) throw new Error('Usage: upload-catalog-images.js <imagesDir> [--no-db]');
-const writeDb = !flags.includes('--no-db');
+const writeReferences = !flags.includes('--no-appwrite');
 
 const config = loadConfig();
 configureAppwrite(config);
@@ -78,12 +78,11 @@ for (const product of CATALOG) {
 }
 console.error(`Cloudinary cloud name (public, for VITE_CLOUDINARY_CLOUD_NAME): ${config.cloudinaryCloudName}`);
 
-if (writeDb) {
+if (writeReferences) {
   for (const product of CATALOG) {
     const record = await findDocument('products', 'sku', product.sku);
     if (!record) {
-      console.error(`${product.sku}: NOT FOUND (run seed:catalog first)`);
-      continue;
+      throw new Error(`${product.sku} is missing in Appwrite. Run seed:catalog before saving image references.`);
     }
     await updateDocument('products', record.$id, {
       imagesJson: JSON.stringify(byProduct.get(product.id)),
