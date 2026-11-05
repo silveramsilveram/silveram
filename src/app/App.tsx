@@ -126,4 +126,9 @@ function Storefront() {
 export default function App() {
   return (
     <AuthProvider>
-    
+      <CartProvider>
+        <Storefront />
+      </CartProvider>
+    </AuthProvider>
+  );
+}

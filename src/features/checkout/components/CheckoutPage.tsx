@@ -460,4 +460,27 @@ export default function CheckoutPage() {
                     <span className="font-medium">{item.name}</span>
                     <span className="tabular-nums">{formatINR(item.price * item.quantity)}</span>
                   </div>
- 
+                </li>
+              ))}
+            </ul>
+            <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-text-secondary">Subtotal</dt>
+                <dd className="tabular-nums">{formatINR(subtotal)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-text-secondary">Delivery charges</dt>
+                <dd>None added</dd>
+              </div>
+              <div className="flex justify-between pt-2 text-base font-semibold">
+                <dt>Total</dt>
+                <dd className="tabular-nums text-brand-primary">{formatINR(subtotal)}</dd>
+              </div>
+            </dl>
+            <p className="type-caption mt-4 text-text-muted">The final amount is confirmed by Silveram when the order is placed.</p>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}
