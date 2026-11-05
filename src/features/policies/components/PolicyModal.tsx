@@ -44,10 +44,14 @@ export default function PolicyModal({ policyId, onClose }: PolicyModalProps) {
           </button>
         </div>
 
+        {policy.draft && (
+          <p className="mt-5 rounded-[2px] border border-border bg-surface-secondary px-4 py-3 text-sm text-text-primary" role="status">
+            Draft for store review — these terms are not yet approved for production.
+          </p>
+        )}
+
         <div className="type-body mt-5 space-y-3 text-text-secondary">
-          {policy.paragraphs.length > 0
-            ? policy.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)
-            : <p>{policy.pendingNote}</p>}
+          {policy.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
         </div>
 
         <div className="mt-6 flex justify-end">
