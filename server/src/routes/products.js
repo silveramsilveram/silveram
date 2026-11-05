@@ -1,8 +1,7 @@
-import { ObjectId } from 'mongodb';
 import { Router } from 'express';
 import { z } from 'zod';
-import { collections } from '../db.js';
-import { PRODUCT_CATEGORIES } from '../database/schema.js';
+import { PRODUCT_CATEGORIES } from '../catalog.js';
+import { createDocument, getDocument, ID, listDocuments, Query, updateDocument } from '../platform/appwrite.js';
 import { requireAdmin, requireUser } from '../middleware.js';
 import { cloudinaryEnabled, imageUrl as cloudinaryUrl } from '../storage/cloudinary/client.js';
 import { isProductPublicId } from '../storage/cloudinary/folders.js';
@@ -34,7 +33,6 @@ function createProductSchema(config) {
     currency: z.literal('INR').default('INR'),
     stockQuantity: z.number().int().min(0).max(2147483647),
     imageUrl: imageUrl.optional(),
-    // Cloudinary references only; the files themselves never touch MongoDB.
     images: z.array(z.object({
       publicId: z.string().trim().min(1).max(255),
       width: z.number().int().positive().max(20000),
@@ -46,26 +44,34 @@ function createProductSchema(config) {
 }
 
 function serializeProduct(product, config) {
-  const { _id, ...fields } = product;
-  const images = (fields.images || []).map((image) => ({ ...image, url: cloudinaryUrl(config, image.publicId) }));
+  const { $id, imagesJson, ...fields } = product;
+  let images = [];
+  try {
+    images = JSON.parse(imagesJson || '[]');
+  } catch (error) {
+    console.error(`Invalid image metadata for product ${$id}:`, error?.message || error);
+  }
+  images = images.map((image) => ({ ...image, url: cloudinaryUrl(config, image.publicId) }));
   return {
     ...fields,
-    id: _id.toString(),
+    id: $id,
     images,
-    imageUrl: images[0]?.url || fields.imageUrl,
+    imageUrl: images[0]?.url || product.imageUrl,
   };
 }
 
-// Reject public IDs outside this SKU's Cloudinary folder, so a product can
-// never point at another product's (or another app's) media.
 function imagesAreOwned(config, sku, images) {
   if (!images || images.length === 0) return true;
   return cloudinaryEnabled(config) && images.every((image) => isProductPublicId(config, sku, image.publicId));
 }
 
+function storeProduct(product) {
+  const { images, ...fields } = product;
+  return { ...fields, imagesJson: JSON.stringify(images || []) };
+}
+
 export function createProductsRouter(config) {
   const router = Router();
-  const { products } = collections();
   const productSchema = createProductSchema(config);
 
   router.get('/', async (req, res, next) => {
@@ -74,9 +80,10 @@ export function createProductsRouter(config) {
       if (category && !PRODUCT_CATEGORIES.includes(category)) {
         return res.status(400).json({ error: 'Choose a valid product category.' });
       }
-      const filter = { active: true, ...(category ? { category } : {}) };
       const limit = Math.min(Number.parseInt(req.query.limit, 10) || 24, 100);
-      const rows = await products.find(filter).sort({ _id: 1 }).limit(limit).toArray();
+      const queries = [Query.equal('active', true), Query.limit(limit)];
+      if (category) queries.push(Query.equal('category', category));
+      const rows = await listDocuments('products', queries);
       return res.json({ products: rows.map((row) => serializeProduct(row, config)) });
     } catch (error) {
       next(error);
@@ -86,7 +93,7 @@ export function createProductsRouter(config) {
   const admin = [requireUser, requireAdmin(config)];
   router.get('/admin', ...admin, async (_req, res, next) => {
     try {
-      const rows = await products.find({}).sort({ _id: 1 }).limit(500).toArray();
+      const rows = await listDocuments('products', [Query.limit(500)]);
       return res.json({ products: rows.map((row) => serializeProduct(row, config)) });
     } catch (error) {
       next(error);
@@ -100,25 +107,25 @@ export function createProductsRouter(config) {
       if (!imagesAreOwned(config, parsed.data.sku, parsed.data.images)) {
         return res.status(400).json({ error: 'Upload product images through the image uploader.' });
       }
-      const product = { ...parsed.data, createdAt: new Date(), updatedAt: new Date() };
-      const result = await products.insertOne(product);
-      return res.status(201).json({ product: serializeProduct({ ...product, _id: result.insertedId }, config) });
+      const now = Date.now();
+      const product = { ...storeProduct(parsed.data), createdAt: now, updatedAt: now };
+      const created = await createDocument('products', ID.unique(), product);
+      return res.status(201).json({ product: serializeProduct(created, config) });
     } catch (error) {
-      if (error?.code === 11000) return res.status(409).json({ error: 'That SKU is already in use.' });
+      if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
       next(error);
     }
   });
 
   router.patch('/admin/:id', ...admin, async (req, res, next) => {
     try {
-      if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid product ID.' });
       const parsed = productSchema.partial().strict().safeParse(req.body);
       if (!parsed.success || Object.keys(parsed.data || {}).length === 0) {
         return res.status(400).json({ error: 'Provide valid product fields to update.' });
       }
+      const existing = await getDocument('products', req.params.id);
+      if (!existing) return res.status(404).json({ error: 'Product not found.' });
       if (parsed.data.images) {
-        const existing = await products.findOne({ _id: new ObjectId(req.params.id) }, { projection: { sku: 1 } });
-        if (!existing) return res.status(404).json({ error: 'Product not found.' });
         if (parsed.data.sku && parsed.data.sku !== existing.sku) {
           return res.status(400).json({ error: 'Change the SKU separately from its images.' });
         }
@@ -126,27 +133,26 @@ export function createProductsRouter(config) {
           return res.status(400).json({ error: 'Upload product images through the image uploader.' });
         }
       }
-      const result = await products.findOneAndUpdate(
-        { _id: new ObjectId(req.params.id) },
-        { $set: { ...parsed.data, updatedAt: new Date() } },
-        { returnDocument: 'after' },
-      );
-      if (!result) return res.status(404).json({ error: 'Product not found.' });
-      return res.json({ product: serializeProduct(result, config) });
+      const updated = await updateDocument('products', req.params.id, {
+        ...storeProduct(parsed.data),
+        updatedAt: Date.now(),
+      });
+      return res.json({ product: serializeProduct(updated, config) });
     } catch (error) {
-      if (error?.code === 11000) return res.status(409).json({ error: 'That SKU is already in use.' });
+      if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
       next(error);
     }
   });
 
   router.delete('/admin/:id', ...admin, async (req, res, next) => {
     try {
-      if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ error: 'Invalid product ID.' });
-      const result = await products.updateOne(
-        { _id: new ObjectId(req.params.id) },
-        { $set: { active: false, deletedAt: new Date(), updatedAt: new Date() } },
-      );
-      if (!result.matchedCount) return res.status(404).json({ error: 'Product not found.' });
+      const existing = await getDocument('products', req.params.id);
+      if (!existing) return res.status(404).json({ error: 'Product not found.' });
+      await updateDocument('products', req.params.id, {
+        active: false,
+        deletedAt: Date.now(),
+        updatedAt: Date.now(),
+      });
       return res.status(204).end();
     } catch (error) {
       next(error);

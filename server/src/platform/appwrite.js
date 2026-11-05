@@ -42,23 +42,25 @@ export async function getDocument(collectionId, documentId) {
   }
 }
 
-export async function createDocument(collectionId, documentId, data) {
+export async function createDocument(collectionId, documentId, data, transactionId) {
   assertConfigured();
   return databases.createDocument({
     databaseId: config.appwriteDatabaseId,
     collectionId: config.appwriteCollections[collectionId],
     documentId,
     data,
+    ...(transactionId && { transactionId }),
   });
 }
 
-export async function updateDocument(collectionId, documentId, data) {
+export async function updateDocument(collectionId, documentId, data, transactionId) {
   assertConfigured();
   return databases.updateDocument({
     databaseId: config.appwriteDatabaseId,
     collectionId: config.appwriteCollections[collectionId],
     documentId,
     data,
+    ...(transactionId && { transactionId }),
   });
 }
 
@@ -90,6 +92,23 @@ export async function listDocuments(collectionId, queries = []) {
 export async function findDocument(collectionId, field, value) {
   const [document] = await listDocuments(collectionId, [Query.equal(field, value), Query.limit(1)]);
   return document || null;
+}
+
+export async function runTransaction(work) {
+  assertConfigured();
+  const transaction = await databases.createTransaction({ ttl: 60 });
+  try {
+    const result = await work(transaction.$id);
+    await databases.updateTransaction({ transactionId: transaction.$id, commit: true });
+    return result;
+  } catch (error) {
+    try {
+      await databases.updateTransaction({ transactionId: transaction.$id, rollback: true });
+    } catch (rollbackError) {
+      console.error('Appwrite transaction rollback failed:', rollbackError?.message || rollbackError);
+    }
+    throw error;
+  }
 }
 
 export async function connectDatabase(nextConfig) {

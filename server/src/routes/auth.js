@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { collections } from '../db.js';
+import { createDocument, deleteDocument, findDocument, getAppwrite, getDocument, ID, Query, updateDocument } from '../platform/appwrite.js';
 import { getMailer } from '../mail/transport.js';
 import { consumeRateLimit, createOpaqueToken, createOtp, hashToken, otpDigest, safeEqualHex } from '../security.js';
 
@@ -12,6 +12,10 @@ const verifySchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
 }).strict();
 const sessionDurationMs = 14 * 24 * 60 * 60 * 1000;
+
+function challengeId(email) {
+  return hashToken(email).slice(0, 36);
+}
 
 function setSessionCookie(res, token, config) {
   res.cookie('silveram_session', token, {
@@ -42,29 +46,27 @@ export function createAuthRouter(config) {
         return res.status(429).json({ error: 'Too many verification requests. Please try again later.' });
       }
 
-      const { authChallenges } = collections();
-      const existing = await authChallenges.findOne({ _id: email }, { projection: { lastSentAt: 1 } });
+      const id = challengeId(email);
+      const existing = await getDocument('authChallenges', id);
       if (
         existing?.lastSentAt &&
-        Date.now() - existing.lastSentAt.getTime() < config.otpResendSeconds * 1000
+        Date.now() - existing.lastSentAt < config.otpResendSeconds * 1000
       ) {
         return res.status(429).json({ error: 'Please wait before requesting another verification code.' });
       }
 
       const code = createOtp();
       const now = new Date();
-      await authChallenges.replaceOne(
-        { _id: email },
-        {
-          _id: email,
-          codeDigest: otpDigest(email, code, config.otpPepper),
-          attempts: 0,
-          createdAt: now,
-          lastSentAt: now,
-          expiresAt: new Date(now.getTime() + config.otpTtlMinutes * 60 * 1000),
-        },
-        { upsert: true },
-      );
+      const challenge = {
+        email,
+        codeDigest: otpDigest(email, code, config.otpPepper),
+        attempts: 0,
+        createdAt: now.getTime(),
+        lastSentAt: now.getTime(),
+        expiresAt: now.getTime() + config.otpTtlMinutes * 60 * 1000,
+      };
+      if (existing) await updateDocument('authChallenges', id, challenge);
+      else await createDocument('authChallenges', id, challenge);
 
       try {
         await mailer.sendMail({
@@ -75,7 +77,8 @@ export function createAuthRouter(config) {
           html: `<p>Your Silveram verification code is <strong>${code}</strong>.</p><p>It expires in ${config.otpTtlMinutes} minutes. If you did not request this, you can ignore this email.</p>`,
         });
       } catch (error) {
-        await authChallenges.deleteOne({ _id: email, codeDigest: otpDigest(email, code, config.otpPepper) });
+        const latest = await getDocument('authChallenges', id);
+        if (latest?.codeDigest === challenge.codeDigest) await deleteDocument('authChallenges', id);
         throw error;
       }
 
@@ -93,50 +96,71 @@ export function createAuthRouter(config) {
       const parsed = verifySchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Enter your email and the six-digit code.' });
       const { email, code, name } = parsed.data;
-      const { authChallenges, users, sessions } = collections();
-      const challenge = await authChallenges.findOne({ _id: email });
-      if (!challenge || challenge.expiresAt <= new Date()) {
-        await authChallenges.deleteOne({ _id: email });
+      const id = challengeId(email);
+      const challenge = await getDocument('authChallenges', id);
+      if (!challenge || challenge.expiresAt <= Date.now()) {
+        await deleteDocument('authChallenges', id);
         return res.status(400).json({ error: 'That code has expired. Request a new code.' });
       }
 
       const submittedDigest = otpDigest(email, code, config.otpPepper);
       if (!safeEqualHex(submittedDigest, challenge.codeDigest)) {
-        await authChallenges.updateOne(
-          { _id: email, attempts: { $lt: config.otpMaxAttempts } },
-          { $inc: { attempts: 1 } },
-        );
+        if (challenge.attempts < config.otpMaxAttempts) {
+          await updateDocument('authChallenges', id, { attempts: challenge.attempts + 1 });
+        }
         return res.status(400).json({ error: 'That verification code is incorrect.' });
       }
 
-      const consumed = await authChallenges.findOneAndDelete({
-        _id: email,
-        codeDigest: challenge.codeDigest,
-        attempts: { $lt: config.otpMaxAttempts },
-        expiresAt: { $gt: new Date() },
-      });
-      if (!consumed) return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
+      if (challenge.attempts >= config.otpMaxAttempts || challenge.expiresAt <= Date.now()) {
+        await deleteDocument('authChallenges', id);
+        return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
+      }
+      await deleteDocument('authChallenges', id);
 
       const now = new Date();
-      const user = await users.findOneAndUpdate(
-        { email },
-        {
-          $set: { emailVerifiedAt: now, lastLoginAt: now, ...(name ? { name } : {}) },
-          $setOnInsert: { email, createdAt: now },
-        },
-        { upsert: true, returnDocument: 'after' },
-      );
+      const { users } = getAppwrite();
+      const matches = await users.list({ queries: [Query.equal('email', email), Query.limit(1)] });
+      let user = matches.users[0];
+      if (!user) {
+        try {
+          user = await users.create({
+            userId: ID.unique(),
+            email,
+            password: createOpaqueToken(),
+            name: name || '',
+          });
+        } catch (error) {
+          if (error?.code !== 409) throw error;
+          const retry = await users.list({ queries: [Query.equal('email', email), Query.limit(1)] });
+          user = retry.users[0];
+          if (!user) throw error;
+        }
+      } else if (name && user.name !== name) {
+        user = await users.updateName({ userId: user.$id, name });
+      }
+      if (!user.emailVerification) {
+        user = await users.updateEmailVerification({ userId: user.$id, emailVerification: true });
+      }
+      const profile = await getDocument('profiles', user.$id);
+      const profileData = {
+        email,
+        name: name || user.name || '',
+        createdAt: profile?.createdAt || now.getTime(),
+        lastLoginAt: now.getTime(),
+      };
+      if (profile) await updateDocument('profiles', user.$id, profileData);
+      else await createDocument('profiles', user.$id, profileData);
 
       const sessionToken = createOpaqueToken();
-      await sessions.insertOne({
+      await createDocument('sessions', ID.unique(), {
         tokenHash: hashToken(sessionToken),
-        userId: user._id,
+        userId: user.$id,
         email,
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + sessionDurationMs),
+        createdAt: now.getTime(),
+        expiresAt: now.getTime() + sessionDurationMs,
       });
       setSessionCookie(res, sessionToken, config);
-      return res.json({ user: { id: user._id.toString(), email: user.email, name: user.name || '' } });
+      return res.json({ user: { id: user.$id, email: user.email, name: name || user.name || '' } });
     } catch (error) {
       next(error);
     }
@@ -146,17 +170,22 @@ export function createAuthRouter(config) {
     try {
       const token = req.cookies?.silveram_session;
       if (!token) return res.status(401).json({ error: 'Sign in to continue.' });
-      const session = await collections().sessions.findOne({
-        tokenHash: hashToken(token),
-        expiresAt: { $gt: new Date() },
-      });
+      const session = await findDocument('sessions', 'tokenHash', hashToken(token));
+      if (session?.expiresAt <= Date.now()) {
+        await deleteDocument('sessions', session.$id);
+        return res.status(401).json({ error: 'Your session expired. Verify your email again.' });
+      }
       if (!session) return res.status(401).json({ error: 'Your session expired. Verify your email again.' });
-      const user = await collections().users.findOne(
-        { _id: session.userId },
-        { projection: { email: 1, name: 1 } },
-      );
+      const { users } = getAppwrite();
+      let user;
+      try {
+        user = await users.get({ userId: session.userId });
+      } catch (error) {
+        if (error?.code === 404) return res.status(401).json({ error: 'Your account could not be found.' });
+        throw error;
+      }
       if (!user) return res.status(401).json({ error: 'Your account could not be found.' });
-      return res.json({ user: { id: user._id.toString(), email: user.email, name: user.name || '' } });
+      return res.json({ user: { id: user.$id, email: user.email, name: user.name || '' } });
     } catch (error) {
       next(error);
     }
@@ -165,7 +194,10 @@ export function createAuthRouter(config) {
   router.post('/logout', async (req, res, next) => {
     try {
       const token = req.cookies?.silveram_session;
-      if (token) await collections().sessions.deleteOne({ tokenHash: hashToken(token) });
+      if (token) {
+        const session = await findDocument('sessions', 'tokenHash', hashToken(token));
+        if (session) await deleteDocument('sessions', session.$id);
+      }
       res.clearCookie('silveram_session', {
         httpOnly: true,
         secure: config.isProduction,
