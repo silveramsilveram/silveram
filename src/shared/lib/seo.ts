@@ -42,7 +42,10 @@ export function setPageMeta({ title, description, path = '', image }: PageMeta) 
   const url = `${SITE.url}/${path}`;
   setMeta('meta[property="og:url"]', 'property', 'og:url', url);
   setCanonical(url);
-  const imageUrl = new URL(image ?? productImageUrl('SV-001', 'silver-frame-01'), SITE.url).toString();
+  const imageUrl = new URL(
+    image ?? productImageUrl('SV-001', 'silver-frame-01', 1200, '/images/products/silver-frame-01.png'),
+    SITE.url,
+  ).toString();
   setMeta('meta[property="og:image"]', 'property', 'og:image', imageUrl);
   setMeta('meta[name="twitter:image"]', 'name', 'twitter:image', imageUrl);
 }

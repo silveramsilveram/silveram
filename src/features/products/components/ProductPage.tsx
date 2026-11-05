@@ -36,7 +36,7 @@ function productJsonLd(product: Product) {
     name: product.name,
     ...(product.description && { description: product.description }),
     ...(product.images.length > 0 && {
-      image: product.images.map((image) => new URL(image.fallbackSrc ?? image.src, SITE.url).toString()),
+      image: product.images.map((image) => new URL(image.src, SITE.url).toString()),
     }),
     ...(product.material && { material: product.material }),
     brand: { '@type': 'Brand', name: SITE.name },
@@ -70,7 +70,7 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
         product.description?.slice(0, 155) ??
         `${product.name} from the ${SITE.name} silver collection.`,
       path: productPath(product),
-      image: product.images[0]?.src,
+      image: product.images[0]?.fallbackSrc ?? product.images[0]?.src,
     });
     setStructuredData(productJsonLd(product));
     return () => setStructuredData(null);
