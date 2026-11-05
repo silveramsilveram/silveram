@@ -65,11 +65,6 @@ function imagesAreOwned(config, sku, images) {
   return cloudinaryEnabled(config) && images.every((image) => isProductPublicId(config, sku, image.publicId));
 }
 
-function storeProduct(product) {
-  const { images, ...fields } = product;
-  return { ...fields, imagesJson: JSON.stringify(images || []) };
-}
-
 export function createProductsRouter(config) {
   const router = Router();
   const productSchema = createProductSchema(config);
@@ -108,7 +103,8 @@ export function createProductsRouter(config) {
         return res.status(400).json({ error: 'Upload product images through the image uploader.' });
       }
       const now = Date.now();
-      const product = { ...storeProduct(parsed.data), createdAt: now, updatedAt: now };
+      const { images, ...fields } = parsed.data;
+      const product = { ...fields, imagesJson: JSON.stringify(images), createdAt: now, updatedAt: now };
       const created = await createDocument('products', ID.unique(), product);
       return res.status(201).json({ product: serializeProduct(created, config) });
     } catch (error) {
@@ -133,8 +129,10 @@ export function createProductsRouter(config) {
           return res.status(400).json({ error: 'Upload product images through the image uploader.' });
         }
       }
+      const { images, ...fields } = parsed.data;
       const updated = await updateDocument('products', req.params.id, {
-        ...storeProduct(parsed.data),
+        ...fields,
+        ...(images && { imagesJson: JSON.stringify(images) }),
         updatedAt: Date.now(),
       });
       return res.json({ product: serializeProduct(updated, config) });

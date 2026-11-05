@@ -107,6 +107,7 @@ export function loadConfig() {
     products: process.env.APPWRITE_PRODUCTS_COLLECTION_ID?.trim() || 'products',
     orders: process.env.APPWRITE_ORDERS_COLLECTION_ID?.trim() || 'orders',
     webhookEvents: process.env.APPWRITE_WEBHOOK_EVENTS_COLLECTION_ID?.trim() || 'webhook_events',
+    emailClaims: process.env.APPWRITE_EMAIL_CLAIMS_COLLECTION_ID?.trim() || 'email_claims',
   };
   for (const [name, id] of Object.entries(appwriteCollections)) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(id)) {
