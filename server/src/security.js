@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
-import { collections } from './db.js';
+import { createDocument, getAppwrite } from './platform/appwrite.js';
 
 export function hashToken(token) {
   return createHash('sha256').update(token).digest('hex');
@@ -24,37 +24,33 @@ export function createOtp() {
 }
 
 export async function consumeRateLimit(identity, action, limit, windowMs) {
-  const now = new Date();
-  const id = createHash('sha256').update(`${action}:${identity}`).digest('hex');
-  const collection = collections().rateLimits;
-  const update = [
-    {
-      $set: {
-        windowStart: {
-          $cond: [
-            { $lte: [{ $ifNull: ['$windowStart', new Date(0)] }, new Date(now.getTime() - windowMs)] },
-            now,
-            '$windowStart',
-          ],
-        },
-        count: {
-          $cond: [
-            { $lte: [{ $ifNull: ['$windowStart', new Date(0)] }, new Date(now.getTime() - windowMs)] },
-            1,
-            { $add: [{ $ifNull: ['$count', 0] }, 1] },
-          ],
-        },
-        expiresAt: new Date(now.getTime() + windowMs + 60000),
-      },
-    },
-  ];
+  const { databases, databaseId, collections } = getAppwrite();
+  const now = Date.now();
+  const windowStart = Math.floor(now / windowMs) * windowMs;
+  const id = createHash('sha256').update(`${action}:${identity}:${windowStart}`).digest('hex').slice(0, 36);
+  try {
+    await createDocument('rateLimits', id, {
+      key: createHash('sha256').update(`${action}:${identity}`).digest('hex'),
+      windowStart,
+      count: 1,
+    });
+    return true;
+  } catch (error) {
+    if (error?.code !== 409) throw error;
+  }
 
   try {
-    await collection.updateOne({ _id: id }, update, { upsert: true });
+    const updated = await databases.incrementDocumentAttribute({
+      databaseId,
+      collectionId: collections.rateLimits,
+      documentId: id,
+      attribute: 'count',
+      value: 1,
+      max: limit,
+    });
+    return updated.count <= limit;
   } catch (error) {
-    if (error?.code !== 11000) throw error;
-    await collection.updateOne({ _id: id }, update);
+    if (error?.code === 400) return false;
+    throw error;
   }
-  const current = await collection.findOne({ _id: id }, { projection: { count: 1 } });
-  return (current?.count ?? 0) <= limit;
 }
