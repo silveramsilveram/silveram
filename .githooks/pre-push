@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+media_dir='public/images/products'
+empty_sha='0000000000000000000000000000000000000000'
+sync_media=false
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -n "$local_sha" ] || continue
+  [ "$local_sha" != "$empty_sha" ] || continue
+
+  if [ "$remote_sha" = "$empty_sha" ]; then
+    if git ls-tree -r --name-only "$local_sha" -- "$media_dir" | grep -q .; then
+      sync_media=true
+    fi
+  elif ! git diff --quiet "$remote_sha" "$local_sha" -- "$media_dir"; then
+    sync_media=true
+  fi
+done
+
+if [ "$sync_media" = true ]; then
+  npm --prefix server run upload:catalog-images -- --environment=production
+fi
