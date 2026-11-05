@@ -98,6 +98,22 @@ export function loadConfig() {
   }
 
   const appwriteEndpoint = required('APPWRITE_ENDPOINT').replace(/\/+$/, '');
+  let endpoint;
+  try {
+    endpoint = new URL(appwriteEndpoint);
+  } catch {
+    throw new Error('APPWRITE_ENDPOINT must be a valid HTTP(S) URL.');
+  }
+  if (!['http:', 'https:'].includes(endpoint.protocol) || endpoint.username || endpoint.password) {
+    throw new Error('APPWRITE_ENDPOINT must be a valid HTTP(S) URL without embedded credentials.');
+  }
+  if (nodeEnv === 'production' && endpoint.protocol !== 'https:') {
+    throw new Error('APPWRITE_ENDPOINT must use HTTPS in production.');
+  }
+  const appwriteDatabaseId = process.env.APPWRITE_DATABASE_ID?.trim() || 'silveram';
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(appwriteDatabaseId)) {
+    throw new Error('APPWRITE_DATABASE_ID is invalid.');
+  }
   const appwriteCollections = {
     profiles: process.env.APPWRITE_PROFILES_COLLECTION_ID?.trim() || 'profiles',
     authChallenges: process.env.APPWRITE_AUTH_CHALLENGES_COLLECTION_ID?.trim() || 'auth_challenges',
@@ -123,7 +139,7 @@ export function loadConfig() {
     appwriteEndpoint,
     appwriteProjectId: required('APPWRITE_PROJECT_ID'),
     appwriteApiKey: required('APPWRITE_API_KEY'),
-    appwriteDatabaseId: process.env.APPWRITE_DATABASE_ID?.trim() || 'silveram',
+    appwriteDatabaseId,
     appwriteCollections,
     sessionSecret: secret('SESSION_SECRET'),
     otpPepper: secret('OTP_PEPPER'),

@@ -32,7 +32,16 @@ test('cod email asks for cash on delivery', () => {
 
 test('mailjet keys derive SMTP settings and must come as a pair', () => {
   const saved = { ...process.env };
-  t_env({ MONGODB_URI: 'mongodb://x', SESSION_SECRET: 's'.repeat(32), OTP_PEPPER: 'p'.repeat(32), MAILJET_API_KEY: 'k', MAILJET_SECRET_KEY: 's', SMTP_FROM: 'a@b.c' });
+  t_env({
+    APPWRITE_ENDPOINT: 'https://cloud.appwrite.io/v1',
+    APPWRITE_PROJECT_ID: 'project',
+    APPWRITE_API_KEY: 'appwrite-server-key',
+    SESSION_SECRET: 's'.repeat(32),
+    OTP_PEPPER: 'p'.repeat(32),
+    MAILJET_API_KEY: 'k',
+    MAILJET_SECRET_KEY: 's',
+    SMTP_FROM: 'a@b.c',
+  });
   try {
     const c = loadConfig();
     assert.equal(c.smtpHost, 'in-v3.mailjet.com');

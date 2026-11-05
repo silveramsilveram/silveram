@@ -5,8 +5,10 @@ import { loadConfig } from '../src/config.js';
 const configNames = [
   'NODE_ENV',
   'PORT',
-  'MONGODB_URI',
-  'MONGODB_DB_NAME',
+  'APPWRITE_ENDPOINT',
+  'APPWRITE_PROJECT_ID',
+  'APPWRITE_API_KEY',
+  'APPWRITE_DATABASE_ID',
   'SESSION_SECRET',
   'OTP_PEPPER',
   'FRONTEND_ORIGINS',
@@ -34,7 +36,9 @@ function configure(t, values) {
   const previous = new Map(configNames.map((name) => [name, process.env[name]]));
   for (const name of configNames) delete process.env[name];
   Object.assign(process.env, {
-    MONGODB_URI: 'mongodb://localhost:27017',
+    APPWRITE_ENDPOINT: 'https://cloud.appwrite.io/v1',
+    APPWRITE_PROJECT_ID: 'project',
+    APPWRITE_API_KEY: 'appwrite-server-key',
     SESSION_SECRET: 's'.repeat(32),
     OTP_PEPPER: 'p'.repeat(32),
     ...values,
