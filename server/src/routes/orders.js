@@ -1,17 +1,25 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { createDocument, getAppwrite, getDocument, listDocuments, Query, runTransaction, updateDocument } from '../platform/appwrite.js';
-import { requireUser } from '../middleware.js';
-import { queueOrderConfirmation } from '../mail/orderConfirmation.js';
+import { optionalUser, requireUser } from '../middleware.js';
+import { sendOrderConfirmationBestEffort } from '../mail/orderConfirmation.js';
+import { consumeRateLimit } from '../security.js';
 import {
   createRazorpayOrder,
   verifyCapturedPayment,
   verifyRazorpayCheckoutSignature,
 } from '../payments/razorpay/client.js';
 
+const emailSchema = z.string().trim().email().max(254).transform((email) => email.toLowerCase());
+const orderIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/);
+const GUEST_ID = 'guest';
+const HOUR = 60 * 60 * 1000;
+
 const requestSchema = z.object({
-  requestId: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/),
-  paymentMethod: z.enum(['razorpay', 'cod']),
+  requestId: orderIdSchema,
+  paymentMethod: z.enum(['razorpay', 'cod', 'test']),
+  // Required only when nobody is signed in (guest checkout).
+  guestEmail: emailSchema.optional(),
   customer: z.object({
     name: z.string().trim().min(1).max(100),
     phone: z.string().regex(/^\d{10}$/),
@@ -39,7 +47,7 @@ function orderData(order) {
   }
 }
 
-function sameOrder(existing, userId, paymentMethod, requestedItems, shipping) {
+function sameOrder(existing, identity, paymentMethod, requestedItems, shipping) {
   const data = orderData(existing);
   const existingItems = data.items
     .map(({ productId, quantity }) => [productId, quantity])
@@ -47,14 +55,35 @@ function sameOrder(existing, userId, paymentMethod, requestedItems, shipping) {
   const expectedItems = [...requestedItems]
     .map(([id, quantity]) => [id, quantity])
     .sort(([left], [right]) => left.localeCompare(right));
-  return existing.userId === userId &&
+  return existing.userId === identity.id &&
+    existing.email === identity.email &&
     existing.paymentMethod === paymentMethod &&
     JSON.stringify(existingItems) === JSON.stringify(expectedItems) &&
     JSON.stringify(data.shipping) === JSON.stringify(shipping);
 }
 
+// What the order's owner (signed-in user, or a guest who proved their email) may see.
+function publicOrder(order) {
+  const { items, shipping } = orderData(order);
+  return {
+    id: order.$id,
+    status: order.status,
+    paymentMethod: order.paymentMethod,
+    amountInPaise: order.amountInPaise,
+    currency: order.currency,
+    createdAt: order.createdAt,
+    email: order.email,
+    guest: order.userId === GUEST_ID,
+    items: items.map(({ productId, sku, name, quantity, unitPriceInPaise, lineTotalInPaise }) => ({
+      productId, sku, name, quantity, unitPriceInPaise, lineTotalInPaise,
+    })),
+    shipping,
+  };
+}
+
 function orderResponse(order, keyId) {
   return {
+    order: publicOrder(order),
     orderId: order.$id,
     amountInPaise: order.amountInPaise,
     currency: 'INR',
@@ -64,7 +93,7 @@ function orderResponse(order, keyId) {
   };
 }
 
-async function reserveOrder(config, input, user) {
+async function reserveOrder(config, input, identity) {
   const requested = new Map();
   for (const item of input.items) {
     if (requested.has(item.id)) throw Object.assign(new Error('Your bag contains a duplicate item.'), { status: 400 });
@@ -74,7 +103,7 @@ async function reserveOrder(config, input, user) {
   const existing = await getDocument('orders', input.requestId);
   let order = existing;
   if (existing) {
-    if (!sameOrder(existing, user.id, input.paymentMethod, requested, input.customer)) {
+    if (!sameOrder(existing, identity, input.paymentMethod, requested, input.customer)) {
       throw Object.assign(new Error('This order request is no longer available.'), { status: 409 });
     }
     if (
@@ -83,7 +112,7 @@ async function reserveOrder(config, input, user) {
     ) {
       throw Object.assign(new Error('This order can no longer be paid. Please contact the store.'), { status: 409 });
     }
-    if (existing.paymentMethod === 'cod' || existing.razorpayOrderId) return existing;
+    if (existing.paymentMethod === 'cod' || existing.paymentMethod === 'test' || existing.razorpayOrderId) return existing;
   }
 
   if (!order) {
@@ -126,8 +155,8 @@ async function reserveOrder(config, input, user) {
         }
         const now = Date.now();
         const data = {
-          userId: user.id,
-          email: user.email,
+          userId: identity.id,
+          email: identity.email,
           status: input.paymentMethod === 'cod' ? 'placed_cod' : 'pending_payment',
           paymentMethod: input.paymentMethod,
           amountInPaise: total,
@@ -137,14 +166,14 @@ async function reserveOrder(config, input, user) {
           createdAt: now,
           updatedAt: now,
           confirmationEmailAttempts: 0,
-          ...(input.paymentMethod === 'razorpay' && { reservationExpiresAt: now + 30 * 60 * 1000 }),
+          ...(input.paymentMethod !== 'cod' && { reservationExpiresAt: now + 30 * 60 * 1000 }),
         };
         return createDocument('orders', input.requestId, data, transactionId);
       });
     } catch (error) {
       if (error?.code === 409) {
         const duplicate = await getDocument('orders', input.requestId);
-        if (duplicate && sameOrder(duplicate, user.id, input.paymentMethod, requested, input.customer)) {
+        if (duplicate && sameOrder(duplicate, identity, input.paymentMethod, requested, input.customer)) {
           order = duplicate;
         } else {
           throw Object.assign(new Error('Inventory changed during checkout. Please refresh your bag and try again.'), { status: 409 });
@@ -155,12 +184,12 @@ async function reserveOrder(config, input, user) {
     }
   }
 
-  if (order.paymentMethod === 'cod') return order;
+  if (order.paymentMethod === 'cod' || order.paymentMethod === 'test') return order;
   if (order.razorpayOrderId) return order;
   const razorpayOrder = await createRazorpayOrder(config, {
     ...orderData(order),
     _id: order.$id,
-  }, user);
+  }, { id: identity.id });
   order = await updateDocument('orders', order.$id, {
     razorpayOrderId: razorpayOrder.id,
     updatedAt: Date.now(),
@@ -168,7 +197,7 @@ async function reserveOrder(config, input, user) {
   return order;
 }
 
-async function releaseExpiredReservations() {
+export async function releaseExpiredReservations() {
   const expired = await listDocuments('orders', [
     Query.equal('status', 'pending_payment'),
     Query.lessThan('reservationExpiresAt', Date.now()),
