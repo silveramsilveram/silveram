@@ -69,9 +69,13 @@ The local/long-running Node server starts reservation and email retry sweepers. 
 
 ## 6. Cloudinary media and Appwrite Storage
 
-Cloudinary is the single source for image/video binaries. Configure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, and `CLOUDINARY_ROOT_FOLDER` on the server. Admin image upload signatures are short-lived and scoped to a product/site folder. The browser uploads media directly to Cloudinary; the API does not proxy file bytes.
+Cloudinary is the single source for image/video binaries. Configure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, and `CLOUDINARY_ROOT_FOLDER` on the server. Keep the Cloudinary key and secret server-only. Admin upload signatures are scoped to a product/site folder and resource type (`image` or `video`). The browser uploads media directly to Cloudinary; the API does not proxy file bytes. The current signer allows `.jpg`, `.jpeg`, `.png`, `.webp`, and `.avif` images, plus `.mp4`, `.mov`, `.webm`, and `.m4v` videos.
 
-Set public `VITE_CLOUDINARY_CLOUD_NAME` at build time to generate CDN image URLs after corresponding public IDs are uploaded. The Cloudinary cloud name is public; the API key and secret are not. Local optimized WebP fallbacks are bundled for the existing products.
+Set public `VITE_CLOUDINARY_CLOUD_NAME` at build time to generate CDN URLs after corresponding public IDs are uploaded. The Cloudinary cloud name is public; the API key and secret are not. The product sync script uploads media from `public/images/products` to the chosen Cloudinary environment and stores only public IDs, resource types, dimensions, and alt text in each Appwrite product's `imagesJson` reference field. New video files use names like `silver-frame-video-01.mp4`; image files use names like `silver-frame-07.webp`. Add a new product prefix/SKU mapping to the script when expanding the starter catalog.
+
+Run `npm --prefix server run upload:catalog-images -- --environment=production` after adding catalog media. This sync is idempotent and never changes product prices, stock, or active status. For admin uploads, request `/api/uploads/sign` with a product/site target and `resourceType: "image"` or `"video"`, then post the file directly to the returned Cloudinary upload URL. Do not send file bytes to Appwrite.
+
+The Cloudinary API key used for this setup has a server-only Master Admin role because the free-tier Media Library User role did not have asset-create permission for signed uploads. Keep the secret only in the ignored local `server/.env` and the API runtime environment; never expose it in the browser or a `VITE_*` setting.
 
 Appwrite Storage is reserved for private **non-image/video** customer files if/when a feature requires them (for example, a private document attachment). No such customer-file upload feature is currently exposed. Do not use Appwrite Storage for product photos, avatars, or videos; keep all image/video media in Cloudinary and store only its references in Appwrite.
 

@@ -120,7 +120,7 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 | `npm --prefix server run appwrite:setup` | Provision required Appwrite database, private collections, attributes and indexes |
 | `npm --prefix server run appwrite:check` | Verify configured Appwrite collections/indexes |
 | `npm --prefix server run seed:catalog` | Add or refresh inactive starter products with zero stock |
-| `npm --prefix server run upload:catalog-images` | Upload supplied catalog images to Cloudinary and save references in Appwrite |
+| `npm --prefix server run upload:catalog-images -- --environment=production` | Sync catalog images/videos from `public/images/products` to Cloudinary and save references in Appwrite |
 
 ## Configure Appwrite, Cloudinary, and Vercel
 
@@ -129,10 +129,12 @@ Follow [docs/APPWRITE_SETUP.md](./docs/APPWRITE_SETUP.md) for the full guided se
 1. Create an Appwrite project in the required region and configure its Vercel web platform hostname. Use the region-specific endpoint shown in Appwrite Console (for example, Singapore uses `https://sgp.cloud.appwrite.io/v1`); the setup script creates the database.
 2. Set `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID`, `APPWRITE_API_KEY`, and `APPWRITE_DATABASE_ID`. Run the provisioning script using a temporary key limited to database/schema management, then revoke it. Give the separate runtime key only the scopes required by the API.
 3. Configure exact trusted website origins in `FRONTEND_ORIGINS`, a trusted admin-email allowlist, and independent random OTP/session secrets.
-4. Configure Cloudinary server credentials for signed uploads. Set the public `VITE_CLOUDINARY_CLOUD_NAME` at build time only if product assets have been uploaded to that account. The Cloudinary API secret must never use a `VITE_` name.
+4. Configure Cloudinary server credentials for signed uploads. Set the public `VITE_CLOUDINARY_CLOUD_NAME` at build time so the storefront serves uploaded assets from Cloudinary. The Cloudinary API secret must never use a `VITE_` name.
 5. In Vercel, use the repository root as the project root and the Vite framework preset. `vercel.json` installs root and API dependencies, builds `dist`, and routes `/api/*` to the Express function.
 6. Add server values under Vercel Project → Settings → Environment Variables. Vercel values are not automatically copied from local `.env` files; redeploy after changing them.
 7. Verify `/api/health`, catalog reads, OTP delivery and session cookies in a staging environment before enabling checkout.
+
+Product media files must use a supported image format (`.webp`, `.png`, `.jpg`, `.jpeg`, `.avif`) and names such as `silver-frame-07.webp`, or a supported video format (`.mp4`, `.mov`, `.webm`, `.m4v`) named `silver-frame-video-01.mp4`. After adding media, run the sync command above. It uploads bytes to Cloudinary and writes only public IDs and media metadata to Appwrite; it does not activate products or change price or stock. Admin uploads use the signed `/api/uploads/sign` endpoint and upload directly to Cloudinary. Never upload media binaries to Appwrite Storage.
 
 The Vercel project was previously configured with the `server` directory and Express preset, causing Vercel to load the Express app factory as a serverless function. The storefront project must instead use the repository root and Vite preset. The API entry is now `api/[...path].js`; do not set the Vercel Root Directory to `server`.
 
