@@ -122,7 +122,25 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 | `npm --prefix server run seed:catalog` | Add or refresh inactive starter products with zero stock |
 | `npm --prefix server run upload:catalog-images -- --environment=production` | Sync catalog images/videos from `public/images/products` to Cloudinary and save references in Appwrite |
 
-## Accounts, guest checkout and e-mails
+## Shopping journey, accounts and e-mails
+
+**Orders are placed and paid online only (UPI, debit card, credit card). There is no cash on delivery and no ordering through WhatsApp: WhatsApp (+91 77669 11777) is for questions only.**
+
+Every step is its own page (hash routes, no server rewrites needed):
+
+| Page | Route | Purpose |
+|---|---|---|
+| Home | `#/` | Landing page |
+| Shop | `#/shop` | All products |
+| Product | `#/product/<slug>` | Details, Add to Cart, Buy Now |
+| Bag | `#/cart` | Review items and quantities |
+| Details | `#/checkout` | Contact (guest e-mail or signed-in account) and delivery address |
+| Payment | `#/checkout/payment` | Choose UPI / card and pay |
+| Confirmation | `#/order/<id>` | Receipt and status |
+| Sign in / Create account | `#/signin`, `#/signup` | Passwordless: e-mail + 6-digit code |
+| Account | `#/account` | Order history, sign out |
+| Track order | `#/track` | Guests: order reference + e-mail |
+| Policies | `#/policy/<shipping|returns|privacy|terms>` | Store policies |
 
 Customers can shop three ways, all stored in Appwrite:
 
@@ -132,16 +150,14 @@ Customers can shop three ways, all stored in Appwrite:
 | **Sign in** | Email, then a 6-digit code (never creates an account by accident) | New session |
 | **Guest checkout** | Email + phone + address at checkout, no account | A `customers` record (email, name, phone) and the `orders` record |
 
-Screens (hash routes): `#/cart` bag, `#/checkout` single-page checkout (contact, delivery, payment, order summary), `#/order/<id>` confirmation and tracking, `#/account` sign in / create account / order history. Guests reopen an order with its reference plus the email used (`POST /api/orders/lookup`); this device also remembers its last guest orders.
-
 E-mails (Mailjet SMTP, sent by the API):
-- **Order confirmation** after a COD order is placed or a payment succeeds, to the guest or account email.
+- **Order confirmation** after a successful payment, to the guest or account email.
 - **"Your bag is saved"** when a signed-in customer has items in the bag, or a guest enters their email at checkout. At most one every 6 hours per address; the bag is also saved in `customers`.
 - Sign-in / sign-up codes.
 
-**Test payments.** Until a real gateway is connected, set `PAYMENT_TEST_MODE=true` (API, needs `STORE_LIVE_CHECKOUT=true`) and `VITE_TEST_PAYMENT_ENABLED=true` (storefront). Checkout then offers a dummy card form: `4111 1111 1111 1111` succeeds, `4000 0000 0000 0002` is declined; the order is marked paid with payment method `test` and the email says it is a test order. **Turn both off before accepting real orders.**
+**Payments.** The real gateway is not connected yet. Until then set `PAYMENT_TEST_MODE=true` (API, needs `STORE_LIVE_CHECKOUT=true`) and `VITE_TEST_PAYMENT_ENABLED=true` (storefront): the payment page offers a dummy **UPI** form (`success@upi` succeeds, `failure@upi` is declined) and a dummy **card** form (`4111 1111 1111 1111` succeeds, `4000 0000 0000 0002` is declined). The order is marked paid with payment method `test` and the email says it is a test order. When Razorpay is configured (`RAZORPAY_ENABLED` / `VITE_RAZORPAY_ENABLED`), its hosted screen (UPI, debit and credit cards) is offered instead. If neither is enabled the payment page says payments are being set up. **Turn test mode off before accepting real orders.**
 
-After pulling this change run `npm --prefix server run appwrite:setup` once to create the new `customers` collection, then set each product's `stockQuantity` and `active: true` in Appwrite (seeded products start inactive with zero stock, so orders are refused until you do).
+After pulling this change run `npm --prefix server run appwrite:setup` once to create the new `customers` collection and the `paymentChannel` order attribute, then set each product's `stockQuantity` and `active: true` in Appwrite (seeded products start inactive with zero stock, so orders are refused until you do).
 
 ## Configure Appwrite, Cloudinary, and Vercel
 

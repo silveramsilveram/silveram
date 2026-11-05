@@ -11,7 +11,7 @@ export const NAV_LINKS = [
   { label: 'Contact', href: '#contact' },
 ] as const;
 
-export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Enquire before you order';
+export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Pay securely online by UPI, debit & credit card';
 
 import { productImageUrl } from '@/shared/lib/cloudinary';
 
