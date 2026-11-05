@@ -41,7 +41,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
     paragraphs: [
       'The shopping bag is stored in this browser. If you send an enquiry through WhatsApp, the message and any contact details you include are shared with Silveram and processed by WhatsApp.',
       'If checkout is enabled and you place an order, Silveram processes your name, verified email address, phone number, delivery address, order items, and payment status to manage the order. The current storefront keeps the bag in browser storage and does not send it to the API until checkout is submitted.',
-      'The service uses MongoDB to store account, session, product, and order records; Mailjet may process verification and service emails; Cloudinary stores product images. Razorpay may process payments only if online payment is enabled. These providers receive information needed for their service.',
+      'The service uses Appwrite to manage account and application data; Mailjet may process verification and service emails; Cloudinary stores product and site media. Razorpay may process payment details only if online payment is enabled. These providers receive information needed for their service.',
       'The site uses an HTTP-only session cookie after email verification. The browser does not receive the raw session token from the API.',
       'Marketing messages are separate from service messages and require consent. Newsletter sign-up is available only when enabled; Mailjet manages subscriptions and its unsubscribe controls.',
       'The store has not provided a retention schedule or a privacy contact. This draft must be reviewed and completed with the business contact, applicable retention periods, and customer-request process before publication.',

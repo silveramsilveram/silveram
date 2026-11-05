@@ -22,7 +22,7 @@ Trendy, youth-centric silver jewellery combining playful, vibrant energy and mod
 
 - Primary sales interaction: Hybrid channel — browsing online catalogue with direct WhatsApp ordering (`VITE_WHATSAPP_NUMBER`) and self-serve checkout options.
 - Market & Currency: Indian domestic market (INR ₹ pricing, Cash on Delivery, mobile-first responsive web).
-- Backend & Storage: Node/Express API with MongoDB for accounts/orders, Cloudinary for optimized media delivery.
+- Backend & Storage: Node/Express API with Appwrite for authentication and application data, Cloudinary for optimized image/video delivery.
 
 ## Capabilities and Constraints
 
@@ -61,4 +61,3 @@ Trendy, youth-centric silver jewellery combining playful, vibrant energy and mod
 - Adherence to WCAG AA contrast standards across light and dynamic surfaces.
 - Fully keyboard-accessible navigation, modals, and cart drawers with accessible focus management.
 - Semantic HTML tags for screen readers across all product listings, forms, and announcements.
-

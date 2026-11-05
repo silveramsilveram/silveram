@@ -1,5 +1,5 @@
 /**
- * Product and site photographs are hosted on Cloudinary (never in MongoDB or the
+ * Product and site photographs are hosted on Cloudinary (never in Appwrite or the
  * repo). Public IDs follow server/src/storage/cloudinary/folders.js:
  *   <root>/<development|production>/products/<sku>/<name>
  * The cloud name is public (it appears in every image URL). Override it with

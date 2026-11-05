@@ -35,7 +35,7 @@ export function orderConfirmationEmail(config, order) {
     `Thank you for your order. We have received it${cod ? '' : ' and your payment'}.`,
     '',
     `Order reference: ${reference}`,
-    `Placed on: ${order.createdAt.toISOString().slice(0, 10)}`,
+    `Placed on: ${new Date(order.createdAt).toISOString().slice(0, 10)}`,
     '',
     ...order.items.map((item) => `${item.quantity} x ${item.name} (${item.sku}) - ${formatInr(item.lineTotalInPaise)}`),
     '',

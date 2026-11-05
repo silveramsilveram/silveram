@@ -43,4 +43,4 @@ The provider secret is never returned to the browser. The public key identifier 
 - Keep provider changes isolated in this directory. Add unit tests for every signature and provider response validation change, plus staging integration tests for new event types.
 - Refunds, payment cancellation, and late-capture inventory recovery require an audited workflow. A signed webhook should not silently release inventory for a captured payment.
 
-For Atlas credentials, database access control, collection structure, CRUD, deployment, and the full checkout launch checklist, see [MongoDB setup](../../../../docs/MONGODB_SETUP.md).
+For Appwrite credentials, collection structure, access controls, deployment, and the full checkout launch checklist, see [Appwrite setup](../../../../docs/APPWRITE_SETUP.md).

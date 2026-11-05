@@ -13,7 +13,7 @@
  *  - `images` use Cloudinary when configured and a bundled local fallback otherwise.
  *    With no images the UI shows a neutral "photograph coming soon" panel.
  *  - Set `isPlaceholder: false` once the record holds real information.
- *  - Keep `id` identical to the `_id` of the matching record on the server
+ *  - Keep `id` identical to the Appwrite document ID of the matching server record
  *    (server/src/scripts/seed-catalog.js) so cart items match orders.
  */
 
