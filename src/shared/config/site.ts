@@ -25,7 +25,7 @@ function readEmail(raw: string | undefined): string | null {
 
 export const SITE = {
   name: 'Silveram',
-  url: 'https://silverr.vercel.app',
+  url: 'https://silveram-peach.vercel.app',
   tagline: 'Timeless craft. Lasting meaning.',
   instagramUrl: readInstagramUrl(import.meta.env.VITE_INSTAGRAM_URL),
   contactEmail: readEmail(import.meta.env.VITE_CONTACT_EMAIL),

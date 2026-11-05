@@ -2,8 +2,10 @@ import { loadConfig } from '../config.js';
 import { configureAppwrite, getAppwrite } from '../platform/appwrite.js';
 import { APPWRITE_SCHEMA } from '../platform/appwrite-schema.js';
 
-const config = loadConfig();
-configureAppwrite(config);
+const setupKey = process.env.APPWRITE_SETUP_API_KEY?.trim();
+if (!setupKey) throw new Error('Set APPWRITE_SETUP_API_KEY to a temporary setup key before provisioning Appwrite.');
+const config = loadConfig({ allowSetupKey: true });
+configureAppwrite({ ...config, appwriteApiKey: setupKey });
 const { databases, databaseId, collections } = getAppwrite();
 
 function isConflict(error) {

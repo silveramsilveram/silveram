@@ -49,7 +49,7 @@ function mailConfig() {
   };
 }
 
-export function loadConfig() {
+export function loadConfig({ allowSetupKey = false } = {}) {
   const nodeEnv = process.env.NODE_ENV || 'development';
   const trustProxyHops = Number(process.env.TRUST_PROXY_HOPS || (nodeEnv === 'production' ? 1 : 0));
   if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0) {
@@ -130,6 +130,8 @@ export function loadConfig() {
       throw new Error(`APPWRITE_${name.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}_COLLECTION_ID is invalid.`);
     }
   }
+  const appwriteApiKey = process.env.APPWRITE_API_KEY?.trim() ||
+    (allowSetupKey ? required('APPWRITE_SETUP_API_KEY') : required('APPWRITE_API_KEY'));
 
   return {
     nodeEnv,
@@ -138,10 +140,9 @@ export function loadConfig() {
     port: positiveInteger('PORT', 4000),
     appwriteEndpoint,
     appwriteProjectId: required('APPWRITE_PROJECT_ID'),
-    appwriteApiKey: required('APPWRITE_API_KEY'),
+    appwriteApiKey,
     appwriteDatabaseId,
     appwriteCollections,
-    sessionSecret: secret('SESSION_SECRET'),
     otpPepper: secret('OTP_PEPPER'),
     origins,
     adminEmails: new Set(

@@ -36,7 +36,6 @@ test('mailjet keys derive SMTP settings and must come as a pair', () => {
     APPWRITE_ENDPOINT: 'https://cloud.appwrite.io/v1',
     APPWRITE_PROJECT_ID: 'project',
     APPWRITE_API_KEY: 'appwrite-server-key',
-    SESSION_SECRET: 's'.repeat(32),
     OTP_PEPPER: 'p'.repeat(32),
     MAILJET_API_KEY: 'k',
     MAILJET_SECRET_KEY: 's',

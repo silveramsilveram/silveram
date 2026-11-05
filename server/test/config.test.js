@@ -8,6 +8,7 @@ const configNames = [
   'APPWRITE_ENDPOINT',
   'APPWRITE_PROJECT_ID',
   'APPWRITE_API_KEY',
+  'APPWRITE_SETUP_API_KEY',
   'APPWRITE_DATABASE_ID',
   'APPWRITE_PROFILES_COLLECTION_ID',
   'APPWRITE_AUTH_CHALLENGES_COLLECTION_ID',
@@ -18,7 +19,6 @@ const configNames = [
   'APPWRITE_ORDERS_COLLECTION_ID',
   'APPWRITE_WEBHOOK_EVENTS_COLLECTION_ID',
   'APPWRITE_EMAIL_CLAIMS_COLLECTION_ID',
-  'SESSION_SECRET',
   'OTP_PEPPER',
   'FRONTEND_ORIGINS',
   'TRUST_PROXY_HOPS',
@@ -48,7 +48,6 @@ function configure(t, values) {
     APPWRITE_ENDPOINT: 'https://cloud.appwrite.io/v1',
     APPWRITE_PROJECT_ID: 'project',
     APPWRITE_API_KEY: 'appwrite-server-key',
-    SESSION_SECRET: 's'.repeat(32),
     OTP_PEPPER: 'p'.repeat(32),
     ...values,
   });
