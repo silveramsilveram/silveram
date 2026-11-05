@@ -27,13 +27,15 @@ export function envRoot(config) {
   return `${config.cloudinaryRootFolder}/${config.isProduction ? 'production' : 'development'}`;
 }
 
-export function productFolder(config, sku) {
-  return `${envRoot(config)}/products/${segment(sku, 'SKU')}`;
+export function productFolder(config, sku, environment = config.isProduction ? 'production' : 'development') {
+  if (!['development', 'production'].includes(environment)) throw new Error('Invalid media environment.');
+  return `${config.cloudinaryRootFolder}/${environment}/products/${segment(sku, 'SKU')}`;
 }
 
-export function siteFolder(config, area) {
+export function siteFolder(config, area, environment = config.isProduction ? 'production' : 'development') {
   if (!SITE_AREAS.includes(area)) throw new Error('Invalid site media area.');
-  return `${envRoot(config)}/site/${area}`;
+  if (!['development', 'production'].includes(environment)) throw new Error('Invalid media environment.');
+  return `${config.cloudinaryRootFolder}/${environment}/site/${area}`;
 }
 
 /** True only for ids Cloudinary generated inside this product's folder. */

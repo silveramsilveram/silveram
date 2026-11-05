@@ -35,5 +35,24 @@ test('upload signature matches the Cloudinary SHA-1 scheme', () => {
   ).digest('hex');
   assert.equal(upload.signature, expected);
   assert.equal(upload.uploadUrl, 'https://api.cloudinary.com/v1_1/demo/image/upload');
+  assert.equal(upload.resourceType, 'image');
+  assert.equal(upload.allowed_formats, 'jpg,jpeg,png,webp,avif');
   assert.equal(signParams({ b: 2, a: 1 }, 's'), createHash('sha1').update('a=1&b=2s').digest('hex'));
+});
+
+test('video upload signatures target Cloudinary video resources and allowed video formats', () => {
+  const upload = createUploadSignature(config, 'silveram/production/products/sr-001', 1700000000000, 'video');
+  const expected = createHash('sha1').update(
+    'allowed_formats=mp4,mov,webm,m4v&folder=silveram/production/products/sr-001&timestamp=1700000000secret',
+  ).digest('hex');
+  assert.equal(upload.signature, expected);
+  assert.equal(upload.uploadUrl, 'https://api.cloudinary.com/v1_1/demo/video/upload');
+  assert.equal(upload.resourceType, 'video');
+  assert.equal(upload.allowed_formats, 'mp4,mov,webm,m4v');
+});
+
+test('media delivery URLs use the matching Cloudinary resource type', async () => {
+  const { imageUrl, mediaUrl } = await import('../src/storage/cloudinary/client.js');
+  assert.match(imageUrl(config, 'silveram/production/products/sr-001/photo'), /\/image\/upload\//);
+  assert.match(mediaUrl(config, 'silveram/production/products/sr-001/clip', { resourceType: 'video' }), /\/video\/upload\//);
 });

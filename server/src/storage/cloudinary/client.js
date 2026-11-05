@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
-export const ALLOWED_FORMATS = 'jpg,jpeg,png,webp,avif';
+export const IMAGE_FORMATS = 'jpg,jpeg,png,webp,avif';
+export const VIDEO_FORMATS = 'mp4,mov,webm,m4v';
 
 export function cloudinaryEnabled(config) {
   return Boolean(config.cloudinaryCloudName && config.cloudinaryApiKey && config.cloudinaryApiSecret);
@@ -25,24 +26,35 @@ export function signParams(params, apiSecret) {
 }
 
 /** Parameters the browser needs to upload straight to Cloudinary into `folder`. */
-export function createUploadSignature(config, folder, now = Date.now()) {
+export function createUploadSignature(config, folder, now = Date.now(), resourceType = 'image') {
   assertCloudinary(config);
+  if (!['image', 'video'].includes(resourceType)) {
+    throw new Error('Unsupported Cloudinary resource type.');
+  }
   const params = {
     folder,
-    allowed_formats: ALLOWED_FORMATS,
+    allowed_formats: resourceType === 'video' ? VIDEO_FORMATS : IMAGE_FORMATS,
     timestamp: Math.floor(now / 1000),
   };
   return {
-    uploadUrl: `https://api.cloudinary.com/v1_1/${config.cloudinaryCloudName}/image/upload`,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${config.cloudinaryCloudName}/${resourceType}/upload`,
     apiKey: config.cloudinaryApiKey,
     signature: signParams(params, config.cloudinaryApiSecret),
     ...params,
+    resourceType,
   };
 }
 
 /** Optimised delivery URL (auto format/quality, width-capped). */
-export function imageUrl(config, publicId, { width = 1200 } = {}) {
-  return `https://res.cloudinary.com/${config.cloudinaryCloudName}/image/upload/f_auto,q_auto,c_limit,w_${width}/${publicId}`;
+export function mediaUrl(config, publicId, { width = 1200, resourceType = 'image' } = {}) {
+  const transformations = resourceType === 'video'
+    ? `f_auto,q_auto,c_limit,w_${width}`
+    : `f_auto,q_auto,c_limit,w_${width}`;
+  return `https://res.cloudinary.com/${config.cloudinaryCloudName}/${resourceType}/upload/${transformations}/${publicId}`;
+}
+
+export function imageUrl(config, publicId, options = {}) {
+  return mediaUrl(config, publicId, { ...options, resourceType: 'image' });
 }
 
 export async function destroyImage(config, publicId) {

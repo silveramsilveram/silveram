@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { PRODUCT_CATEGORIES } from '../catalog.js';
 import { createDocument, getDocument, ID, listDocuments, Query, updateDocument } from '../platform/appwrite.js';
 import { requireAdmin, requireUser } from '../middleware.js';
-import { cloudinaryEnabled, imageUrl as cloudinaryUrl } from '../storage/cloudinary/client.js';
+import { cloudinaryEnabled, mediaUrl as cloudinaryUrl } from '../storage/cloudinary/client.js';
 import { isProductPublicId } from '../storage/cloudinary/folders.js';
 
 function createProductSchema(config) {
@@ -24,6 +24,16 @@ function createProductSchema(config) {
     }
   });
 
+  const mediaSchema = z.object({
+    publicId: z.string().trim().min(1).max(255),
+    resourceType: z.enum(['image', 'video']).default('image'),
+    width: z.number().int().positive().max(20000),
+    height: z.number().int().positive().max(20000),
+    duration: z.number().positive().max(86400).optional(),
+    format: z.string().trim().toLowerCase().regex(/^[a-z0-9]{1,10}$/).optional(),
+    alt: z.string().trim().max(200).default(''),
+  }).strict();
+
   return z.object({
     sku: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1).max(160),
@@ -33,36 +43,44 @@ function createProductSchema(config) {
     currency: z.literal('INR').default('INR'),
     stockQuantity: z.number().int().min(0).max(2147483647),
     imageUrl: imageUrl.optional(),
-    images: z.array(z.object({
-      publicId: z.string().trim().min(1).max(255),
-      width: z.number().int().positive().max(20000),
-      height: z.number().int().positive().max(20000),
-      alt: z.string().trim().max(200).default(''),
-    }).strict()).max(10).default([]),
+    images: z.array(mediaSchema.omit({ resourceType: true, duration: true, format: true })).max(10).optional(),
+    media: z.array(mediaSchema).max(10).optional(),
     active: z.boolean().default(false),
-  }).strict();
+  }).strict().refine((value) => !(value.images && value.media), {
+    message: 'Send either images or media, not both.',
+  }).refine((value) => !value.media || value.media.every((item) =>
+    item.resourceType !== 'video' || item.duration !== undefined,
+  ), {
+    message: 'Video metadata must include its duration.',
+  });
 }
 
 function serializeProduct(product, config) {
   const { $id, imagesJson, ...fields } = product;
-  let images = [];
+  let media = [];
   try {
-    images = JSON.parse(imagesJson || '[]');
+    media = JSON.parse(imagesJson || '[]');
   } catch (error) {
     console.error(`Invalid image metadata for product ${$id}:`, error?.message || error);
   }
-  images = images.map((image) => ({ ...image, url: cloudinaryUrl(config, image.publicId) }));
+  media = media.map((asset) => ({
+    ...asset,
+    resourceType: asset.resourceType || 'image',
+    url: cloudinaryUrl(config, asset.publicId, { resourceType: asset.resourceType || 'image' }),
+  }));
+  const images = media.filter((asset) => asset.resourceType === 'image');
   return {
     ...fields,
     id: $id,
+    media,
     images,
     imageUrl: images[0]?.url || product.imageUrl,
   };
 }
 
-function imagesAreOwned(config, sku, images) {
-  if (!images || images.length === 0) return true;
-  return cloudinaryEnabled(config) && images.every((image) => isProductPublicId(config, sku, image.publicId));
+function mediaAreOwned(config, sku, media) {
+  if (!media || media.length === 0) return true;
+  return cloudinaryEnabled(config) && media.every((asset) => isProductPublicId(config, sku, asset.publicId));
 }
 
 export function createProductsRouter(config) {
@@ -99,12 +117,13 @@ export function createProductsRouter(config) {
     try {
       const parsed = productSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Check the product fields and try again.' });
-      if (!imagesAreOwned(config, parsed.data.sku, parsed.data.images)) {
-        return res.status(400).json({ error: 'Upload product images through the image uploader.' });
+      const media = parsed.data.media || parsed.data.images || [];
+      if (!mediaAreOwned(config, parsed.data.sku, media)) {
+        return res.status(400).json({ error: 'Upload product media through the Cloudinary uploader.' });
       }
       const now = Date.now();
-      const { images, ...fields } = parsed.data;
-      const product = { ...fields, imagesJson: JSON.stringify(images), createdAt: now, updatedAt: now };
+      const { images, media: _media, ...fields } = parsed.data;
+      const product = { ...fields, imagesJson: JSON.stringify(media), createdAt: now, updatedAt: now };
       const created = await createDocument('products', ID.unique(), product);
       return res.status(201).json({ product: serializeProduct(created, config) });
     } catch (error) {
@@ -121,18 +140,19 @@ export function createProductsRouter(config) {
       }
       const existing = await getDocument('products', req.params.id);
       if (!existing) return res.status(404).json({ error: 'Product not found.' });
-      if (parsed.data.images) {
+      const media = parsed.data.media || parsed.data.images;
+      if (media) {
         if (parsed.data.sku && parsed.data.sku !== existing.sku) {
-          return res.status(400).json({ error: 'Change the SKU separately from its images.' });
+          return res.status(400).json({ error: 'Change the SKU separately from its media.' });
         }
-        if (!imagesAreOwned(config, existing.sku, parsed.data.images)) {
-          return res.status(400).json({ error: 'Upload product images through the image uploader.' });
+        if (!mediaAreOwned(config, existing.sku, media)) {
+          return res.status(400).json({ error: 'Upload product media through the Cloudinary uploader.' });
         }
       }
-      const { images, ...fields } = parsed.data;
+      const { images, media: _media, ...fields } = parsed.data;
       const updated = await updateDocument('products', req.params.id, {
         ...fields,
-        ...(images && { imagesJson: JSON.stringify(images) }),
+        ...(media && { imagesJson: JSON.stringify(media) }),
         updatedAt: Date.now(),
       });
       return res.json({ product: serializeProduct(updated, config) });
