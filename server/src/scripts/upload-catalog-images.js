@@ -7,8 +7,8 @@
 // It does not touch price, stock or the active flag.
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { MongoClient } from 'mongodb';
 import { loadConfig } from '../config.js';
+import { configureAppwrite, findDocument, updateDocument } from '../platform/appwrite.js';
 import { assertCloudinary, signParams } from '../storage/cloudinary/client.js';
 import { productFolder } from '../storage/cloudinary/folders.js';
 
@@ -28,6 +28,7 @@ if (!dir) throw new Error('Usage: upload-catalog-images.js <imagesDir> [--no-db]
 const writeDb = !flags.includes('--no-db');
 
 const config = loadConfig();
+configureAppwrite(config);
 assertCloudinary(config);
 
 async function upload(file, publicId) {
@@ -78,15 +79,16 @@ for (const product of CATALOG) {
 console.error(`Cloudinary cloud name (public, for VITE_CLOUDINARY_CLOUD_NAME): ${config.cloudinaryCloudName}`);
 
 if (writeDb) {
-  const client = new MongoClient(config.mongoUri, { appName: 'silveram-catalog-images' });
-  try {
-    await client.connect();
-    const products = client.db(config.mongoDbName).collection('products');
-    for (const [id, images] of byProduct) {
-      const result = await products.updateOne({ _id: id }, { $set: { images, updatedAt: new Date() } });
-      console.error(`${id}: ${result.matchedCount ? 'image references saved' : 'NOT FOUND (run seed:catalog first)'}`);
+  for (const product of CATALOG) {
+    const record = await findDocument('products', 'sku', product.sku);
+    if (!record) {
+      console.error(`${product.sku}: NOT FOUND (run seed:catalog first)`);
+      continue;
     }
-  } finally {
-    await client.close();
+    await updateDocument('products', record.$id, {
+      imagesJson: JSON.stringify(byProduct.get(product.id)),
+      updatedAt: Date.now(),
+    });
+    console.error(`${product.sku}: image references saved in Appwrite`);
   }
 }
