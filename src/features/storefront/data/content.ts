@@ -28,8 +28,8 @@ export const HERO = {
   description:
     'A devotional frame, patterned bangles and a peacock-inspired ring, thoughtfully chosen for meaningful occasions.',
   image: {
-    src: productImageUrl('SV-001', 'silver-frame-01', 1400, '/images/products/silver-frame-01.png'),
-    fallbackSrc: '/images/products/silver-frame-01.png',
+    src: productImageUrl('SV-001', 'silver-frame-01', 1400, '/images/products/silver-frame-01.webp'),
+    fallbackSrc: '/images/products/silver-frame-01.webp',
     width: 508,
     height: 508,
     alt: 'Lakshmi and Ganesha devotional frame on royal blue velvet',
@@ -51,8 +51,8 @@ export const STORY = {
   description:
     'In India, a gift is rarely just an object. It marks Diwali and Dhanteras, a wedding or a housewarming, and it says “may good fortune stay with you”. Silveram brings together pieces made for those moments: devotional décor for the home, traditional bangles for festive dressing and an artistic ring for special occasions.',
   image: {
-    src: productImageUrl('SV-003', 'peacock-ring-02', 1400, '/images/products/peacock-ring-02.png'),
-    fallbackSrc: '/images/products/peacock-ring-02.png',
+    src: productImageUrl('SV-003', 'peacock-ring-02', 1400, '/images/products/peacock-ring-02.webp'),
+    fallbackSrc: '/images/products/peacock-ring-02.webp',
     width: 1374,
     height: 1145,
     alt: 'Peacock-inspired statement ring with colourful detailing on a marble surface',
@@ -69,8 +69,8 @@ export const CRAFTSMANSHIP = {
     { id: 'colour', title: 'Colour and detail', text: 'Peacock Ring: feather-inspired shapes and colourful accents.' },
   ],
   image: {
-    src: productImageUrl('SV-001', 'silver-frame-06', 1400, '/images/products/silver-frame-06.png'),
-    fallbackSrc: '/images/products/silver-frame-06.png',
+    src: productImageUrl('SV-001', 'silver-frame-06', 1400, '/images/products/silver-frame-06.webp'),
+    fallbackSrc: '/images/products/silver-frame-06.webp',
     width: 508,
     height: 508,
     alt: 'Close-up of the embossed Lakshmi and Ganesha relief on the Silver Frame',
@@ -82,8 +82,8 @@ export const GIFTING = {
   description:
     'For festivals, weddings, anniversaries and housewarmings. The Silver Frame brings devotional detail to a home-temple shelf. Ask us about gift presentation for the piece you have in mind.',
   image: {
-    src: productImageUrl('SV-001', 'silver-frame-03', 1400, '/images/products/silver-frame-03.png'),
-    fallbackSrc: '/images/products/silver-frame-03.png',
+    src: productImageUrl('SV-001', 'silver-frame-03', 1400, '/images/products/silver-frame-03.webp'),
+    fallbackSrc: '/images/products/silver-frame-03.webp',
     width: 508,
     height: 508,
     alt: 'Silver Frame presented in a navy gift box with a gold ribbon',
