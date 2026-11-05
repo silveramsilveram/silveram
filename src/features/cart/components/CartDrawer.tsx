@@ -163,13 +163,13 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
                 Online payment disabled for setup. Please order through WhatsApp.
               </p>
             )}
-            <button
-              type="button"
+            <a
+              href="#/cart"
               onClick={close}
-              className="block min-h-11 w-full text-center text-sm text-text-secondary underline underline-offset-4 hover:text-text-primary"
+              className="block min-h-11 w-full text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary"
             >
-              Continue shopping
-            </button>
+              View full bag
+            </a>
           </div>
         )}
       </div>

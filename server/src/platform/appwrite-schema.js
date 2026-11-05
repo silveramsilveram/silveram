@@ -113,6 +113,23 @@ export const APPWRITE_SCHEMA = {
       ['received_at_idx', 'key', ['receivedAt']],
     ],
   },
+  customers: {
+    name: 'Customer contacts and saved bags (guests and account holders)',
+    attributes: [
+      ['email', 'string', true, 254],
+      ['name', 'string', false, 100],
+      ['phone', 'string', false, 10],
+      ['userId', 'string', false, 36],
+      ['source', 'string', true, 16],
+      ['cartJson', 'string', false, 6000],
+      ['cartUpdatedAt', 'integer', false],
+      ['cartEmailSentAt', 'integer', false],
+      ['lastOrderAt', 'integer', false],
+      ['createdAt', 'integer', true],
+      ['updatedAt', 'integer', true],
+    ],
+    indexes: [['email_unique', 'unique', ['email']]],
+  },
   emailClaims: {
     name: 'Order email delivery claims',
     attributes: [

@@ -2,7 +2,18 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/,
 
 export const isCheckoutEnabled = import.meta.env.VITE_CHECKOUT_ENABLED === 'true';
 export const isRazorpayEnabled = import.meta.env.VITE_RAZORPAY_ENABLED === 'true';
+/** Dummy "test card" payment option. Keep in step with PAYMENT_TEST_MODE on the API. */
+export const isTestPaymentEnabled = import.meta.env.VITE_TEST_PAYMENT_ENABLED === 'true';
 export const isNewsletterEnabled = import.meta.env.VITE_NEWSLETTER_ENABLED === 'true';
+
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 
 export async function apiRequest<T = void>(
   path: string,
@@ -27,7 +38,7 @@ export async function apiRequest<T = void>(
     } catch {
       // The response may not contain JSON.
     }
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   if (response.status === 204) return undefined as T;

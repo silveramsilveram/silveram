@@ -9,6 +9,7 @@ import { createAdminRouter } from './routes/admin.js';
 import { createUploadsRouter } from './routes/uploads.js';
 import { createWebhookRouter } from './routes/webhooks.js';
 import { createNewsletterRouter } from './routes/newsletter.js';
+import { createCartRouter } from './routes/cart.js';
 import { createMaintenanceRouter } from './routes/maintenance.js';
 import { checkDatabase } from './platform/appwrite.js';
 
@@ -39,6 +40,7 @@ export function createApp(config) {
   app.use('/api/products', createProductsRouter(config));
   app.use('/api/uploads', createUploadsRouter(config));
   app.use('/api/orders', createOrdersRouter(config));
+  app.use('/api/cart', createCartRouter(config));
   app.use('/api/newsletter', createNewsletterRouter(config));
   app.use('/api/cron', createMaintenanceRouter(config));
   app.use('/api/admin', createAdminRouter(config));

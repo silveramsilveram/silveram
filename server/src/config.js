@@ -78,6 +78,13 @@ export function loadConfig({ allowSetupKey = false } = {}) {
   if (razorpayEnabled && (!liveCheckout || !process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || !process.env.RAZORPAY_WEBHOOK_SECRET)) {
     throw new Error('Enable Razorpay only after checkout is enabled and all Razorpay keys are configured.');
   }
+  const testPayments = process.env.PAYMENT_TEST_MODE === 'true';
+  if (testPayments && !liveCheckout) {
+    throw new Error('PAYMENT_TEST_MODE requires STORE_LIVE_CHECKOUT=true.');
+  }
+  if (testPayments && nodeEnv === 'production') {
+    console.warn('PAYMENT_TEST_MODE is ON: orders can be marked paid without real payment. Turn it off before launch.');
+  }
   const mail = mailConfig();
   if (liveCheckout && (!mail.smtpHost || !mail.smtpUser || !mail.smtpPassword || !mail.smtpFrom)) {
     throw new Error('Live checkout requires SMTP_HOST, SMTP_USER, SMTP_PASSWORD and SMTP_FROM so customers can receive order confirmations.');
@@ -124,6 +131,7 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     orders: process.env.APPWRITE_ORDERS_COLLECTION_ID?.trim() || 'orders',
     webhookEvents: process.env.APPWRITE_WEBHOOK_EVENTS_COLLECTION_ID?.trim() || 'webhook_events',
     emailClaims: process.env.APPWRITE_EMAIL_CLAIMS_COLLECTION_ID?.trim() || 'email_claims',
+    customers: process.env.APPWRITE_CUSTOMERS_COLLECTION_ID?.trim() || 'customers',
   };
   for (const [name, id] of Object.entries(appwriteCollections)) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(id)) {
@@ -164,6 +172,7 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     cloudinaryRootFolder: process.env.CLOUDINARY_ROOT_FOLDER?.trim() || 'silveram',
     liveCheckout,
     razorpayEnabled,
+    testPayments,
     otpTtlMinutes: positiveInteger('OTP_TTL_MINUTES', 10),
     otpMaxAttempts: positiveInteger('OTP_MAX_ATTEMPTS', 5),
     otpResendSeconds: positiveInteger('OTP_RESEND_SECONDS', 60),

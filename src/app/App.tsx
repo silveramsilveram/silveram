@@ -5,7 +5,13 @@
 
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 
+import AccountPage from '@/features/auth/components/AccountPage';
+import AuthDialog from '@/features/auth/components/AuthDialog';
+import { AuthProvider } from '@/features/auth/context/AuthContext';
+import CartPage from '@/features/cart/components/CartPage';
 import { CartProvider, useCart } from '@/features/cart/context/CartContext';
+import { useSignedInCartSync } from '@/features/cart/lib/syncCart';
+import OrderPage from '@/features/orders/components/OrderPage';
 import CartDrawer from '@/features/cart/components/CartDrawer';
 import PolicyModal from '@/features/policies/components/PolicyModal';
 import type { PolicyId } from '@/features/policies/data/policies';
@@ -28,7 +34,7 @@ import { SITE } from '@/shared/config/site';
 import { setPageMeta, setStructuredData } from '@/shared/lib/seo';
 import Toast from '@/shared/ui/Toast';
 
-const CheckoutDialog = lazy(() => import('@/features/checkout/components/CheckoutDialog'));
+const CheckoutPage = lazy(() => import('@/features/checkout/components/CheckoutPage'));
 
 const HOME_META = {
   title: `${SITE.name} | Silver jewellery & gifting`,
@@ -68,8 +74,8 @@ function HomePage() {
 function Storefront() {
   const route = useHashRoute();
   const [policyId, setPolicyId] = useState<PolicyId | null>(null);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const { cart, clearCart, setIsCartOpen } = useCart();
+  const { setIsCartOpen } = useCart();
+  useSignedInCartSync();
 
   return (
     <>
@@ -83,10 +89,21 @@ function Storefront() {
       <AnnouncementBar />
       <Header />
 
-      {route.name === 'product' ? (
-        <ProductPage key={route.slug} slug={route.slug} onOpenPolicy={setPolicyId} />
-      ) : (
-        <HomePage />
+      {route.name === 'product' && <ProductPage key={route.slug} slug={route.slug} onOpenPolicy={setPolicyId} />}
+      {route.name === 'home' && <HomePage />}
+      {route.name === 'cart' && <CartPage />}
+      {route.name === 'account' && <AccountPage />}
+      {route.name === 'order' && <OrderPage key={route.id} orderId={route.id} />}
+      {route.name === 'checkout' && (
+        <Suspense
+          fallback={
+            <p className="page-container py-16 text-sm text-text-secondary" role="status">
+              Loading checkout…
+            </p>
+          }
+        >
+          <CheckoutPage />
+        </Suspense>
       )}
 
       <FooterSection onOpenPolicy={setPolicyId} />
@@ -94,27 +111,11 @@ function Storefront() {
       <CartDrawer
         onCheckout={() => {
           setIsCartOpen(false);
-          setIsCheckoutOpen(true);
+          window.location.hash = '#/checkout';
         }}
       />
 
-      {isCheckoutOpen && (
-        <Suspense
-          fallback={
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-primary/60 text-sm text-surface-primary" role="status">
-              Loading checkout…
-            </div>
-          }
-        >
-          <CheckoutDialog
-            isOpen
-            cart={cart}
-            onClose={() => setIsCheckoutOpen(false)}
-            onOrderComplete={clearCart}
-          />
-        </Suspense>
-      )}
-
+      <AuthDialog />
       <PolicyModal policyId={policyId} onClose={() => setPolicyId(null)} />
       <FloatingWhatsApp />
       <Toast />
@@ -124,8 +125,5 @@ function Storefront() {
 
 export default function App() {
   return (
-    <CartProvider>
-      <Storefront />
-    </CartProvider>
-  );
-}
+    <AuthProvider>
+    

@@ -10,6 +10,8 @@ const verifySchema = z.object({
   email: emailSchema,
   code: z.string().regex(/^\d{6}$/),
   name: z.string().trim().min(1).max(100).optional(),
+  // "signup" creates the account when none exists; "signin" never does.
+  mode: z.enum(['signin', 'signup']).default('signup'),
 }).strict();
 const sessionDurationMs = 14 * 24 * 60 * 60 * 1000;
 
@@ -95,7 +97,10 @@ export function createAuthRouter(config) {
       }
       const parsed = verifySchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Enter your email and the six-digit code.' });
-      const { email, code, name } = parsed.data;
+      const { email, code, name, mode } = parsed.data;
+      if (mode === 'signup' && !name) {
+        return res.status(400).json({ error: 'Enter your name to create an account.' });
+      }
       const id = challengeId(email);
       const challenge = await getDocument('authChallenges', id);
       if (!challenge) return res.status(400).json({ error: 'That code has expired. Request a new code.' });
@@ -123,6 +128,14 @@ export function createAuthRouter(config) {
         return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
       }
 
+      // The code proves the caller owns this address, so it is safe to say whether an account exists.
+      // Checked before the code is consumed so the customer can switch to "Create account" and reuse it.
+      const { users } = getAppwrite();
+      const matches = await users.list({ queries: [Query.equal('email', email), Query.limit(1)] });
+      if (mode === 'signin' && !matches.users[0]) {
+        return res.status(404).json({ error: 'No account exists for this email yet. Choose "Create account" to register.' });
+      }
+
       const consumptionId = hashToken(`${email}:${challenge.nonce}:${challenge.codeDigest}`).slice(0, 36);
       try {
         await createDocument('authConsumptions', consumptionId, {
@@ -138,8 +151,6 @@ export function createAuthRouter(config) {
       await deleteDocument('authChallenges', id);
 
       const now = new Date();
-      const { users } = getAppwrite();
-      const matches = await users.list({ queries: [Query.equal('email', email), Query.limit(1)] });
       let user = matches.users[0];
       if (!user) {
         try {

@@ -30,10 +30,13 @@ export interface PageMeta {
   path?: string;
   /** Site-relative or absolute image URL for social previews. */
   image?: string;
+  /** Keep transactional pages (checkout, account, orders) out of search results. */
+  noindex?: boolean;
 }
 
-export function setPageMeta({ title, description, path = '', image }: PageMeta) {
+export function setPageMeta({ title, description, path = '', image, noindex = false }: PageMeta) {
   document.title = title;
+  setMeta('meta[name="robots"]', 'name', 'robots', noindex ? 'noindex, nofollow' : 'index, follow');
   setMeta('meta[name="description"]', 'name', 'description', description);
   setMeta('meta[property="og:title"]', 'property', 'og:title', title);
   setMeta('meta[property="og:description"]', 'property', 'og:description', description);

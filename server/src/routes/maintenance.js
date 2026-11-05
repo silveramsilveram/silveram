@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { Router } from 'express';
 import { deleteDocument, listDocuments, Query } from '../platform/appwrite.js';
+import { releaseExpiredReservations } from './orders.js';
 
 async function deleteBefore(collection, field, cutoff) {
   let deleted = 0;
@@ -47,6 +48,7 @@ export function createMaintenanceRouter(config) {
         return res.status(401).json({ error: 'Unauthorized.' });
       }
 
+      await releaseExpiredReservations();
       const now = Date.now();
       const removed = {
         sessions: await deleteBefore('sessions', 'expiresAt', now),

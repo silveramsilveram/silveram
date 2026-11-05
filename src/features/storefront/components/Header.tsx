@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { BagIcon, CloseIcon, MenuIcon } from '@/shared/ui/icons';
+import { BagIcon, CloseIcon, MenuIcon, UserIcon } from '@/shared/ui/icons';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { useCart } from '@/features/cart/context/CartContext';
 import { NAV_LINKS } from '../data/content';
 
 export default function Header() {
   const { itemCount, setIsCartOpen } = useCart();
+  const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
@@ -43,6 +45,16 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center justify-end gap-1">
+          <a
+            href="#/account"
+            className="flex h-11 items-center justify-center gap-2 rounded-[2px] px-2.5 text-brand-primary transition-colors hover:bg-surface-secondary"
+            aria-label={user ? 'Your account' : 'Sign in or create an account'}
+          >
+            <UserIcon size={22} />
+            <span className="type-caption hidden font-semibold uppercase tracking-[0.14em] lg:inline">
+              {user ? 'Account' : 'Sign in'}
+            </span>
+          </a>
           <button
             type="button"
             onClick={() => setIsCartOpen(true)}

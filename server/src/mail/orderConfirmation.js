@@ -64,6 +64,22 @@ export async function sendOrderConfirmation(config, orderId) {
   }
 }
 
+// Serverless platforms freeze a function once the response is sent, so a fire-and-forget e-mail
+// can be lost. Await the send (bounded) before replying; failures are logged and retried by the sweeper.
+export async function sendOrderConfirmationBestEffort(config, orderId, timeoutMs = 8000) {
+  let timer;
+  try {
+    await Promise.race([
+      sendOrderConfirmation(config, orderId),
+      new Promise((resolve) => { timer = setTimeout(resolve, timeoutMs); }),
+    ]);
+  } catch (error) {
+    console.error('Order confirmation email failed:', orderId, error?.message || 'Unknown error');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Never let email trouble affect the checkout response.
 export function queueOrderConfirmation(config, orderId) {
   void sendOrderConfirmation(config, orderId).catch((error) => {

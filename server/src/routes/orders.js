@@ -4,6 +4,7 @@ import { createDocument, getAppwrite, getDocument, listDocuments, Query, runTran
 import { optionalUser, requireUser } from '../middleware.js';
 import { sendOrderConfirmationBestEffort } from '../mail/orderConfirmation.js';
 import { consumeRateLimit } from '../security.js';
+import { recordCustomerOrder } from '../customers.js';
 import {
   createRazorpayOrder,
   verifyCapturedPayment,
@@ -244,40 +245,122 @@ export function startReservationSweeper() {
   timer.unref();
 }
 
+function sameEmail(left, right) {
+  return typeof left === 'string' && typeof right === 'string' && left.toLowerCase() === right.toLowerCase();
+}
+
+// An order may be acted on by its signed-in owner, or - for guest orders - by someone who
+// supplies the e-mail address the order was placed with.
+function ownsOrder(order, user, email) {
+  if (!order) return false;
+  if (user) return order.userId === user.id;
+  return order.userId === GUEST_ID && sameEmail(order.email, email);
+}
+
+async function markPaid(config, order, patch) {
+  const latest = await getDocument('orders', order.$id);
+  if (latest?.status === 'pending_payment') {
+    await updateDocument('orders', order.$id, { status: 'paid', ...patch, updatedAt: Date.now() });
+  } else if (latest?.status !== 'paid') {
+    return false;
+  }
+  await sendOrderConfirmationBestEffort(config, order.$id);
+  return true;
+}
+
 export function createOrdersRouter(config) {
   const router = Router();
-  router.use(requireUser);
 
-  router.get('/', async (req, res, next) => {
+  // Signed-in customer: their own orders.
+  router.get('/', requireUser, async (req, res, next) => {
     try {
       const rows = await listDocuments('orders', [
         Query.equal('userId', req.user.id),
         Query.orderDesc('createdAt'),
         Query.limit(50),
       ]);
-      return res.json({
-        orders: rows.map((order) => {
-          const { shipping, email, userId, items, ...fields } = orderData(order);
-          return { ...fields, items, id: order.$id };
-        }),
-      });
+      return res.json({ orders: rows.map(publicOrder) });
     } catch (error) {
       next(error);
     }
   });
 
-  router.post('/', async (req, res, next) => {
+  // Guest: look an order up with its reference and the e-mail it was placed with.
+  router.post('/lookup', async (req, res, next) => {
+    try {
+      const parsed = z.object({ orderId: orderIdSchema, email: emailSchema }).strict().safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ error: 'Enter your order reference and email address.' });
+      if (!(await consumeRateLimit(req.ip, 'order-lookup-ip', 30, HOUR))) {
+        return res.status(429).json({ error: 'Too many lookups. Please try again later.' });
+      }
+      const order = await getDocument('orders', parsed.data.orderId);
+      if (!order || !sameEmail(order.email, parsed.data.email)) {
+        return res.status(404).json({ error: 'We could not find an order with those details.' });
+      }
+      return res.json({ order: publicOrder(order) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/:id', requireUser, async (req, res, next) => {
+    try {
+      if (!orderIdSchema.safeParse(req.params.id).success) return res.status(404).json({ error: 'Order not found.' });
+      const order = await getDocument('orders', req.params.id);
+      if (!ownsOrder(order, req.user)) return res.status(404).json({ error: 'Order not found.' });
+      return res.json({ order: publicOrder(order) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Place an order: signed-in customer, or guest (guestEmail required).
+  router.post('/', optionalUser, async (req, res, next) => {
     try {
       if (!config.liveCheckout) {
         return res.status(503).json({ error: 'Checkout is not enabled yet. Please contact the store.' });
       }
       const parsed = requestSchema.safeParse(req.body);
-      if (!parsed.success) return res.status(400).json({ error: 'Check your delivery details and bag.' });
-      if (parsed.data.paymentMethod === 'razorpay' && !config.razorpayEnabled) {
-        return res.status(503).json({ error: 'Online payments are not enabled. Please choose cash on delivery.' });
+      if (!parsed.success) return res.status(400).json({ error: 'Check your contact details, delivery details and bag.' });
+      const input = parsed.data;
+      if (input.paymentMethod === 'razorpay' && !config.razorpayEnabled) {
+        return res.status(503).json({ error: 'Online payments are not enabled. Please choose another payment method.' });
       }
-      const order = await reserveOrder(config, parsed.data, req.user);
-      if (order.status === 'placed_cod') queueOrderConfirmation(config, order.$id);
+      if (input.paymentMethod === 'test' && !config.testPayments) {
+        return res.status(503).json({ error: 'Test payments are not enabled.' });
+      }
+
+      let identity;
+      if (req.user) {
+        identity = { id: req.user.id, email: req.user.email };
+      } else if (input.guestEmail) {
+        identity = { id: GUEST_ID, email: input.guestEmail };
+      } else {
+        return res.status(400).json({ error: 'Enter your email address to check out as a guest.' });
+      }
+
+      if (
+        !(await consumeRateLimit(req.ip, 'order-ip', 30, HOUR)) ||
+        !(await consumeRateLimit(identity.email, 'order-email', 15, HOUR))
+      ) {
+        return res.status(429).json({ error: 'Too many order attempts. Please try again later.' });
+      }
+
+      const order = await reserveOrder(config, input, identity);
+      // Keep the contact (e-mail + phone) in Appwrite for guests and members alike. Best effort:
+      // a bookkeeping failure must never undo an order that has already been placed.
+      try {
+        await recordCustomerOrder({
+          email: identity.email,
+          name: input.customer.name,
+          phone: input.customer.phone,
+          userId: req.user?.id,
+          source: req.user ? 'account' : 'guest',
+        });
+      } catch (error) {
+        console.error('Saving customer contact failed:', error?.message || error);
+      }
+      if (order.status === 'placed_cod') await sendOrderConfirmationBestEffort(config, order.$id);
       return res.json(orderResponse(order, config.razorpayKeyId));
     } catch (error) {
       if (error?.status) return res.status(error.status).json({ error: error.message });
@@ -285,7 +368,44 @@ export function createOrdersRouter(config) {
     }
   });
 
-  router.post('/:id/verify', async (req, res, next) => {
+  // TEST MODE ONLY (PAYMENT_TEST_MODE=true): simulates the outcome of a card payment so the whole
+  // cart-to-confirmation flow can be exercised before a real gateway is connected.
+  router.post('/:id/test-payment', optionalUser, async (req, res, next) => {
+    try {
+      if (!config.liveCheckout || !config.testPayments) {
+        return res.status(503).json({ error: 'Test payments are not enabled.' });
+      }
+      const input = z.object({
+        outcome: z.enum(['success', 'declined']),
+        email: emailSchema.optional(),
+      }).strict().safeParse(req.body);
+      if (!input.success || !orderIdSchema.safeParse(req.params.id).success) {
+        return res.status(400).json({ error: 'The test payment request is invalid.' });
+      }
+      const order = await getDocument('orders', req.params.id);
+      if (!ownsOrder(order, req.user, input.data.email) || order.paymentMethod !== 'test') {
+        return res.status(404).json({ error: 'Order not found.' });
+      }
+      if (!(await consumeRateLimit(order.$id, 'test-payment-order', 20, HOUR))) {
+        return res.status(429).json({ error: 'Too many payment attempts. Please try again later.' });
+      }
+      if (order.status === 'paid') return res.json({ success: true, order: publicOrder(order) });
+      if (order.status !== 'pending_payment' || order.reservationExpiresAt <= Date.now()) {
+        return res.status(409).json({ error: 'This order is no longer awaiting payment. Please start checkout again.' });
+      }
+      if (input.data.outcome === 'declined') {
+        return res.status(402).json({ error: 'The test card was declined. Your order is still reserved, so you can try again.' });
+      }
+      if (!(await markPaid(config, order, {}))) {
+        return res.status(409).json({ error: 'The order status changed while payment was being processed.' });
+      }
+      return res.json({ success: true, order: publicOrder(await getDocument('orders', order.$id)) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/:id/verify', optionalUser, async (req, res, next) => {
     try {
       if (!config.liveCheckout || !config.razorpayEnabled) {
         return res.status(503).json({ error: 'Payment verification is not configured.' });
@@ -294,17 +414,18 @@ export function createOrdersRouter(config) {
         razorpay_payment_id: z.string().min(1).max(100),
         razorpay_order_id: z.string().min(1).max(100),
         razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
+        email: emailSchema.optional(),
       }).strict().safeParse(req.body);
       if (!input.success) return res.status(400).json({ error: 'The payment response is invalid.' });
 
       const { razorpay_payment_id: paymentId, razorpay_order_id: razorpayOrderId, razorpay_signature: signature } = input.data;
       const order = await getDocument('orders', req.params.id);
-      if (!order || order.userId !== req.user.id || order.paymentMethod !== 'razorpay' || order.razorpayOrderId !== razorpayOrderId) {
+      if (!ownsOrder(order, req.user, input.data.email) || order.paymentMethod !== 'razorpay' || order.razorpayOrderId !== razorpayOrderId) {
         return res.status(403).json({ error: 'This payment does not match your order.' });
       }
       if (order.status === 'paid' && order.razorpayPaymentId === paymentId) {
-        queueOrderConfirmation(config, order.$id);
-        return res.json({ success: true, orderId: order.$id });
+        await sendOrderConfirmationBestEffort(config, order.$id);
+        return res.json({ success: true, orderId: order.$id, order: publicOrder(order) });
       }
       if (order.status !== 'pending_payment') {
         return res.status(409).json({ error: 'This order is no longer awaiting payment.' });
@@ -325,8 +446,8 @@ export function createOrdersRouter(config) {
       } else if (latest?.status !== 'paid' || latest.razorpayPaymentId !== paymentId) {
         return res.status(409).json({ error: 'The order status changed while payment was being verified.' });
       }
-      queueOrderConfirmation(config, order.$id);
-      return res.json({ success: true, orderId: order.$id });
+      await sendOrderConfirmationBestEffort(config, order.$id);
+      return res.json({ success: true, orderId: order.$id, order: publicOrder(await getDocument('orders', order.$id)) });
     } catch (error) {
       next(error);
     }

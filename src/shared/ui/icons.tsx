@@ -31,6 +31,19 @@ export const BagIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const UserIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </Icon>
+);
+
+export const CheckIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </Icon>
+);
+
 export const MenuIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d="M4 7h16M4 12h16M4 17h16" />

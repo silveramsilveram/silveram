@@ -1,4 +1,4 @@
-import { findDocument, getAppwrite } from './platform/appwrite.js';
+import { findDocument } from './platform/appwrite.js';
 import { hashToken } from './security.js';
 
 export function requireLiveCheckout(config) {
@@ -20,6 +20,22 @@ export async function requireUser(req, res, next) {
     }
     req.user = { id: session.userId, email: session.email };
     req.sessionTokenHash = session.tokenHash;
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Attaches req.user when a valid session cookie is present; otherwise carries on as a guest.
+export async function optionalUser(req, _res, next) {
+  try {
+    const token = req.cookies?.silveram_session;
+    if (token) {
+      const session = await findDocument('sessions', 'tokenHash', hashToken(token));
+      if (session && session.expiresAt > Date.now()) {
+        req.user = { id: session.userId, email: session.email };
+      }
+    }
     next();
   } catch (error) {
     next(error);
