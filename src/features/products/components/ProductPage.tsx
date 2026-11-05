@@ -36,7 +36,7 @@ function productJsonLd(product: Product) {
     name: product.name,
     ...(product.description && { description: product.description }),
     ...(product.images.length > 0 && {
-      image: product.images.map((image) => new URL(image.src, SITE.url).toString()),
+      image: product.images.map((image) => new URL(image.fallbackSrc ?? image.src, SITE.url).toString()),
     }),
     ...(product.material && { material: product.material }),
     brand: { '@type': 'Brand', name: SITE.name },
@@ -119,6 +119,11 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
               <p className="type-body-lg mt-5 text-text-secondary">{product.shortDescription}</p>
             )}
             {product.description && <p className="type-body mt-4 text-text-secondary">{product.description}</p>}
+            {!product.material && !product.purity && (
+              <p className="type-caption mt-5 text-text-muted">
+                Material and purity details have not been verified for this listing. Please enquire before ordering.
+              </p>
+            )}
             {product.isPlaceholder && (
               <p className="type-body mt-5 border-l-2 border-accent-silver pl-4 text-text-secondary">
                 Full details, photography and pricing for this piece are coming soon. Message us on WhatsApp

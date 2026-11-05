@@ -66,9 +66,9 @@ export const PRODUCTS: Product[] = [
     categoryLabel: 'Devotional frames',
     price: 999,
     shortDescription:
-      'A beautiful devotional silver-finish frame featuring Goddess Lakshmi and Lord Ganesha, designed for meaningful gifting and home décor.',
+      'A devotional frame featuring Goddess Lakshmi and Lord Ganesha, designed for meaningful gifting and home décor.',
     description:
-      'A timeless expression of devotion, beautifully crafted with intricate representations of Goddess Lakshmi and Lord Ganesha. Its detailed silver-finish artwork and elegant transparent stand make it a thoughtful addition to your home temple. A meaningful gift for festivals, celebrations and auspicious occasions.',
+      'A timeless expression of devotion, featuring detailed representations of Goddess Lakshmi and Lord Ganesha. Its decorative artwork and transparent stand make it a thoughtful addition to your home temple. A meaningful gift for festivals, celebrations and auspicious occasions.',
     images: [
       { src: productImageUrl('SV-001', 'silver-frame-01'), fallbackSrc: '/images/products/silver-frame-01.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a stand, set against royal blue velvet' },
       { src: productImageUrl('SV-001', 'silver-frame-02'), fallbackSrc: '/images/products/silver-frame-02.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on ivory satin beside orange marigolds' },
@@ -88,9 +88,9 @@ export const PRODUCTS: Product[] = [
     categoryLabel: 'Kada & bangles',
     price: 999,
     shortDescription:
-      'Intricately patterned traditional silver bangles that bring timeless elegance to festive and everyday styling.',
+      'Intricately patterned traditional bangles that bring timeless elegance to festive and everyday styling.',
     description:
-      'Celebrate traditional artistry with an elegant collection of intricately patterned silver bangles. Beautifully detailed surfaces create a distinctive play of light and texture, making them suitable for festive occasions and everyday ethnic styling. A graceful addition to your jewellery collection.',
+      'Celebrate traditional artistry with an elegant collection of intricately patterned bangles. Beautifully detailed surfaces create a distinctive play of light and texture, making them suitable for festive occasions and everyday ethnic styling. A graceful addition to your jewellery collection.',
     images: [
       { src: productImageUrl('SV-002', 'silver-kada-01'), fallbackSrc: '/images/products/silver-kada-01.png', width: 920, height: 768, alt: 'Stack of intricately patterned bangles on a cream display stand' },
     ],
@@ -107,10 +107,10 @@ export const PRODUCTS: Product[] = [
     shortDescription:
       'An artistic peacock-inspired statement ring featuring vibrant colours and intricate decorative detailing.',
     description:
-      'Inspired by the timeless beauty of the Indian peacock, this statement ring showcases vibrant enamel-like detailing and colourful gemstone accents. Its intricate craftsmanship and striking silhouette create an elegant centrepiece for special occasions. A distinctive jewellery piece for those who appreciate artistic design.',
+      'Inspired by the timeless beauty of the Indian peacock, this statement ring pairs vibrant colour with feather-inspired detailing. Its striking silhouette creates an elegant centrepiece for special occasions. A distinctive jewellery piece for those who appreciate artistic design.',
     images: [
-      { src: productImageUrl('SV-003', 'peacock-ring-01'), fallbackSrc: '/images/products/peacock-ring-01.png', width: 920, height: 768, alt: 'Peacock-inspired statement ring with blue and green feather detailing and colourful stones, side view' },
-      { src: productImageUrl('SV-003', 'peacock-ring-02'), fallbackSrc: '/images/products/peacock-ring-02.png', width: 920, height: 768, alt: 'Peacock-inspired statement ring seen from above, showing the fanned feather detail and colourful stones' },
+      { src: productImageUrl('SV-003', 'peacock-ring-01'), fallbackSrc: '/images/products/peacock-ring-01.png', width: 920, height: 768, alt: 'Peacock-inspired statement ring with blue and green feather detailing, side view' },
+      { src: productImageUrl('SV-003', 'peacock-ring-02'), fallbackSrc: '/images/products/peacock-ring-02.png', width: 920, height: 768, alt: 'Peacock-inspired statement ring seen from above, showing the fanned feather detail' },
     ],
   },
 ];

@@ -47,7 +47,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </h3>
         <PriceLabel price={product.price} className="type-body-lg mt-1.5 block font-semibold text-brand-primary" />
         <p className="type-body mt-2.5 line-clamp-3 text-text-secondary">
-          {product.shortDescription ?? (product.isPlaceholder ? 'Certified 925 sterling silver piece. Details and photographs updating soon.' : '')}
+          {product.shortDescription ?? (product.isPlaceholder ? 'Product details and photographs are being confirmed.' : '')}
         </p>
         <div className="mt-auto flex flex-col gap-2.5 pt-6 sm:flex-row lg:flex-col xl:flex-row">
           <a href={productPath(product)} className={buttonClasses('secondary', 'md', 'flex-1')}>

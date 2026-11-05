@@ -46,18 +46,18 @@ export default function HeroSection() {
             </a>
           </div>
 
-          <div data-hero-text className="mt-12 flex items-center gap-6 border-t border-accent-silver/20 pt-6 text-xs uppercase tracking-[0.18em] text-accent-silver">
+          <div data-hero-text className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-accent-silver/20 pt-6 text-xs uppercase tracking-[0.18em] text-accent-silver">
             <span className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              925 Pure Silver
+              Thoughtful gifting
             </span>
             <span className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              Hallmark Certified
+              Considered designs
             </span>
-            <span className="hidden sm:flex items-center gap-2">
+            <span className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              Insured Pan-India Shipping
+              Personal enquiries
             </span>
           </div>
         </div>
@@ -67,14 +67,14 @@ export default function HeroSection() {
             <ImageSlot
               src={HERO.image?.src}
               fallbackSrc={HERO.image?.fallbackSrc}
-              alt={HERO.image?.alt ?? 'Silveram silver collection – photography coming soon'}
+              alt={HERO.image?.alt ?? 'Silveram collection – photograph coming soon'}
               width={HERO.image?.width ?? 1}
               height={HERO.image?.height ?? 1}
               ratio="1 / 1"
               tone="dark"
               priority
               sizes="(min-width: 1024px) 520px, 90vw"
-              placeholderLabel="Silver photography coming soon"
+              placeholderLabel="Product photography coming soon"
             />
             <div className="absolute bottom-4 left-4 right-4 rounded-[2px] border border-white/10 bg-brand-primary/95 px-4 py-2.5">
               <p className="type-caption flex items-center justify-between text-surface-primary">

@@ -24,15 +24,15 @@ interface Img {
 
 export const HERO = {
   eyebrow: 'Silver gifting & jewellery',
-  heading: 'A little silver. A lifetime of meaning.',
+  heading: 'Small keepsakes. Lasting meaning.',
   description:
-    'Devotional décor, traditional bangles and a statement ring, selected for festivals, celebrations and the moments worth marking.',
+    'A devotional frame, patterned bangles and a peacock-inspired ring, thoughtfully chosen for meaningful occasions.',
   image: {
     src: productImageUrl('SV-001', 'silver-frame-01'),
     fallbackSrc: '/images/products/silver-frame-01.png',
     width: 508,
     height: 508,
-    alt: 'Silveram silver-finish Lakshmi and Ganesha frame on royal blue velvet',
+    alt: 'Lakshmi and Ganesha devotional frame on royal blue velvet',
   } as Img,
 };
 
@@ -55,7 +55,7 @@ export const STORY = {
     fallbackSrc: '/images/products/peacock-ring-02.png',
     width: 1374,
     height: 1145,
-    alt: 'Peacock statement ring with coloured stones and enamel-like feathers on a marble surface',
+    alt: 'Peacock-inspired statement ring with colourful detailing on a marble surface',
   } as Img,
 };
 
@@ -66,7 +66,7 @@ export const CRAFTSMANSHIP = {
   points: [
     { id: 'relief', title: 'Embossed devotional relief', text: 'Silver Frame: Lakshmi, Ganesha and the Shubh Labh inscription.' },
     { id: 'texture', title: 'Patterned surfaces', text: 'Silver Kada: geometric and textured patterns across the bangles.' },
-    { id: 'colour', title: 'Colour and detail', text: 'Peacock Ring: enamel-like feathers and colourful gemstone accents.' },
+    { id: 'colour', title: 'Colour and detail', text: 'Peacock Ring: feather-inspired shapes and colourful accents.' },
   ],
   image: {
     src: productImageUrl('SV-001', 'silver-frame-06'),
@@ -80,7 +80,7 @@ export const CRAFTSMANSHIP = {
 export const GIFTING = {
   heading: 'A gift beyond occasions.',
   description:
-    'For festivals, weddings, anniversaries and housewarmings. The Silver Frame sits happily on a home-temple shelf, a thoughtful gift that is easy to give and to keep. Ask us on WhatsApp about gift packaging for any piece.',
+    'For festivals, weddings, anniversaries and housewarmings. The Silver Frame brings devotional detail to a home-temple shelf. Ask us about gift presentation for the piece you have in mind.',
   image: {
     src: productImageUrl('SV-001', 'silver-frame-03'),
     fallbackSrc: '/images/products/silver-frame-03.png',
