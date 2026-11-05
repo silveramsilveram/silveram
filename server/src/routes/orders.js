@@ -72,6 +72,7 @@ async function reserveOrder(config, input, user) {
   }
 
   const existing = await getDocument('orders', input.requestId);
+  let order = existing;
   if (existing) {
     if (!sameOrder(existing, user.id, input.paymentMethod, requested, input.customer)) {
       throw Object.assign(new Error('This order request is no longer available.'), { status: 409 });
@@ -85,9 +86,9 @@ async function reserveOrder(config, input, user) {
     if (existing.paymentMethod === 'cod' || existing.razorpayOrderId) return existing;
   }
 
-  let order;
-  try {
-    order = await runTransaction(async (transactionId) => {
+  if (!order) {
+    try {
+      order = await runTransaction(async (transactionId) => {
       const { databases, databaseId, collections } = getAppwrite();
       const lines = [];
       let total = 0;
@@ -139,17 +140,23 @@ async function reserveOrder(config, input, user) {
         ...(input.paymentMethod === 'razorpay' && { reservationExpiresAt: now + 30 * 60 * 1000 }),
       };
       return createDocument('orders', input.requestId, data, transactionId);
-    });
-  } catch (error) {
-    if (error?.code === 409) {
-      const duplicate = await getDocument('orders', input.requestId);
-      if (duplicate && sameOrder(duplicate, user.id, input.paymentMethod, requested, input.customer)) return duplicate;
-      throw Object.assign(new Error('Inventory changed during checkout. Please refresh your bag and try again.'), { status: 409 });
+      });
+    } catch (error) {
+      if (error?.code === 409) {
+        const duplicate = await getDocument('orders', input.requestId);
+        if (duplicate && sameOrder(duplicate, user.id, input.paymentMethod, requested, input.customer)) {
+          order = duplicate;
+        } else {
+          throw Object.assign(new Error('Inventory changed during checkout. Please refresh your bag and try again.'), { status: 409 });
+        }
+      } else {
+        throw error;
+      }
     }
-    throw error;
   }
 
   if (order.paymentMethod === 'cod') return order;
+  if (order.razorpayOrderId) return order;
   const razorpayOrder = await createRazorpayOrder(config, {
     ...orderData(order),
     _id: order.$id,
