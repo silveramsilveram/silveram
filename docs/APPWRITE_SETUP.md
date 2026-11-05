@@ -4,9 +4,9 @@ This project uses Appwrite for customer accounts and application data. The API u
 
 ## 1. Create project and database
 
-1. Create an Appwrite project in the region appropriate for your customers and configure its web platform hostname for the Vercel storefront.
-2. Create an Appwrite database with ID `silveram` (or set `APPWRITE_DATABASE_ID` to your chosen ID).
-3. Generate a temporary Appwrite server key with database write access for schema provisioning. Run the setup command from a trusted local machine. Do not store this key in Vercel:
+1. Create an Appwrite project in the region appropriate for your customers and configure its web platform hostname for the Vercel storefront. Copy the project ID and region-specific endpoint from the Console; for example, Singapore projects use `https://sgp.cloud.appwrite.io/v1`.
+2. The setup command creates the Appwrite database with ID `silveram` (or the value of `APPWRITE_DATABASE_ID`) and its private collections.
+3. Generate a temporary Appwrite server key with `databases.read/write`, `collections.read/write`, `attributes.read/write`, and `indexes.read/write` scopes for schema provisioning. Run the setup command from a trusted local machine. Do not store this key in Vercel:
 
    ```powershell
    Copy-Item server\.env.example server\.env
@@ -16,10 +16,12 @@ This project uses Appwrite for customer accounts and application data. The API u
    ```
 
 4. Revoke the temporary setup key after the collections and indexes are provisioned.
-5. Create a separate runtime API key with only the Appwrite scopes needed for the app: database read/write and user read/write. Place this key only in `APPWRITE_API_KEY` on the API/Vercel environment.
+5. Create a separate runtime API key with `databases.read/write`, `collections.read/write`, `attributes.read/write`, `indexes.read/write`, `documents.read/write`, and `users.read/write` scopes. Place this key only in `APPWRITE_API_KEY` on the API/Vercel environment.
 6. Run `npm --prefix server run appwrite:check` to verify that all collections, attributes, and indexes are available.
 
 `appwrite:setup` is idempotent for existing resources. It creates private collections with no public permissions; it does not delete or migrate records. For custom collection IDs, configure the corresponding `APPWRITE_*_COLLECTION_ID` variables before setup, then keep the IDs unchanged in all environments.
+
+The JSON attribute sizes are intentionally bounded to fit Appwrite Cloud collection limits while covering the current API payload limits. Validate the project's limits and application payloads before increasing them.
 
 ## 2. Data model
 

@@ -126,8 +126,8 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 
 Follow [docs/APPWRITE_SETUP.md](./docs/APPWRITE_SETUP.md) for the full guided setup.
 
-1. Create an Appwrite project and database. Add a server API key with only the required database and user scopes; keep it server-only.
-2. Set `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID`, `APPWRITE_API_KEY`, and `APPWRITE_DATABASE_ID`. Run the provisioning script using a temporary setup key, then revoke that key.
+1. Create an Appwrite project in the required region and configure its Vercel web platform hostname. Use the region-specific endpoint shown in Appwrite Console (for example, Singapore uses `https://sgp.cloud.appwrite.io/v1`); the setup script creates the database.
+2. Set `APPWRITE_ENDPOINT`, `APPWRITE_PROJECT_ID`, `APPWRITE_API_KEY`, and `APPWRITE_DATABASE_ID`. Run the provisioning script using a temporary key limited to database/schema management, then revoke it. Give the separate runtime key only the scopes required by the API.
 3. Configure exact trusted website origins in `FRONTEND_ORIGINS`, a trusted admin-email allowlist, and independent random OTP/session secrets.
 4. Configure Cloudinary server credentials for signed uploads. Set the public `VITE_CLOUDINARY_CLOUD_NAME` at build time only if product assets have been uploaded to that account. The Cloudinary API secret must never use a `VITE_` name.
 5. In Vercel, use the repository root as the project root and the Vite framework preset. `vercel.json` installs root and API dependencies, builds `dist`, and routes `/api/*` to the Express function.
