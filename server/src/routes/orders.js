@@ -18,7 +18,10 @@ const HOUR = 60 * 60 * 1000;
 
 const requestSchema = z.object({
   requestId: orderIdSchema,
-  paymentMethod: z.enum(['razorpay', 'cod', 'test']),
+  // Online payment only. Cash on delivery is no longer offered.
+  paymentMethod: z.enum(['razorpay', 'test']),
+  // How the customer chose to pay (UPI or card); recorded for the receipt and for support.
+  paymentChannel: z.enum(['upi', 'card']).optional(),
   // Required only when nobody is signed in (guest checkout).
   guestEmail: emailSchema.optional(),
   customer: z.object({
@@ -70,6 +73,7 @@ function publicOrder(order) {
     id: order.$id,
     status: order.status,
     paymentMethod: order.paymentMethod,
+    paymentChannel: order.paymentChannel || null,
     amountInPaise: order.amountInPaise,
     currency: order.currency,
     createdAt: order.createdAt,
@@ -158,8 +162,9 @@ async function reserveOrder(config, input, identity) {
         const data = {
           userId: identity.id,
           email: identity.email,
-          status: input.paymentMethod === 'cod' ? 'placed_cod' : 'pending_payment',
+          status: 'pending_payment',
           paymentMethod: input.paymentMethod,
+          ...(input.paymentChannel && { paymentChannel: input.paymentChannel }),
           amountInPaise: total,
           currency: 'INR',
           itemsJson: JSON.stringify(lines),
@@ -324,7 +329,7 @@ export function createOrdersRouter(config) {
       if (!parsed.success) return res.status(400).json({ error: 'Check your contact details, delivery details and bag.' });
       const input = parsed.data;
       if (input.paymentMethod === 'razorpay' && !config.razorpayEnabled) {
-        return res.status(503).json({ error: 'Online payments are not enabled. Please choose another payment method.' });
+        return res.status(503).json({ error: 'Online payments are not available yet. Please try again soon.' });
       }
       if (input.paymentMethod === 'test' && !config.testPayments) {
         return res.status(503).json({ error: 'Test payments are not enabled.' });

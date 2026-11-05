@@ -126,29 +126,42 @@ const customer = {
   state: 'Maharashtra', postalCode: '411001', country: 'IN',
 };
 const order = (id, extra = {}) => ({
-  requestId: id, paymentMethod: 'cod', guestEmail: 'Asha@Example.com', customer,
+  requestId: id, paymentMethod: 'test', paymentChannel: 'upi', guestEmail: 'Asha@Example.com', customer,
   items: [{ id: 'product-1', quantity: 2 }], ...extra,
 });
 
-test('guest checkout: COD order is stored, stock reduced, contact saved, e-mail sent', async () => {
+test('guest checkout: order is stored, stock reserved, contact saved; paying by UPI e-mails the guest', async () => {
   seed();
-  const res = await call('/orders', order('guest-cod-1'));
+  const res = await call('/orders', order('guest-upi-1'));
   assert.equal(res.status, 200);
   const body = await res.json();
-  assert.equal(body.status, 'placed_cod');
+  assert.equal(body.status, 'pending_payment');
   assert.equal(body.order.guest, true);
+  assert.equal(body.order.paymentChannel, 'upi');
   assert.equal(body.order.email, 'asha@example.com');
   assert.equal(body.amountInPaise, 199800);
   assert.equal(store.get('products/product-1').stockQuantity, 3);
+  assert.equal(sent.length, 0);
 
   const contact = docsOf('customers')[0];
   assert.equal(contact.email, 'asha@example.com');
   assert.equal(contact.phone, '9876543210');
   assert.equal(contact.source, 'guest');
 
+  const paid = await call('/orders/guest-upi-1/test-payment', { outcome: 'success', email: 'asha@example.com' });
+  assert.equal(paid.status, 200);
+  assert.equal((await paid.json()).order.status, 'paid');
   assert.equal(sent.length, 1);
   assert.equal(sent[0].to, 'asha@example.com');
   assert.match(sent[0].subject, /order confirmed/);
+  assert.match(sent[0].text, /simulated UPI payment/);
+});
+
+test('cash on delivery is no longer accepted', async () => {
+  seed();
+  const res = await call('/orders', order('guest-cod', { paymentMethod: 'cod' }));
+  assert.equal(res.status, 400);
+  assert.equal(store.get('products/product-1').stockQuantity, 5);
 });
 
 test('guest checkout needs an e-mail address', async () => {

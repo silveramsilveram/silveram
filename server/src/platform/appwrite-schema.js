@@ -81,6 +81,7 @@ export const APPWRITE_SCHEMA = {
       ['email', 'string', true, 254],
       ['status', 'string', true, 32],
       ['paymentMethod', 'string', true, 32],
+      ['paymentChannel', 'string', false, 16],
       ['amountInPaise', 'integer', true],
       ['currency', 'string', true, 3],
       ['itemsJson', 'string', true, 10000],

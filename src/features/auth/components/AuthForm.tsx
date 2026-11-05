@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import Button from '@/shared/ui/Button';
 import { ApiError } from '@/shared/lib/api';
+import { setAuthEmail } from '../redirect';
 import { useAuth, type AuthMode, type AuthUser } from '../context/AuthContext';
 
 interface AuthFormProps {
-  initialMode?: AuthMode;
+  /** "signin" and "signup" are separate pages; each renders this form in its own mode. */
+  mode: AuthMode;
   initialEmail?: string;
   onSuccess?: (user: AuthUser) => void;
 }
@@ -15,9 +17,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Passwordless sign-in / sign-up: the customer enters an e-mail, receives a six-digit code
  * (sent by the API through Mailjet) and confirms it. Accounts are stored in Appwrite.
  */
-export default function AuthForm({ initialMode = 'signin', initialEmail = '', onSuccess }: AuthFormProps) {
+export default function AuthForm({ mode, initialEmail = '', onSuccess }: AuthFormProps) {
   const { requestCode, verifyCode } = useAuth();
-  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [step, setStep] = useState<'details' | 'code'>('details');
   const [name, setName] = useState('');
   const [email, setEmail] = useState(initialEmail);
@@ -32,14 +33,6 @@ export default function AuthForm({ initialMode = 'signin', initialEmail = '', on
     const timer = window.setTimeout(() => setResendSeconds((seconds) => seconds - 1), 1000);
     return () => window.clearTimeout(timer);
   }, [resendSeconds]);
-
-  const switchMode = (next: AuthMode) => {
-    setMode(next);
-    setStep('details');
-    setCode('');
-    setError('');
-    setNoAccount(false);
-  };
 
   const sendCode = async () => {
     const normalized = email.trim().toLowerCase();
@@ -71,10 +64,6 @@ export default function AuthForm({ initialMode = 'signin', initialEmail = '', on
       setError('Enter the six-digit code from your email.');
       return;
     }
-    if (mode === 'signup' && !name.trim()) {
-      setError('Enter your name to create an account.');
-      return;
-    }
     setBusy(true);
     setError('');
     setNoAccount(false);
@@ -89,29 +78,8 @@ export default function AuthForm({ initialMode = 'signin', initialEmail = '', on
     }
   };
 
-  const tab = (value: AuthMode, label: string) => (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={mode === value}
-      onClick={() => switchMode(value)}
-      className={`min-h-11 flex-1 border-b-2 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${
-        mode === value
-          ? 'border-brand-primary text-brand-primary'
-          : 'border-transparent text-text-muted hover:text-text-primary'
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div>
-      <div role="tablist" aria-label="Account" className="mb-6 flex border-b border-border">
-        {tab('signin', 'Sign in')}
-        {tab('signup', 'Create account')}
-      </div>
-
       {step === 'details' ? (
         <form
           className="space-y-4"
@@ -121,11 +89,6 @@ export default function AuthForm({ initialMode = 'signin', initialEmail = '', on
             void sendCode();
           }}
         >
-          <p className="type-body text-text-secondary">
-            {mode === 'signin'
-              ? 'Enter your email and we will send you a one-time code. No password needed.'
-              : 'Create a free account to track orders and check out faster. No password needed.'}
-          </p>
           {mode === 'signup' && (
             <label className="block text-sm font-medium">
               Full name
@@ -160,19 +123,6 @@ export default function AuthForm({ initialMode = 'signin', initialEmail = '', on
           <p className="type-body text-text-secondary">
             Enter the six-digit code sent to <strong className="text-text-primary">{email}</strong>. It expires in a few minutes.
           </p>
-          {mode === 'signup' && !name.trim() && (
-            <label className="block text-sm font-medium">
-              Full name
-              <input
-                className="field mt-1.5"
-                autoComplete="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                maxLength={100}
-                required
-              />
-            </label>
-          )}
           <label className="block text-sm font-medium">
             Verification code
             <input
@@ -190,13 +140,13 @@ export default function AuthForm({ initialMode = 'signin', initialEmail = '', on
             {busy ? 'Verifying…' : mode === 'signin' ? 'Sign in' : 'Create account'}
           </Button>
           {noAccount && (
-            <Button type="button" variant="secondary" size="lg" className="w-full" onClick={() => {
-                setMode('signup');
-                setNoAccount(false);
-                setError('');
-              }}>
+            <a
+              href="#/signup"
+              onClick={() => setAuthEmail(email)}
+              className="block min-h-11 border border-brand-primary text-center text-xs font-semibold uppercase leading-[2.75rem] tracking-[0.12em] text-brand-primary hover:bg-brand-primary hover:text-surface-primary"
+            >
               Create an account with this email
-            </Button>
+            </a>
           )}
           <div className="flex items-center justify-between text-sm">
             <button

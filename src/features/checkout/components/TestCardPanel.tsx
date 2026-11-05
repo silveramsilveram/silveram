@@ -1,15 +1,17 @@
 /**
- * Dummy card form for TEST MODE. Nothing typed here is ever sent to the server: the card number only
- * decides whether the simulated payment succeeds or is declined. Remove with PAYMENT_TEST_MODE at launch.
+ * Dummy UPI and card forms for TEST MODE. Nothing typed here is ever sent to the server: the UPI ID or
+ * card number only decides whether the simulated payment succeeds or is declined. They are replaced by the
+ * real gateway's hosted checkout (UPI, debit and credit cards) once it is connected.
  */
 export const SUCCESS_CARD = '4111111111111111';
 export const DECLINE_CARD = '4000000000000002';
+export const SUCCESS_UPI = 'success@upi';
+export const DECLINE_UPI = 'failure@upi';
 
 export interface TestCard {
   number: string;
   expiry: string;
   cvv: string;
-  name: string;
 }
 
 const groupDigits = (digits: string) => digits.replace(/(.{4})/g, '$1 ').trim();
@@ -24,12 +26,57 @@ export function validateTestCard(card: TestCard): string {
   return '';
 }
 
+export function validateTestUpi(upiId: string): string {
+  return /^[a-z0-9._-]{2,}@[a-z][a-z0-9]{1,}$/i.test(upiId.trim())
+    ? ''
+    : 'Enter a valid UPI ID, for example name@bank.';
+}
+
+function Banner() {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-primary">
+      Test mode · no real money is charged
+    </p>
+  );
+}
+
+const helperButton =
+  'min-h-11 rounded-[2px] border border-border-strong px-3 text-xs hover:bg-surface-secondary';
+
+export function TestUpiPanel({ upiId, onChange }: { upiId: string; onChange: (upiId: string) => void }) {
+  return (
+    <div className="space-y-4 border border-dashed border-brand-primary/50 bg-surface-white p-4 sm:p-5">
+      <Banner />
+      <label className="block text-sm font-medium">
+        UPI ID
+        <input
+          className="field mt-1.5 font-mono"
+          autoComplete="off"
+          inputMode="email"
+          placeholder="name@bank"
+          value={upiId}
+          onChange={(event) => onChange(event.target.value.trim())}
+        />
+      </label>
+      <p className="text-xs text-text-muted">
+        In test mode any valid UPI ID succeeds, except <code>{DECLINE_UPI}</code>, which is declined.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={helperButton} onClick={() => onChange(SUCCESS_UPI)}>
+          Use {SUCCESS_UPI}
+        </button>
+        <button type="button" className={helperButton} onClick={() => onChange(DECLINE_UPI)}>
+          Use {DECLINE_UPI} (declined)
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TestCardPanel({ card, onChange }: { card: TestCard; onChange: (card: TestCard) => void }) {
   return (
     <div className="space-y-4 border border-dashed border-brand-primary/50 bg-surface-white p-4 sm:p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-primary">
-        Test mode · no real money is charged
-      </p>
+      <Banner />
       <label className="block text-sm font-medium">
         Card number
         <input
@@ -67,19 +114,11 @@ export function TestCardPanel({ card, onChange }: { card: TestCard; onChange: (c
           />
         </label>
       </div>
-      <div className="flex flex-wrap gap-2 text-xs">
-        <button
-          type="button"
-          className="min-h-11 rounded-[2px] border border-border-strong px-3 hover:bg-surface-secondary"
-          onClick={() => onChange({ ...card, number: SUCCESS_CARD })}
-        >
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={helperButton} onClick={() => onChange({ ...card, number: SUCCESS_CARD })}>
           Use success card ({groupDigits(SUCCESS_CARD)})
         </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-[2px] border border-border-strong px-3 hover:bg-surface-secondary"
-          onClick={() => onChange({ ...card, number: DECLINE_CARD })}
-        >
+        <button type="button" className={helperButton} onClick={() => onChange({ ...card, number: DECLINE_CARD })}>
           Use declined card ({groupDigits(DECLINE_CARD)})
         </button>
       </div>

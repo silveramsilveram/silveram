@@ -16,10 +16,6 @@ interface AuthContextValue {
   requestCode: (email: string) => Promise<void>;
   verifyCode: (input: { email: string; code: string; mode: AuthMode; name?: string }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
-  /** Opens the shared sign-in / create-account dialog. */
-  openAuth: (mode?: AuthMode) => void;
-  closeAuth: () => void;
-  authDialog: { open: boolean; mode: AuthMode };
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -27,7 +23,6 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<Status>('loading');
-  const [authDialog, setAuthDialog] = useState<{ open: boolean; mode: AuthMode }>({ open: false, mode: 'signin' });
 
   useEffect(() => {
     let active = true;
@@ -69,12 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const openAuth = useCallback((mode: AuthMode = 'signin') => setAuthDialog({ open: true, mode }), []);
-  const closeAuth = useCallback(() => setAuthDialog((current) => ({ ...current, open: false })), []);
-
   const value = useMemo(
-    () => ({ user, status, requestCode, verifyCode, signOut, openAuth, closeAuth, authDialog }),
-    [user, status, requestCode, verifyCode, signOut, openAuth, closeAuth, authDialog],
+    () => ({ user, status, requestCode, verifyCode, signOut }),
+    [user, status, requestCode, verifyCode, signOut],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
