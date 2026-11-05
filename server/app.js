@@ -1,6 +1,6 @@
 import { createApp } from './src/app.js';
 import { loadConfig } from './src/config.js';
-import { connectDatabase } from './src/db.js';
+import { connectDatabase } from './src/platform/appwrite.js';
 
 // Vercel entrypoint. Nothing heavy runs at import time: a missing env var or an
 // unreachable database must not crash the function before it can answer.

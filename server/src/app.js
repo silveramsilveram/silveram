@@ -9,7 +9,7 @@ import { createAdminRouter } from './routes/admin.js';
 import { createUploadsRouter } from './routes/uploads.js';
 import { createWebhookRouter } from './routes/webhooks.js';
 import { createNewsletterRouter } from './routes/newsletter.js';
-import { checkDatabase } from './db.js';
+import { checkDatabase } from './platform/appwrite.js';
 
 export function createApp(config) {
   const app = express();

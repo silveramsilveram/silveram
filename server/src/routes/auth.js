@@ -99,6 +99,18 @@ export function createAuthRouter(config) {
       const id = challengeId(email);
       const challenge = await getDocument('authChallenges', id);
       if (!challenge || challenge.expiresAt <= Date.now()) {
+        const consumptionId = hashToken(`${email}:${challenge.codeDigest}`).slice(0, 36);
+        try {
+          await createDocument('authConsumptions', consumptionId, {
+            emailHash: hashToken(email),
+            consumedAt: Date.now(),
+          });
+        } catch (error) {
+          if (error?.code === 409) {
+            return res.status(400).json({ error: 'That code is no longer valid. Request a new code.' });
+          }
+          throw error;
+        }
         await deleteDocument('authChallenges', id);
         return res.status(400).json({ error: 'That code has expired. Request a new code.' });
       }

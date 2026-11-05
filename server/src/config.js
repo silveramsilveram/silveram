@@ -101,6 +101,7 @@ export function loadConfig() {
   const appwriteCollections = {
     profiles: process.env.APPWRITE_PROFILES_COLLECTION_ID?.trim() || 'profiles',
     authChallenges: process.env.APPWRITE_AUTH_CHALLENGES_COLLECTION_ID?.trim() || 'auth_challenges',
+    authConsumptions: process.env.APPWRITE_AUTH_CONSUMPTIONS_COLLECTION_ID?.trim() || 'auth_consumptions',
     sessions: process.env.APPWRITE_SESSIONS_COLLECTION_ID?.trim() || 'sessions',
     rateLimits: process.env.APPWRITE_RATE_LIMITS_COLLECTION_ID?.trim() || 'rate_limits',
     products: process.env.APPWRITE_PRODUCTS_COLLECTION_ID?.trim() || 'products',

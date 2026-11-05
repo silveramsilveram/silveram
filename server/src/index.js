@@ -1,6 +1,6 @@
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
-import { closeDatabase, connectDatabase } from './db.js';
+import { closeDatabase, connectDatabase } from './platform/appwrite.js';
 import { startConfirmationRetrySweeper } from './mail/orderConfirmation.js';
 import { startReservationSweeper } from './routes/orders.js';
 
