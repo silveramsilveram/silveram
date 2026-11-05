@@ -6,7 +6,6 @@ import ImageSlot from '@/shared/ui/ImageSlot';
 import { useDialog } from '@/shared/hooks/useDialog';
 import { formatINR } from '@/shared/lib/money';
 import { isCheckoutEnabled } from '@/shared/lib/api';
-import { WhatsAppButton, buildCartMessage } from '@/features/whatsapp';
 
 interface CartDrawerProps {
   onCheckout: () => void;
@@ -20,8 +19,6 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
   useDialog(isCartOpen, close, panelRef);
 
   if (!isCartOpen) return null;
-
-  const message = buildCartMessage(cart.map(({ sku, name, price, quantity }) => ({ sku, name, price, quantity })));
 
   return (
     <div
@@ -66,10 +63,10 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
               </div>
               <p className="type-h3 font-medium">Your bag is empty</p>
               <p className="type-body mt-2 max-w-xs text-text-secondary">
-                Explore the collection, or message us on WhatsApp and we will gladly help you choose.
+                Explore the collection and add your favourite pieces.
               </p>
               <a
-                href="#collection"
+                href="#/shop"
                 onClick={close}
                 className="mt-6 inline-flex min-h-11 items-center rounded-[2px] border border-brand-primary px-6 text-xs font-semibold uppercase tracking-[0.14em] text-brand-primary transition-colors hover:bg-brand-primary hover:text-surface-primary"
               >
@@ -147,21 +144,15 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
             
             <div className="flex items-center justify-between border-y border-border/80 py-2.5 text-xs text-text-muted">
               <span>Prices shown in INR</span>
-              <span>Delivery confirmed before order</span>
+              <span>UPI, debit &amp; credit cards</span>
             </div>
 
-            <WhatsAppButton message={message} size="lg" className="w-full">
-              Order via WhatsApp
-            </WhatsAppButton>
-
             {isCheckoutEnabled ? (
-              <Button variant="secondary" size="lg" className="w-full" onClick={onCheckout}>
-                Proceed to checkout
+              <Button variant="primary" size="lg" className="w-full" onClick={onCheckout}>
+                Checkout
               </Button>
             ) : (
-              <p className="type-caption text-center text-text-muted">
-                Online payment disabled for setup. Please order through WhatsApp.
-              </p>
+              <p className="type-caption text-center text-text-muted">Online checkout is opening soon.</p>
             )}
             <a
               href="#/cart"

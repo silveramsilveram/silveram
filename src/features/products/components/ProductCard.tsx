@@ -1,7 +1,6 @@
 import Button, { buttonClasses } from '@/shared/ui/Button';
 import { useCart } from '@/features/cart/context/CartContext';
 import ImageSlot from '@/shared/ui/ImageSlot';
-import { WhatsAppButton, buildProductMessage } from '@/features/whatsapp';
 import { productPath, type Product } from '../data/products';
 import PriceLabel from './PriceLabel';
 
@@ -53,26 +52,16 @@ export default function ProductCard({ product }: { product: Product }) {
           <a href={productPath(product)} className={buttonClasses('secondary', 'md', 'flex-1')}>
             View Product
           </a>
-          {canAddToCart ? (
-            <Button
-              variant="primary"
-              size="md"
-              className="flex-1"
-              onClick={() => addToCart(product, true)}
-              aria-label={`Add ${product.name} to cart`}
-            >
-              Add to Cart
-            </Button>
-          ) : (
-            <WhatsAppButton
-              message={buildProductMessage(product)}
-              variant="primary"
-              size="md"
-              className="flex-1"
-            >
-              Enquire
-            </WhatsAppButton>
-          )}
+          <Button
+            variant="primary"
+            size="md"
+            className="flex-1"
+            disabled={!canAddToCart}
+            onClick={() => addToCart(product, true)}
+            aria-label={`Add ${product.name} to cart`}
+          >
+            Add to Cart
+          </Button>
         </div>
       </div>
     </article>

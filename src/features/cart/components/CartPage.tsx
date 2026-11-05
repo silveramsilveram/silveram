@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/context/CartContext';
 import { productPath, getProductById } from '@/features/products/data/products';
-import { WhatsAppButton, buildCartMessage } from '@/features/whatsapp';
 import { buttonClasses } from '@/shared/ui/Button';
 import ImageSlot from '@/shared/ui/ImageSlot';
 import { MinusIcon, PlusIcon } from '@/shared/ui/icons';
@@ -26,9 +25,9 @@ export default function CartPage() {
           <div className="mt-10 max-w-xl border border-border bg-surface-white p-8 text-center">
             <p className="type-h3">Your bag is empty</p>
             <p className="type-body mt-2 text-text-secondary">
-              Explore the collection, or message us on WhatsApp and we will gladly help you choose.
+              Explore the collection and add your favourite pieces.
             </p>
-            <a href="#collection" className={buttonClasses('primary', 'lg', 'mt-6')}>
+            <a href="#/shop" className={buttonClasses('primary', 'lg', 'mt-6')}>
               View collection
             </a>
           </div>
@@ -126,19 +125,10 @@ export default function CartPage() {
                     Checkout
                   </a>
                 ) : (
-                  <p className="type-caption text-text-muted">
-                    Online checkout is not open yet. Please order through WhatsApp.
-                  </p>
+                  <p className="type-caption text-text-muted">Online checkout is opening soon.</p>
                 )}
-                <WhatsAppButton
-                  message={buildCartMessage(cart.map(({ sku, name, price, quantity }) => ({ sku, name, price, quantity })))}
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                >
-                  Order via WhatsApp
-                </WhatsAppButton>
-                <a href="#collection" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
+                <p className="type-caption text-center text-text-muted">Pay securely online with UPI, debit or credit card.</p>
+                <a href="#/shop" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
                   Continue shopping
                 </a>
               </div>

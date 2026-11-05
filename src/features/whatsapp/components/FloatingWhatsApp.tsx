@@ -8,7 +8,7 @@ export default function FloatingWhatsApp() {
   if (!href) return null;
 
   return (
-    <aside aria-label="WhatsApp quick contact">
+    <aside aria-label="WhatsApp contact">
       <a
         href={href}
         target="_blank"
@@ -21,7 +21,7 @@ export default function FloatingWhatsApp() {
           <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-brand-primary bg-emerald-400" aria-hidden="true" />
         </span>
         <span className="hidden pr-2 text-xs font-semibold uppercase tracking-wider md:inline-block">
-          Order on WhatsApp
+          Chat with us
         </span>
       </a>
     </aside>

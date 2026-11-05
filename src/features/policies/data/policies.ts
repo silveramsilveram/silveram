@@ -39,7 +39,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
     title: 'Privacy Policy',
     draft: true,
     paragraphs: [
-      'The shopping bag is stored in this browser. If you send an enquiry through WhatsApp, the message and any contact details you include are shared with Silveram and processed by WhatsApp.',
+      'The shopping bag is stored in this browser. If you contact us on WhatsApp, the message and any contact details you include are shared with Silveram and processed by WhatsApp.',
       'If checkout is enabled and you place an order, Silveram processes your name, verified email address, phone number, delivery address, order items, and payment status to manage the order. The current storefront keeps the bag in browser storage and does not send it to the API until checkout is submitted.',
       'The service uses Appwrite to manage account and application data; Mailjet may process verification and service emails; Cloudinary stores product and site media. Razorpay may process payment details only if online payment is enabled. These providers receive information needed for their service.',
       'The site uses an HTTP-only session cookie after email verification. The browser does not receive the raw session token from the API.',
@@ -54,8 +54,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
     paragraphs: [
       'Product descriptions and photographs are provided to help you understand the designs. Material, purity, weight, dimensions, sizes, stock, and other specifications should be treated as confirmed only when they are explicitly stated for that product.',
       'Displayed prices are in Indian rupees. Shipping charges, taxes, delivery availability, and any other applicable amount must be shown or confirmed before an order is accepted.',
-      'A WhatsApp enquiry is not an order. An order is accepted only when Silveram confirms it through the applicable ordering process.',
-      'Online checkout is currently disabled in this project. Do not treat this draft as a promise that an online payment or COD order can be placed.',
+      'Orders are placed and paid for online on this website by UPI, debit card or credit card. An order is accepted when payment succeeds and Silveram sends you a confirmation email. WhatsApp is for questions only and cannot be used to place an order.',
+      'Cash on delivery is not offered. Online checkout may be switched off while payments are being set up; do not treat this draft as a promise that an order can be placed.',
       'This draft requires review and completion with the seller’s legal identity, contact details, tax treatment, and final commercial terms before publication.',
     ],
   },

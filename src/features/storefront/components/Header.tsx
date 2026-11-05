@@ -46,7 +46,7 @@ export default function Header() {
 
         <div className="flex items-center justify-end gap-1">
           <a
-            href="#/account"
+            href={user ? '#/account' : '#/signin'}
             className="flex h-11 items-center justify-center gap-2 rounded-[2px] px-2.5 text-brand-primary transition-colors hover:bg-surface-secondary"
             aria-label={user ? 'Your account' : 'Sign in or create an account'}
           >

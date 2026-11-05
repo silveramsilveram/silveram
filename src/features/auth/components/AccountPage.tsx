@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import OrderLookupForm from '@/features/orders/components/OrderLookupForm';
 import { fetchMyOrders } from '@/features/orders/api';
 import { saveLastOrder } from '@/features/orders/storage';
 import { STATUS_LABEL, type Order } from '@/features/orders/types';
 import { orderPath } from '@/shared/hooks/useHashRoute';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
-import Button from '@/shared/ui/Button';
+import Button, { buttonClasses } from '@/shared/ui/Button';
 import { useAuth } from '../context/AuthContext';
-import AuthForm from './AuthForm';
 
 export default function AccountPage() {
   const { user, status, signOut } = useAuth();
@@ -40,27 +38,22 @@ export default function AccountPage() {
         {status === 'loading' && <p className="type-body text-text-secondary">Loading…</p>}
 
         {status === 'signedOut' && (
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
-            <section aria-labelledby="account-heading">
-              <h1 id="account-heading" className="type-h1">
-                Your account
-              </h1>
-              <p className="type-body mt-3 mb-8 max-w-md text-text-secondary">
-                Sign in or create an account to see your orders and check out faster. You can always check out as a guest too.
-              </p>
-              <div className="max-w-md">
-                <AuthForm />
-              </div>
-            </section>
-            <section aria-labelledby="track-heading" className="max-w-md">
-              <h2 id="track-heading" className="type-h3">
-                Placed an order as a guest?
-              </h2>
-              <p className="type-body mt-3 mb-6 text-text-secondary">
-                Find it with your order reference and email address.
-              </p>
-              <OrderLookupForm />
-            </section>
+          <div className="mx-auto max-w-md text-center">
+            <h1 className="type-h1">Your account</h1>
+            <p className="type-body mb-8 mt-3 text-text-secondary">
+              Sign in to see your orders and check out faster.
+            </p>
+            <div className="flex flex-col gap-3">
+              <a href="#/signin" className={buttonClasses('primary', 'lg')}>
+                Sign in
+              </a>
+              <a href="#/signup" className={buttonClasses('secondary', 'lg')}>
+                Create an account
+              </a>
+            </div>
+            <p className="type-body mt-8 text-text-secondary">
+              Ordered as a guest? <a href="#/track" className="underline underline-offset-4">Track your order</a>.
+            </p>
           </div>
         )}
 

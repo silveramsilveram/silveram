@@ -4,16 +4,13 @@ import { SITE } from '@/shared/config/site';
 import { PRODUCTS, productPath } from '@/features/products/data/products';
 import { WHATSAPP_DISPLAY, buildGeneralMessage, buildWhatsAppUrl } from '@/features/whatsapp';
 import { POLICIES, type PolicyId } from '@/features/policies/data/policies';
+import { policyPath } from '@/shared/hooks/useHashRoute';
 import { apiRequest, isNewsletterEnabled } from '@/shared/lib/api';
-
-interface FooterSectionProps {
-  onOpenPolicy: (id: PolicyId) => void;
-}
 
 const linkClass =
   'type-body inline-flex min-h-11 items-center text-surface-primary/80 underline-offset-4 hover:text-surface-primary hover:underline';
 
-export default function FooterSection({ onOpenPolicy }: FooterSectionProps) {
+export default function FooterSection() {
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterConsent, setNewsletterConsent] = useState(false);
   const [newsletterBusy, setNewsletterBusy] = useState(false);
@@ -66,14 +63,16 @@ export default function FooterSection({ onOpenPolicy }: FooterSectionProps) {
         <nav aria-label="Company and policies">
           <h2 className="type-eyebrow text-accent-silver">Silveram</h2>
           <ul className="mt-3">
+            <li><a href="#/shop" className={linkClass}>Shop</a></li>
             <li><a href="#story" className={linkClass}>About us</a></li>
             <li><a href="#gifting" className={linkClass}>Gifting</a></li>
             <li><a href="#faq" className={linkClass}>FAQ</a></li>
+            <li><a href="#/track" className={linkClass}>Track your order</a></li>
             {(Object.keys(POLICIES) as PolicyId[]).map((id) => (
               <li key={id}>
-                <button type="button" onClick={() => onOpenPolicy(id)} className={`${linkClass} cursor-pointer`}>
+                <a href={policyPath(id)} className={linkClass}>
                   {POLICIES[id].title}
-                </button>
+                </a>
               </li>
             ))}
           </ul>
