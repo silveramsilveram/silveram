@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ImageSlotProps {
   src?: string;
+  fallbackSrc?: string;
   alt: string;
   width: number;
   height: number;
@@ -27,6 +28,7 @@ interface ImageSlotProps {
  */
 export default function ImageSlot({
   src,
+  fallbackSrc,
   alt,
   width,
   height,
@@ -39,9 +41,16 @@ export default function ImageSlot({
   placeholderLabel = 'Photograph coming soon',
   tone = 'light',
 }: ImageSlotProps) {
-  const [failed, setFailed] = useState(false);
-  const showImage = Boolean(src) && !failed;
+  const [sourceFailed, setSourceFailed] = useState(false);
+  const [fallbackFailed, setFallbackFailed] = useState(false);
+  const imageSrc = sourceFailed || !src ? fallbackSrc : src;
+  const showImage = Boolean(imageSrc) && !fallbackFailed;
   const dark = tone === 'dark';
+
+  useEffect(() => {
+    setSourceFailed(false);
+    setFallbackFailed(false);
+  }, [src, fallbackSrc]);
 
   return (
     <div
@@ -50,7 +59,7 @@ export default function ImageSlot({
     >
       {showImage ? (
         <img
-          src={src}
+          src={imageSrc}
           alt={alt}
           width={width}
           height={height}
@@ -58,7 +67,13 @@ export default function ImageSlot({
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           fetchPriority={priority ? 'high' : 'auto'}
-          onError={() => setFailed(true)}
+          onError={() => {
+            if (!sourceFailed && src && fallbackSrc) {
+              setSourceFailed(true);
+            } else {
+              setFallbackFailed(true);
+            }
+          }}
           className={`absolute inset-0 h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} ${imgClassName}`}
         />
       ) : (

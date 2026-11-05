@@ -7,8 +7,6 @@ export default function AnnouncementBar() {
         <p className="type-caption inline-flex items-center gap-2 font-medium tracking-[0.08em] text-text-secondary">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
           <span>{ANNOUNCEMENT}</span>
-          <span className="hidden text-accent-silver sm:inline">•</span>
-          <span className="hidden font-semibold text-text-primary sm:inline">Certified 925 Hallmark</span>
         </p>
       </div>
     </aside>

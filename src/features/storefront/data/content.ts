@@ -10,12 +10,13 @@ export const NAV_LINKS = [
   { label: 'Contact', href: '#contact' },
 ] as const;
 
-export const ANNOUNCEMENT = 'Thoughtfully selected silver gifting & jewellery · Order personally on WhatsApp';
+export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Enquire before you order';
 
 import { productImageUrl } from '@/shared/lib/cloudinary';
 
 interface Img {
   src: string;
+  fallbackSrc: string;
   width: number;
   height: number;
   alt: string;
@@ -28,6 +29,7 @@ export const HERO = {
     'Devotional décor, traditional bangles and a statement ring, selected for festivals, celebrations and the moments worth marking.',
   image: {
     src: productImageUrl('SV-001', 'silver-frame-01'),
+    fallbackSrc: '/images/products/silver-frame-01.png',
     width: 508,
     height: 508,
     alt: 'Silveram silver-finish Lakshmi and Ganesha frame on royal blue velvet',
@@ -50,6 +52,7 @@ export const STORY = {
     'In India, a gift is rarely just an object. It marks Diwali and Dhanteras, a wedding or a housewarming, and it says “may good fortune stay with you”. Silveram brings together pieces made for those moments: devotional décor for the home, traditional bangles for festive dressing and an artistic ring for special occasions.',
   image: {
     src: productImageUrl('SV-003', 'peacock-ring-02'),
+    fallbackSrc: '/images/products/peacock-ring-02.png',
     width: 1374,
     height: 1145,
     alt: 'Peacock statement ring with coloured stones and enamel-like feathers on a marble surface',
@@ -67,6 +70,7 @@ export const CRAFTSMANSHIP = {
   ],
   image: {
     src: productImageUrl('SV-001', 'silver-frame-06'),
+    fallbackSrc: '/images/products/silver-frame-06.png',
     width: 508,
     height: 508,
     alt: 'Close-up of the embossed Lakshmi and Ganesha relief on the Silver Frame',
@@ -79,6 +83,7 @@ export const GIFTING = {
     'For festivals, weddings, anniversaries and housewarmings. The Silver Frame sits happily on a home-temple shelf, a thoughtful gift that is easy to give and to keep. Ask us on WhatsApp about gift packaging for any piece.',
   image: {
     src: productImageUrl('SV-001', 'silver-frame-03'),
+    fallbackSrc: '/images/products/silver-frame-03.png',
     width: 508,
     height: 508,
     alt: 'Silver Frame presented in a navy gift box with a gold ribbon',

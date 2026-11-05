@@ -1,6 +1,7 @@
 import { formatINR } from '@/shared/lib/money';
 
 interface MessageProduct {
+  sku: string;
   name: string;
   price: number | null;
 }
@@ -18,6 +19,7 @@ export function buildProductMessage(product: MessageProduct): string {
     'I am interested in:',
     '',
     `Product: ${product.name}`,
+    `SKU: ${product.sku}`,
     `Price: ${priceText(product.price)}`,
     '',
     'Could you please share more information and ordering details?',
@@ -27,7 +29,7 @@ export function buildProductMessage(product: MessageProduct): string {
 export function buildCartMessage(lines: MessageLine[]): string {
   const rows = lines.map(
     (line, index) =>
-      `${index + 1}. ${line.name}\n   Quantity: ${line.quantity}\n   Price: ${priceText(line.price)}` +
+      `${index + 1}. ${line.name}\n   SKU: ${line.sku}\n   Quantity: ${line.quantity}\n   Price: ${priceText(line.price)}` +
       (line.price === null ? '' : `\n   Amount: ${formatINR(line.price * line.quantity)}`),
   );
   const allPriced = lines.every((line) => line.price !== null);

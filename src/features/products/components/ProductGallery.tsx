@@ -7,6 +7,7 @@ import type { Product } from '../data/products';
 function Lightbox({ image, onClose }: { image: Product['images'][number]; onClose: () => void }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [zoomed, setZoomed] = useState(false);
+  const [imageSrc, setImageSrc] = useState(image.src);
   useDialog(true, onClose, panelRef);
 
   return (
@@ -31,7 +32,10 @@ function Lightbox({ image, onClose }: { image: Product['images'][number]; onClos
         </div>
         <div className={`flex min-h-0 flex-1 ${zoomed ? 'overflow-auto' : 'items-center justify-center'}`}>
           <img
-            src={image.src}
+            src={imageSrc}
+            onError={() => {
+              if (image.fallbackSrc) setImageSrc(image.fallbackSrc);
+            }}
             alt={image.alt}
             width={image.width}
             height={image.height}
@@ -101,6 +105,7 @@ export default function ProductGallery({ product }: { product: Product }) {
       >
         <ImageSlot
           src={current.src}
+          fallbackSrc={current.fallbackSrc}
           alt={current.alt}
           width={current.width}
           height={current.height}
@@ -148,6 +153,7 @@ export default function ProductGallery({ product }: { product: Product }) {
               >
                 <ImageSlot
                   src={image.src}
+                  fallbackSrc={image.fallbackSrc}
                   alt=""
                   width={image.width}
                   height={image.height}

@@ -1,11 +1,11 @@
 // Usage: node --env-file=.env src/scripts/upload-catalog-images.js <imagesDir> [--no-db]
-// Uploads the launch catalogue photographs (silver-frame-01.webp, silver-kada-01.webp,
-// peacock-ring-01.webp, ...) to this environment's Cloudinary product folders, using
+// Uploads launch catalogue photographs (WebP, PNG, or JPEG) to this environment's
+// Cloudinary product folders, using
 // the fixed public id <root>/<env>/products/<sku>/<file name without extension>.
 // Re-running overwrites the same ids, so it is idempotent. Unless --no-db is passed it
 // then stores the Cloudinary REFERENCES (never image data) on the three product records.
 // It does not touch price, stock or the active flag.
-import { readFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { MongoClient } from 'mongodb';
 import { loadConfig } from '../config.js';
@@ -18,9 +18,9 @@ const CATALOG = [
   { id: 'product-3', sku: 'SV-003', prefix: 'peacock-ring', count: 2 },
 ];
 const ALT = {
-  'silver-frame': 'Silver Frame – devotional Lakshmi and Ganesha frame',
-  'silver-kada': 'Silver Kada – patterned silver bangles',
-  'peacock-ring': 'Peacock Ring – gold-toned peacock statement ring',
+  'silver-frame': 'Silver Frame with Lakshmi and Ganesha devotional relief',
+  'silver-kada': 'Silver Kada with patterned bangle design',
+  'peacock-ring': 'Peacock-inspired statement ring with colourful detailing',
 };
 
 const [dir, ...flags] = process.argv.slice(2);
@@ -32,8 +32,15 @@ assertCloudinary(config);
 
 async function upload(file, publicId) {
   const params = { public_id: publicId, overwrite: 'true', timestamp: Math.floor(Date.now() / 1000) };
+  const contentType = {
+    '.webp': 'image/webp',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+  }[path.extname(file).toLowerCase()];
+  if (!contentType) throw new Error(`Unsupported image format: ${file}`);
   const form = new FormData();
-  form.set('file', new Blob([await readFile(file)], { type: 'image/webp' }), path.basename(file));
+  form.set('file', new Blob([await readFile(file)], { type: contentType }), path.basename(file));
   form.set('api_key', config.cloudinaryApiKey);
   form.set('signature', signParams(params, config.cloudinaryApiSecret));
   for (const [key, value] of Object.entries(params)) form.set(key, String(value));
@@ -43,12 +50,26 @@ async function upload(file, publicId) {
   return result;
 }
 
+async function findImage(directory, name) {
+  for (const extension of ['.webp', '.png', '.jpg', '.jpeg']) {
+    const file = path.join(directory, `${name}${extension}`);
+    try {
+      await access(file);
+      return file;
+    } catch (error) {
+      if (error?.code !== 'ENOENT') throw error;
+    }
+  }
+  throw new Error(`No WebP, PNG, or JPEG image found for ${name} in ${directory}.`);
+}
+
 const byProduct = new Map();
 for (const product of CATALOG) {
   const images = [];
   for (let n = 1; n <= product.count; n += 1) {
     const name = `${product.prefix}-${String(n).padStart(2, '0')}`;
-    const result = await upload(path.join(dir, `${name}.webp`), `${productFolder(config, product.sku)}/${name}`);
+    const file = await findImage(dir, name);
+    const result = await upload(file, `${productFolder(config, product.sku)}/${name}`);
     images.push({ publicId: result.public_id, width: result.width, height: result.height, alt: ALT[product.prefix] });
     console.error(`uploaded ${name} -> ${result.public_id}`);
   }

@@ -89,7 +89,7 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
 
   const specs = specRows(product);
   const others = PRODUCTS.filter((item) => item.id !== product.id);
-  const canBuy = product.price !== null;
+  const canBuy = product.price !== null && !product.isPlaceholder;
 
   return (
     <main id="main-content" tabIndex={-1} className="focus:outline-none">
@@ -110,7 +110,7 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
           <div className="lg:pt-4">
             <div className="inline-flex items-center gap-2 rounded-[2px] border border-border bg-surface-primary px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-primary">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              <span>Certified 925 Sterling Silver</span>
+              <span>{product.categoryLabel}</span>
             </div>
             <h1 className="type-h1 mt-3">{product.name}</h1>
             <PriceLabel price={product.price} className="type-h3 mt-4 block" />

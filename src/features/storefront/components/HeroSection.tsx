@@ -66,6 +66,7 @@ export default function HeroSection() {
           <div className="relative overflow-hidden rounded-[2px] border border-accent-silver/40 shadow-2xl">
             <ImageSlot
               src={HERO.image?.src}
+              fallbackSrc={HERO.image?.fallbackSrc}
               alt={HERO.image?.alt ?? 'Silveram silver collection – photography coming soon'}
               width={HERO.image?.width ?? 1}
               height={HERO.image?.height ?? 1}
@@ -75,10 +76,10 @@ export default function HeroSection() {
               sizes="(min-width: 1024px) 520px, 90vw"
               placeholderLabel="Silver photography coming soon"
             />
-            <div className="absolute bottom-4 left-4 right-4 rounded-[2px] border border-white/10 bg-brand-primary/80 px-4 py-2.5 backdrop-blur-md">
+            <div className="absolute bottom-4 left-4 right-4 rounded-[2px] border border-white/10 bg-brand-primary/95 px-4 py-2.5">
               <p className="type-caption flex items-center justify-between text-surface-primary">
-                <span className="font-semibold uppercase tracking-wider">Hallmarked 925</span>
-                <span className="text-accent-silver">Hand-finished Sterling</span>
+                <span className="font-semibold uppercase tracking-wider">Thoughtful gifting</span>
+                <span className="text-accent-silver">A considered collection</span>
               </p>
             </div>
           </div>

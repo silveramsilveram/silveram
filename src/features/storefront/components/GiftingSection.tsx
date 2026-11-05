@@ -10,6 +10,7 @@ export default function GiftingSection() {
           <div className="overflow-hidden rounded-[2px] border border-border shadow-md">
             <ImageSlot
               src={GIFTING.image?.src}
+              fallbackSrc={GIFTING.image?.fallbackSrc}
               alt={GIFTING.image?.alt ?? 'Silver gifting – photography coming soon'}
               width={GIFTING.image?.width ?? 1}
               height={GIFTING.image?.height ?? 1}
@@ -25,20 +26,10 @@ export default function GiftingSection() {
           </h2>
           <p className="type-body-lg mt-5 max-w-xl text-text-secondary leading-relaxed">{GIFTING.description}</p>
           
-          <ul className="mt-6 space-y-2.5 text-sm text-text-secondary">
-            <li className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-primary" aria-hidden="true" />
-              <span>Signature Silveram midnight presentation box</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-primary" aria-hidden="true" />
-              <span>Complimentary soft silver-polishing cloth & velvet pouch</span>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-primary" aria-hidden="true" />
-              <span>Personalized handwritten gift note on request</span>
-            </li>
-          </ul>
+          <p className="type-body mt-6 max-w-xl text-text-secondary">
+            Ask us about gift presentation and personal notes for the piece you have in mind.
+            We will confirm what is available before you order.
+          </p>
 
           <div className="mt-8">
             <a href="#collection" className={buttonClasses('primary', 'lg')}>

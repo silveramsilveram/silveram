@@ -9,6 +9,7 @@ export default function CraftsmanshipSection() {
         <div data-reveal>
           <ImageSlot
             src={image.src}
+            fallbackSrc={image.fallbackSrc}
             alt={image.alt}
             width={image.width}
             height={image.height}

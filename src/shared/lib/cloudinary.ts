@@ -5,7 +5,7 @@
  * The cloud name is public (it appears in every image URL). Override it with
  * VITE_CLOUDINARY_CLOUD_NAME; VITE_CLOUDINARY_ROOT_FOLDER mirrors the server's root.
  */
-const CLOUD_NAME = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'f0i5hy9r').trim();
+const CLOUD_NAME = (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 's5g6fel0').trim();
 const ROOT = (import.meta.env.VITE_CLOUDINARY_ROOT_FOLDER || 'silveram').trim();
 const ENV_FOLDER = import.meta.env.PROD ? 'production' : 'development';
 

@@ -20,6 +20,7 @@ export default function CategoriesSection() {
                 <a href={productPath(product)} className="group relative block overflow-hidden rounded-[2px]">
                   <ImageSlot
                     src={image?.src}
+                    fallbackSrc={image?.fallbackSrc}
                     alt={image?.alt ?? product.categoryLabel}
                     width={image?.width ?? 6}
                     height={image?.height ?? 5}

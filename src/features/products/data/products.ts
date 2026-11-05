@@ -21,6 +21,7 @@ import { productImageUrl } from '@/shared/lib/cloudinary';
 
 export interface ProductImage {
   src: string;
+  fallbackSrc?: string;
   width: number;
   height: number;
   alt: string;
@@ -28,6 +29,7 @@ export interface ProductImage {
 
 export interface Product {
   id: string;
+  sku: string;
   slug: string;
   name: string;
   isPlaceholder: boolean;
@@ -56,6 +58,7 @@ export interface Product {
 export const PRODUCTS: Product[] = [
   {
     id: 'product-1',
+    sku: 'SV-001',
     slug: 'silver-frame',
     name: 'Silver Frame',
     isPlaceholder: false,
@@ -67,16 +70,17 @@ export const PRODUCTS: Product[] = [
     description:
       'A timeless expression of devotion, beautifully crafted with intricate representations of Goddess Lakshmi and Lord Ganesha. Its detailed silver-finish artwork and elegant transparent stand make it a thoughtful addition to your home temple. A meaningful gift for festivals, celebrations and auspicious occasions.',
     images: [
-      { src: productImageUrl('SV-001', 'silver-frame-01'), width: 508, height: 508, alt: 'Silver-finish Lakshmi and Ganesha frame on a stand, set against royal blue velvet' },
-      { src: productImageUrl('SV-001', 'silver-frame-02'), width: 504, height: 508, alt: 'Silver-finish Lakshmi and Ganesha frame on ivory satin beside orange marigolds' },
-      { src: productImageUrl('SV-001', 'silver-frame-03'), width: 508, height: 508, alt: 'Silver-finish Lakshmi and Ganesha frame presented in a navy gift box with a gold ribbon' },
-      { src: productImageUrl('SV-001', 'silver-frame-04'), width: 508, height: 508, alt: 'Silver-finish Lakshmi and Ganesha frame with transparent stand on a plain white background' },
-      { src: productImageUrl('SV-001', 'silver-frame-05'), width: 504, height: 508, alt: 'Silver-finish Lakshmi and Ganesha frame on a wooden altar shelf with a lit diya and flowers' },
-      { src: productImageUrl('SV-001', 'silver-frame-06'), width: 508, height: 508, alt: 'Close-up of the embossed Lakshmi and Ganesha relief with the Shubh Labh inscription' },
+      { src: productImageUrl('SV-001', 'silver-frame-01'), fallbackSrc: '/images/products/silver-frame-01.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a stand, set against royal blue velvet' },
+      { src: productImageUrl('SV-001', 'silver-frame-02'), fallbackSrc: '/images/products/silver-frame-02.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on ivory satin beside orange marigolds' },
+      { src: productImageUrl('SV-001', 'silver-frame-03'), fallbackSrc: '/images/products/silver-frame-03.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame presented in a navy gift box with a gold ribbon' },
+      { src: productImageUrl('SV-001', 'silver-frame-04'), fallbackSrc: '/images/products/silver-frame-04.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame with transparent stand on a plain white background' },
+      { src: productImageUrl('SV-001', 'silver-frame-05'), fallbackSrc: '/images/products/silver-frame-05.png', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a wooden altar shelf with a lit diya and flowers' },
+      { src: productImageUrl('SV-001', 'silver-frame-06'), fallbackSrc: '/images/products/silver-frame-06.png', width: 508, height: 508, alt: 'Close-up of the Lakshmi and Ganesha relief with the Shubh Labh inscription' },
     ],
   },
   {
     id: 'product-2',
+    sku: 'SV-002',
     slug: 'silver-kada',
     name: 'Silver Kada',
     isPlaceholder: false,
@@ -88,11 +92,12 @@ export const PRODUCTS: Product[] = [
     description:
       'Celebrate traditional artistry with an elegant collection of intricately patterned silver bangles. Beautifully detailed surfaces create a distinctive play of light and texture, making them suitable for festive occasions and everyday ethnic styling. A graceful addition to your jewellery collection.',
     images: [
-      { src: productImageUrl('SV-002', 'silver-kada-01'), width: 1374, height: 1145, alt: 'Stack of intricately patterned silver bangles worn together on a cream display stand' },
+      { src: productImageUrl('SV-002', 'silver-kada-01'), fallbackSrc: '/images/products/silver-kada-01.png', width: 920, height: 768, alt: 'Stack of intricately patterned bangles on a cream display stand' },
     ],
   },
   {
     id: 'product-3',
+    sku: 'SV-003',
     slug: 'peacock-ring',
     name: 'Peacock Ring',
     isPlaceholder: false,
@@ -104,8 +109,8 @@ export const PRODUCTS: Product[] = [
     description:
       'Inspired by the timeless beauty of the Indian peacock, this statement ring showcases vibrant enamel-like detailing and colourful gemstone accents. Its intricate craftsmanship and striking silhouette create an elegant centrepiece for special occasions. A distinctive jewellery piece for those who appreciate artistic design.',
     images: [
-      { src: productImageUrl('SV-003', 'peacock-ring-01'), width: 1374, height: 1145, alt: 'Gold-toned peacock statement ring with blue and green enamel-like feathers and colourful stones, side view' },
-      { src: productImageUrl('SV-003', 'peacock-ring-02'), width: 1374, height: 1145, alt: 'Gold-toned peacock statement ring seen from above, showing the fanned feather detail and coloured stones' },
+      { src: productImageUrl('SV-003', 'peacock-ring-01'), fallbackSrc: '/images/products/peacock-ring-01.png', width: 920, height: 768, alt: 'Peacock-inspired statement ring with blue and green feather detailing and colourful stones, side view' },
+      { src: productImageUrl('SV-003', 'peacock-ring-02'), fallbackSrc: '/images/products/peacock-ring-02.png', width: 920, height: 768, alt: 'Peacock-inspired statement ring seen from above, showing the fanned feather detail and colourful stones' },
     ],
   },
 ];

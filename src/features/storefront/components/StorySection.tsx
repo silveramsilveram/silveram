@@ -17,18 +17,18 @@ export default function StorySection() {
           </h2>
           <p className="type-body-lg mt-5 max-w-xl text-surface-primary/80 leading-relaxed">{STORY.description}</p>
           
-          <div className="mt-8 grid grid-cols-2 gap-4 border-t border-accent-silver/20 pt-6 sm:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-4 border-t border-accent-silver/20 pt-6 sm:grid-cols-3">
             <div>
-              <p className="type-h3 font-semibold text-surface-primary">92.5%</p>
-              <p className="type-caption mt-1 text-accent-silver">Pure Sterling Silver</p>
+              <p className="type-body-lg font-semibold text-surface-primary">Devotional décor</p>
+              <p className="type-caption mt-1 text-accent-silver">For meaningful moments at home</p>
             </div>
             <div>
-              <p className="type-h3 font-semibold text-surface-primary">Anti-Tarnish</p>
-              <p className="type-caption mt-1 text-accent-silver">Protective E-Coating</p>
+              <p className="type-body-lg font-semibold text-surface-primary">Patterned kada</p>
+              <p className="type-caption mt-1 text-accent-silver">Texture that catches the eye</p>
             </div>
             <div>
-              <p className="type-h3 font-semibold text-surface-primary">Artisan</p>
-              <p className="type-caption mt-1 text-accent-silver">Hand-Finished Detail</p>
+              <p className="type-body-lg font-semibold text-surface-primary">Peacock detail</p>
+              <p className="type-caption mt-1 text-accent-silver">A vivid statement design</p>
             </div>
           </div>
 
@@ -42,6 +42,7 @@ export default function StorySection() {
           <div className="overflow-hidden rounded-[2px] border border-accent-silver/40 shadow-xl">
             <ImageSlot
               src={STORY.image?.src}
+              fallbackSrc={STORY.image?.fallbackSrc}
               alt={STORY.image?.alt ?? 'Silver craftsmanship – photography coming soon'}
               width={STORY.image?.width ?? 6}
               height={STORY.image?.height ?? 5}

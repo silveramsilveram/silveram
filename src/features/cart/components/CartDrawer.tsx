@@ -21,7 +21,7 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
 
   if (!isCartOpen) return null;
 
-  const message = buildCartMessage(cart.map(({ name, price, quantity }) => ({ name, price, quantity })));
+  const message = buildCartMessage(cart.map(({ sku, name, price, quantity }) => ({ sku, name, price, quantity })));
 
   return (
     <div
@@ -82,6 +82,7 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
                 <li key={item.id} className="flex gap-4 py-5">
                   <ImageSlot
                     src={item.image}
+                    fallbackSrc={item.imageFallback}
                     alt={item.imageAlt ?? item.name}
                     width={1}
                     height={1}
@@ -145,8 +146,8 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
             </div>
             
             <div className="flex items-center justify-between border-y border-border/80 py-2.5 text-xs text-text-muted">
-              <span>✦ 925 Hallmark Verified</span>
-              <span>✦ Free Insured Delivery</span>
+              <span>Prices shown in INR</span>
+              <span>Delivery confirmed before order</span>
             </div>
 
             <WhatsAppButton message={message} size="lg" className="w-full">

@@ -6,10 +6,12 @@ export const MAX_ITEM_QUANTITY = 10;
 /** A bag line. Name, price and image always come from the catalogue, never from storage. */
 export interface CartItem {
   id: string;
+  sku: string;
   name: string;
   price: number;
   quantity: number;
   image?: string;
+  imageFallback?: string;
   imageAlt?: string;
 }
 
@@ -36,10 +38,12 @@ function toCartItem(product: Product, quantity: number): CartItem | null {
   const image = product.images[0];
   return {
     id: product.id,
+    sku: product.sku,
     name: product.name,
     price: product.price,
     quantity,
     image: image?.src,
+    imageFallback: image?.fallbackSrc,
     imageAlt: image?.alt,
   };
 }

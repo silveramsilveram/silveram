@@ -22,6 +22,7 @@ export default function ProductCard({ product }: { product: Product }) {
       >
         <ImageSlot
           src={image?.src}
+          fallbackSrc={image?.fallbackSrc}
           alt={image?.alt ?? `${product.name} – photograph coming soon`}
           width={image?.width ?? 6}
           height={image?.height ?? 5}
@@ -30,9 +31,8 @@ export default function ProductCard({ product }: { product: Product }) {
           imgClassName="transition-transform duration-500 hover:scale-[1.03]"
           className="border border-border"
         />
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-[2px] bg-brand-primary/90 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-surface-primary backdrop-blur-xs">
-          <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-          925 Silver
+        <div className="absolute top-2.5 left-2.5 rounded-[2px] bg-brand-primary/90 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-surface-primary">
+          {product.categoryLabel}
         </div>
       </a>
 
