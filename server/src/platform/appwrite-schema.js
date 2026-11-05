@@ -7,7 +7,7 @@ export const APPWRITE_SCHEMA = {
       ['createdAt', 'integer', true],
       ['lastLoginAt', 'integer', true],
     ],
-    indexes: [],
+    indexes: [['email_expiry_idx', 'key', ['expiresAt']]],
   },
   authChallenges: {
     name: 'Email verification challenges',
@@ -19,7 +19,7 @@ export const APPWRITE_SCHEMA = {
       ['lastSentAt', 'integer', true],
       ['expiresAt', 'integer', true],
     ],
-    indexes: [],
+    indexes: [['consumed_at_idx', 'key', ['consumedAt']]],
   },
   authConsumptions: {
     name: 'Consumed verification codes',
@@ -38,7 +38,10 @@ export const APPWRITE_SCHEMA = {
       ['createdAt', 'integer', true],
       ['expiresAt', 'integer', true],
     ],
-    indexes: [['tokenHash_idx', 'key', ['tokenHash']]],
+    indexes: [
+      ['tokenHash_idx', 'key', ['tokenHash']],
+      ['expires_at_idx', 'key', ['expiresAt']],
+    ],
   },
   rateLimits: {
     name: 'API rate-limit counters',
@@ -47,7 +50,7 @@ export const APPWRITE_SCHEMA = {
       ['windowStart', 'integer', true],
       ['count', 'integer', true],
     ],
-    indexes: [],
+    indexes: [['window_start_idx', 'key', ['windowStart']]],
   },
   products: {
     name: 'Products',
@@ -105,7 +108,10 @@ export const APPWRITE_SCHEMA = {
       ['eventType', 'string', true, 100],
       ['receivedAt', 'integer', true],
     ],
-    indexes: [['event_id_unique', 'unique', ['eventId']]],
+    indexes: [
+      ['event_id_unique', 'unique', ['eventId']],
+      ['received_at_idx', 'key', ['receivedAt']],
+    ],
   },
   emailClaims: {
     name: 'Order email delivery claims',
@@ -114,6 +120,9 @@ export const APPWRITE_SCHEMA = {
       ['claimedAt', 'integer', true],
       ['sentAt', 'integer', false],
     ],
-    indexes: [],
+    indexes: [
+      ['claimed_at_idx', 'key', ['claimedAt']],
+      ['sent_at_idx', 'key', ['sentAt']],
+    ],
   },
 };

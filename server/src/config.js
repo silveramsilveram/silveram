@@ -144,6 +144,7 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     appwriteDatabaseId,
     appwriteCollections,
     otpPepper: secret('OTP_PEPPER'),
+    cronSecret: process.env.CRON_SECRET ? secret('CRON_SECRET') : '',
     origins,
     adminEmails: new Set(
       (process.env.ADMIN_EMAILS || '')
