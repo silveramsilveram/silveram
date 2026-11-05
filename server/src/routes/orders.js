@@ -89,57 +89,57 @@ async function reserveOrder(config, input, user) {
   if (!order) {
     try {
       order = await runTransaction(async (transactionId) => {
-      const { databases, databaseId, collections } = getAppwrite();
-      const lines = [];
-      let total = 0;
-      for (const [id, quantity] of requested) {
-        const product = await getDocument('products', id);
-        if (!product || product.active !== true || product.currency !== 'INR') {
-          throw Object.assign(new Error('An item in your bag is no longer available.'), { status: 400 });
+        const { databases, databaseId, collections } = getAppwrite();
+        const lines = [];
+        let total = 0;
+        for (const [id, quantity] of requested) {
+          const product = await getDocument('products', id);
+          if (!product || product.active !== true || product.currency !== 'INR') {
+            throw Object.assign(new Error('An item in your bag is no longer available.'), { status: 400 });
+          }
+          if (!Number.isSafeInteger(product.priceInPaise) || product.priceInPaise < 1) {
+            throw new Error('A product has an invalid configured price.');
+          }
+          if (!Number.isSafeInteger(product.stockQuantity) || product.stockQuantity < quantity) {
+            throw Object.assign(new Error('An item in your bag is out of stock.'), { status: 409 });
+          }
+          const lineTotalInPaise = product.priceInPaise * quantity;
+          total += lineTotalInPaise;
+          lines.push({
+            productId: product.$id,
+            sku: product.sku,
+            name: product.name,
+            quantity,
+            unitPriceInPaise: product.priceInPaise,
+            lineTotalInPaise,
+          });
+          await databases.updateDocument({
+            databaseId,
+            collectionId: collections.products,
+            documentId: product.$id,
+            data: { stockQuantity: product.stockQuantity - quantity, updatedAt: Date.now() },
+            transactionId,
+          });
         }
-        if (!Number.isSafeInteger(product.priceInPaise) || product.priceInPaise < 1) {
-          throw new Error('A product has an invalid configured price.');
+        if (!Number.isSafeInteger(total) || total > 2147483647) {
+          throw Object.assign(new Error('The order total is above the supported checkout limit.'), { status: 400 });
         }
-        if (!Number.isSafeInteger(product.stockQuantity) || product.stockQuantity < quantity) {
-          throw Object.assign(new Error('An item in your bag is out of stock.'), { status: 409 });
-        }
-        const lineTotalInPaise = product.priceInPaise * quantity;
-        total += lineTotalInPaise;
-        lines.push({
-          productId: product.$id,
-          sku: product.sku,
-          name: product.name,
-          quantity,
-          unitPriceInPaise: product.priceInPaise,
-          lineTotalInPaise,
-        });
-        await databases.updateDocument({
-          databaseId,
-          collectionId: collections.products,
-          documentId: product.$id,
-          data: { stockQuantity: product.stockQuantity - quantity, updatedAt: Date.now() },
-          transactionId,
-        });
-      }
-      if (!Number.isSafeInteger(total) || total > 2147483647) {
-        throw Object.assign(new Error('The order total is above the supported checkout limit.'), { status: 400 });
-      }
-      const now = Date.now();
-      const data = {
-        userId: user.id,
-        email: user.email,
-        status: input.paymentMethod === 'cod' ? 'placed_cod' : 'pending_payment',
-        paymentMethod: input.paymentMethod,
-        amountInPaise: total,
-        currency: 'INR',
-        itemsJson: JSON.stringify(lines),
-        shippingJson: JSON.stringify(input.customer),
-        createdAt: now,
-        updatedAt: now,
-        confirmationEmailAttempts: 0,
-        ...(input.paymentMethod === 'razorpay' && { reservationExpiresAt: now + 30 * 60 * 1000 }),
-      };
-      return createDocument('orders', input.requestId, data, transactionId);
+        const now = Date.now();
+        const data = {
+          userId: user.id,
+          email: user.email,
+          status: input.paymentMethod === 'cod' ? 'placed_cod' : 'pending_payment',
+          paymentMethod: input.paymentMethod,
+          amountInPaise: total,
+          currency: 'INR',
+          itemsJson: JSON.stringify(lines),
+          shippingJson: JSON.stringify(input.customer),
+          createdAt: now,
+          updatedAt: now,
+          confirmationEmailAttempts: 0,
+          ...(input.paymentMethod === 'razorpay' && { reservationExpiresAt: now + 30 * 60 * 1000 }),
+        };
+        return createDocument('orders', input.requestId, data, transactionId);
       });
     } catch (error) {
       if (error?.code === 409) {
