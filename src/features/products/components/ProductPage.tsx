@@ -6,14 +6,12 @@ import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/context/CartContext'
 import { WhatsAppButton, buildProductMessage } from '@/features/whatsapp';
 import { SITE } from '@/shared/config/site';
 import { setPageMeta, setStructuredData } from '@/shared/lib/seo';
-import type { PolicyId } from '@/features/policies/data/policies';
 import { PRODUCTS, getProductBySlug, productPath, type Product } from '../data/products';
 import ProductGallery from './ProductGallery';
 import PriceLabel from './PriceLabel';
 
 interface ProductPageProps {
   slug: string;
-  onOpenPolicy: (id: PolicyId) => void;
 }
 
 function specRows(product: Product): Array<[string, string]> {
@@ -49,7 +47,7 @@ function productJsonLd(product: Product) {
   };
 }
 
-export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
+export default function ProductPage({ slug }: ProductPageProps) {
   const product = getProductBySlug(slug);
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
@@ -80,7 +78,7 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
     return (
       <main id="main-content" tabIndex={-1} className="page-container section-pad focus:outline-none">
         <h1 className="type-h1">We couldn’t find that piece.</h1>
-        <a href="#collection" className={buttonClasses('primary', 'lg', 'mt-8')}>
+        <a href="#/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
           View the collection
         </a>
       </main>
@@ -98,7 +96,7 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
           <ol className="flex flex-wrap items-center gap-x-2">
             <li><a href="#home" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Home</a></li>
             <li aria-hidden="true">/</li>
-            <li><a href="#collection" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Collection</a></li>
+            <li><a href="#/shop" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Shop</a></li>
             <li aria-hidden="true">/</li>
             <li aria-current="page" className="font-medium text-text-primary">{product.name}</li>
           </ol>
@@ -121,13 +119,12 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
             {product.description && <p className="type-body mt-4 text-text-secondary">{product.description}</p>}
             {!product.material && !product.purity && (
               <p className="type-caption mt-5 text-text-muted">
-                Material and purity details have not been verified for this listing. Please enquire before ordering.
+                Material and purity details have not been verified for this listing. Please message us on WhatsApp before buying if you need these details.
               </p>
             )}
             {product.isPlaceholder && (
               <p className="type-body mt-5 border-l-2 border-accent-silver pl-4 text-text-secondary">
-                Full details, photography and pricing for this piece are coming soon. Message us on WhatsApp
-                and we will share what you would like to know.
+                Full details, photography and pricing for this piece are coming soon.
               </p>
             )}
 
@@ -170,21 +167,22 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
                 size="lg"
                 className="w-full"
                 disabled={!canBuy}
-                onClick={() => addToCart(product, true, quantity)}
+                onClick={() => {
+                  addToCart(product, false, quantity);
+                  window.location.hash = '#/checkout';
+                }}
               >
                 Buy Now
               </Button>
-              <WhatsAppButton message={buildProductMessage(product)} variant="secondary" size="lg" className="w-full">
-                Enquire on WhatsApp
-              </WhatsAppButton>
               {!canBuy && (
-                <p className="type-caption text-text-muted">
-                  Adding to the bag is available once a price is set. Please enquire on WhatsApp.
-                </p>
+                <p className="type-caption text-text-muted">This piece can be added to the bag once a price is set.</p>
               )}
               <p className="type-caption text-text-muted">
-                An enquiry is not an order. Your order is confirmed only when Silveram confirms it with you.
+                Pay securely online with UPI, debit card or credit card.
               </p>
+              <WhatsAppButton message={buildProductMessage(product)} variant="text" size="md" className="self-start">
+                Have a question? Chat with us
+              </WhatsAppButton>
             </div>
 
             {specs.length > 0 && (
@@ -213,19 +211,19 @@ export default function ProductPage({ slug, onOpenPolicy }: ProductPageProps) {
                 <summary className="type-body cursor-pointer list-none font-medium">Delivery</summary>
                 <p className="type-body mt-3 text-text-secondary">
                   {product.deliveryInfo ??
-                    'We confirm delivery timelines and charges for your location on WhatsApp before you order.'}{' '}
-                  <button type="button" className="underline underline-offset-4" onClick={() => onOpenPolicy('shipping')}>
+                    'Delivery timelines and charges are shown before you pay.'}{' '}
+                  <a href="#/policy/shipping" className="underline underline-offset-4">
                     Shipping policy
-                  </button>
+                  </a>
                 </p>
               </details>
               <details className="group py-4">
                 <summary className="type-body cursor-pointer list-none font-medium">Returns &amp; exchanges</summary>
                 <p className="type-body mt-3 text-text-secondary">
-                  {product.returnInfo ?? 'Please confirm return and exchange terms with us before ordering.'}{' '}
-                  <button type="button" className="underline underline-offset-4" onClick={() => onOpenPolicy('returns')}>
+                  {product.returnInfo ?? 'See our return and exchange policy before you order.'}{' '}
+                  <a href="#/policy/returns" className="underline underline-offset-4">
                     Return policy
-                  </button>
+                  </a>
                 </p>
               </details>
             </div>

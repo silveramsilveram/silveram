@@ -9,6 +9,7 @@ export type OrderStatus =
   | 'payment_review';
 
 export type PaymentMethod = 'razorpay' | 'cod' | 'test';
+export type PaymentChannel = 'upi' | 'card';
 
 export interface OrderItem {
   productId: string;
@@ -34,6 +35,8 @@ export interface Order {
   id: string;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
+  /** How the customer paid, when recorded. */
+  paymentChannel: PaymentChannel | null;
   amountInPaise: number;
   currency: string;
   createdAt: number;

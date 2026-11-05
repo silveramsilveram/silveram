@@ -17,6 +17,13 @@ type LoadState =
 
 const money = (paise: number) => formatINR(paise / 100);
 
+function paymentText(order: Order): string {
+  const channel = order.paymentChannel === 'upi' ? 'UPI' : order.paymentChannel === 'card' ? 'Card' : '';
+  if (order.paymentMethod === 'test') return `Test payment${channel ? ` (${channel})` : ''} - no money charged`;
+  if (order.paymentMethod === 'cod') return PAYMENT_LABEL.cod;
+  return channel ? `Paid online by ${channel}` : PAYMENT_LABEL.razorpay;
+}
+
 export default function OrderPage({ orderId }: { orderId: string }) {
   const { user, status: authStatus } = useAuth();
   const [state, setState] = useState<LoadState>(() => {
@@ -181,14 +188,13 @@ function OrderDetails({ order }: { order: Order }) {
             Payment
           </h2>
           <p className="mt-2 text-sm leading-relaxed">
-            {PAYMENT_LABEL[order.paymentMethod]}
-            {order.paymentMethod === 'cod' && <> — please keep {money(order.amountInPaise)} ready on delivery.</>}
+            {paymentText(order)}
           </p>
         </section>
       </div>
 
       <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-        <a href="#collection" className={buttonClasses('primary', 'lg')}>
+        <a href="#/shop" className={buttonClasses('primary', 'lg')}>
           Continue shopping
         </a>
         <WhatsAppButton
@@ -196,7 +202,7 @@ function OrderDetails({ order }: { order: Order }) {
           variant="secondary"
           size="lg"
         >
-          Help with this order
+          Questions about this order? Chat with us
         </WhatsAppButton>
       </div>
     </div>

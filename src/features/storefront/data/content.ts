@@ -3,6 +3,7 @@
  * (or deliberately neutral) belong here — no invented policies, claims or metrics.
  */
 export const NAV_LINKS = [
+  { label: 'Shop', href: '#/shop' },
   { label: 'Collection', href: '#collection' },
   { label: 'Categories', href: '#categories' },
   { label: 'Our Story', href: '#story' },
@@ -105,7 +106,7 @@ export const TRUST_ITEMS = [
   {
     id: 'assistance',
     title: 'Personal assistance',
-    description: 'Talk to us directly on WhatsApp for questions, availability and orders.',
+    description: 'Questions about a piece? Chat with us on WhatsApp or visit the store in Motihari.',
   },
   {
     id: 'delivery',
@@ -138,7 +139,12 @@ export const FAQS: FaqItem[] = [
     id: 'faq-order',
     question: 'How do I place an order?',
     answer:
-      'Message us on WhatsApp from any product page or from your bag. Your order is confirmed only when Silveram confirms it with you, including availability, delivery and payment details. Online checkout is not available yet.',
+      'Add pieces to your bag, enter your delivery details and pay online by UPI, debit card or credit card. You can check out as a guest or with an account, and we email your order confirmation. WhatsApp is only for questions, not for placing orders.',
+  },
+  {
+    id: 'faq-payment',
+    question: 'Which payment methods do you accept?',
+    answer: 'UPI, debit cards and credit cards, paid online at checkout. Cash on delivery is not available.',
   },
   {
     id: 'faq-gifting',
@@ -149,13 +155,13 @@ export const FAQS: FaqItem[] = [
     id: 'faq-delivery',
     question: 'What are the delivery timelines?',
     answer:
-      'Delivery timelines depend on your location. We will confirm them with you on WhatsApp before you place an order.',
+      'Delivery timelines depend on your location. Delivery timelines and charges are shown before you pay. Message us on WhatsApp if you have a question.',
   },
   {
     id: 'faq-returns',
     question: 'What is the return or exchange policy?',
     answer:
-      'Our return and exchange policy is being finalised. Please confirm the terms with us on WhatsApp before ordering.',
+      'Our return and exchange policy is being finalised. Please message us on WhatsApp if you need the terms before ordering.',
   },
   {
     id: 'faq-contact',

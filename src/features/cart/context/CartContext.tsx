@@ -109,7 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const qty = Math.max(1, Math.min(MAX_ITEM_QUANTITY, Math.floor(quantity)));
       const next = toCartItem(product, qty);
       if (!next) {
-        announce(`${product.name} has no price yet. Please enquire on WhatsApp.`);
+        announce(`${product.name} has no price yet and cannot be added to the bag.`);
         return;
       }
       const existing = cart.find((item) => item.id === product.id);
