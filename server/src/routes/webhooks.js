@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { collections } from '../db.js';
+import { createHash } from 'node:crypto';
+import { createDocument, findDocument, getAppwrite, runTransaction, updateDocument } from '../platform/appwrite.js';
 import { queueOrderConfirmation } from '../mail/orderConfirmation.js';
 import { verifyRazorpayWebhookSignature } from '../payments/razorpay/signatures.js';
 
@@ -18,46 +19,65 @@ export function createWebhookRouter(config) {
       if (!eventId || eventId.length > 200) {
         return res.status(400).json({ error: 'Webhook event ID is missing.' });
       }
-      const { orders, webhookEvents } = collections();
-      if (await webhookEvents.findOne({ _id: eventId })) return res.status(200).json({ received: true });
-
       const event = JSON.parse(req.body.toString('utf8'));
       const payment = event.payload?.payment?.entity;
-      if (payment?.order_id && event.event === 'payment.captured') {
-        const result = await orders.updateOne(
-          {
-            razorpayOrderId: payment.order_id,
-            status: 'pending_payment',
-            amountInPaise: payment.amount,
-            currency: payment.currency,
-          },
-          { $set: { status: 'paid', razorpayPaymentId: payment.id, updatedAt: new Date() } },
-        );
-        if (result.matchedCount) {
-          const paid = await orders.findOne({ razorpayOrderId: payment.order_id }, { projection: { _id: 1 } });
-          if (paid) queueOrderConfirmation(config, paid._id);
-        } else {
-          await orders.updateOne(
-            { razorpayOrderId: payment.order_id, status: 'expired' },
-            {
-              $set: {
-                status: 'payment_review',
-                razorpayPaymentId: payment.id,
-                updatedAt: new Date(),
-              },
-            },
-          );
+      const eventDocId = createHash('sha256').update(eventId).digest('hex').slice(0, 36);
+      if (await findDocument('webhookEvents', 'eventId', eventId)) return res.status(200).json({ received: true });
+      let confirmationOrderId;
+      try {
+        await runTransaction(async (transactionId) => {
+          const { databases, databaseId, collections } = getAppwrite();
+          await createDocument('webhookEvents', eventDocId, {
+            eventId,
+            eventType: String(event.event || 'unknown').slice(0, 100),
+            receivedAt: Date.now(),
+          }, transactionId);
+          if (!payment?.order_id) return;
+
+          const order = await findDocument('orders', 'razorpayOrderId', payment.order_id);
+          if (!order) return;
+          if (event.event === 'payment.captured') {
+            if (
+              order.status === 'pending_payment' &&
+              order.amountInPaise === payment.amount &&
+              order.currency === payment.currency
+            ) {
+              await databases.updateDocument({
+                databaseId,
+                collectionId: collections.orders,
+                documentId: order.$id,
+                data: { status: 'paid', razorpayPaymentId: payment.id, updatedAt: Date.now() },
+                transactionId,
+              });
+              confirmationOrderId = order.$id;
+            } else if (order.status === 'expired') {
+              await databases.updateDocument({
+                databaseId,
+                collectionId: collections.orders,
+                documentId: order.$id,
+                data: { status: 'payment_review', razorpayPaymentId: payment.id, updatedAt: Date.now() },
+                transactionId,
+              });
+            }
+          } else if (event.event === 'payment.refunded' && order.status === 'paid') {
+            await databases.updateDocument({
+              databaseId,
+              collectionId: collections.orders,
+              documentId: order.$id,
+              data: { status: 'refunded', updatedAt: Date.now() },
+              transactionId,
+            });
+          }
+        });
+      } catch (error) {
+        if (error?.code === 409 && await findDocument('webhookEvents', 'eventId', eventId)) {
+          return res.status(200).json({ received: true });
         }
-      } else if (payment?.order_id && event.event === 'payment.refunded') {
-        await orders.updateOne(
-          { razorpayOrderId: payment.order_id, status: 'paid' },
-          { $set: { status: 'refunded', updatedAt: new Date() } },
-        );
+        throw error;
       }
-      await webhookEvents.insertOne({ _id: eventId, eventType: event.event, receivedAt: new Date() });
+      if (confirmationOrderId) queueOrderConfirmation(config, confirmationOrderId);
       return res.status(200).json({ received: true });
     } catch (error) {
-      if (error?.code === 11000) return res.status(200).json({ received: true });
       next(error);
     }
   });
