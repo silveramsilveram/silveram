@@ -12,7 +12,7 @@
     "appwrite:check": "node --env-file-if-exists=.env src/scripts/appwrite-check.js",
     "upload:catalog-images": "node --env-file-if-exists=.env src/scripts/upload-catalog-images.js ../public/images/products",
     "seed:catalog": "node --env-file-if-exists=.env src/scripts/seed-catalog.js",
-    "test": "node --test",
+    "test": "node --experimental-test-module-mocks --test",
     "check": "node --check app.js && node --check src/index.js && node --check src/app.js && node --check src/config.js && node --check src/security.js && node --check src/platform/appwrite.js && node --check src/platform/appwrite-schema.js && node --check src/routes/auth.js && node --check src/routes/products.js && node --check src/routes/orders.js && node --check src/routes/admin.js && node --check src/routes/webhooks.js && node --check src/routes/newsletter.js && node --check src/routes/maintenance.js && node --check src/routes/cart.js && node --check src/customers.js && node --check src/mail/transport.js && node --check src/mail/templates.js && node --check src/mail/orderConfirmation.js && node --check src/mail/mailjet.js && node --check src/scripts/appwrite-setup.js && node --check src/scripts/appwrite-check.js && node --check src/scripts/seed-catalog.js && node --check src/scripts/upload-catalog-images.js && node --check src/routes/uploads.js && node --check src/storage/cloudinary/client.js && node --check src/storage/cloudinary/folders.js && node --check src/payments/razorpay/client.js && node --check src/payments/razorpay/signatures.js"
   },
   "dependencies": {
