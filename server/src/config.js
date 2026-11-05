@@ -97,13 +97,32 @@ export function loadConfig() {
     throw new Error('CLOUDINARY_ROOT_FOLDER may only contain lowercase letters, numbers, "-" and "_".');
   }
 
+  const appwriteEndpoint = required('APPWRITE_ENDPOINT').replace(/\/+$/, '');
+  const appwriteCollections = {
+    profiles: process.env.APPWRITE_PROFILES_COLLECTION_ID?.trim() || 'profiles',
+    authChallenges: process.env.APPWRITE_AUTH_CHALLENGES_COLLECTION_ID?.trim() || 'auth_challenges',
+    sessions: process.env.APPWRITE_SESSIONS_COLLECTION_ID?.trim() || 'sessions',
+    rateLimits: process.env.APPWRITE_RATE_LIMITS_COLLECTION_ID?.trim() || 'rate_limits',
+    products: process.env.APPWRITE_PRODUCTS_COLLECTION_ID?.trim() || 'products',
+    orders: process.env.APPWRITE_ORDERS_COLLECTION_ID?.trim() || 'orders',
+    webhookEvents: process.env.APPWRITE_WEBHOOK_EVENTS_COLLECTION_ID?.trim() || 'webhook_events',
+  };
+  for (const [name, id] of Object.entries(appwriteCollections)) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(id)) {
+      throw new Error(`APPWRITE_${name.replace(/[A-Z]/g, (letter) => `_${letter}`).toUpperCase()}_COLLECTION_ID is invalid.`);
+    }
+  }
+
   return {
     nodeEnv,
     isProduction: nodeEnv === 'production',
     trustProxyHops: trustProxyHops === 0 ? false : trustProxyHops,
     port: positiveInteger('PORT', 4000),
-    mongoUri: required('MONGODB_URI'),
-    mongoDbName: process.env.MONGODB_DB_NAME?.trim() || 'silveram',
+    appwriteEndpoint,
+    appwriteProjectId: required('APPWRITE_PROJECT_ID'),
+    appwriteApiKey: required('APPWRITE_API_KEY'),
+    appwriteDatabaseId: process.env.APPWRITE_DATABASE_ID?.trim() || 'silveram',
+    appwriteCollections,
     sessionSecret: secret('SESSION_SECRET'),
     otpPepper: secret('OTP_PEPPER'),
     origins,
