@@ -30,7 +30,7 @@ export const HERO = {
 };
 
 export const COLLECTION = {
-  heading: 'Three Pieces. Endless Meaning.',
+  heading: 'Three pieces. Endless meaning.',
   description: 'A carefully curated selection, each piece chosen for gifting, festivals and everyday celebration.',
 };
 

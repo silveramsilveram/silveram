@@ -26,6 +26,8 @@ export function productImageUrl(
  * upscaled copy). Returns undefined for local fallback paths, which have a single size.
  */
 export function responsiveSrcSet(src: string | undefined, widths: readonly number[]): string | undefined {
-  if (!src || !src.includes('res.cloudinary.com') || !/\/w_\d+/.test(src)) return undefined;
-  return widths.map((width) => `${src.replace(/\/w_\d+/, `/w_${width}`)} ${width}w`).join(', ');
+  // The width transform sits inside the options segment, e.g. ".../upload/f_auto,q_auto,c_limit,w_1400/<id>".
+  const widthParam = /(?<=[,/])w_\d+(?=[,/])/;
+  if (!src || !src.includes('res.cloudinary.com') || !widthParam.test(src)) return undefined;
+  return widths.map((width) => `${src.replace(widthParam, `w_${width}`)} ${width}w`).join(', ');
 }
