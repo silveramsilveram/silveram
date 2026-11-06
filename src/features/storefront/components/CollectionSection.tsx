@@ -46,7 +46,7 @@ function CollectionBand({ band }: { band: Band }) {
   const { layout } = band;
 
   // The Silver Frame photograph is only 508 px wide, so it sits on a stone mat at that size instead of being enlarged.
-  const maxPhotoWidth = layout === 'frame' ? 'max-w-[480px]' : '';
+  const maxPhotoWidth = layout === 'frame' ? 'max-w-[480px]' : layout === 'ring' ? 'md:max-w-[480px]' : '';
   const imageColumn =
     layout === 'frame'
       ? 'lg:col-span-7 lg:col-start-1'
