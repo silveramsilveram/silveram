@@ -11,7 +11,7 @@ export const NAV_LINKS = [
   { label: 'Contact', href: '#contact' },
 ] as const;
 
-export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Pay securely online by UPI, debit & credit card';
+export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Cash on delivery across India · UPI & cards coming soon';
 
 import { productImageUrl } from '@/shared/lib/cloudinary';
 
@@ -139,12 +139,12 @@ export const FAQS: FaqItem[] = [
     id: 'faq-order',
     question: 'How do I place an order?',
     answer:
-      'Add pieces to your bag, enter your delivery details and pay online by UPI, debit card or credit card. You can check out as a guest or with an account, and we email your order confirmation. WhatsApp is only for questions, not for placing orders.',
+      'Add pieces to your bag, enter your delivery details and choose cash on delivery. You can check out as a guest or with an account, and we email your order confirmation. You pay when the parcel arrives. WhatsApp is only for questions, not for placing orders.',
   },
   {
     id: 'faq-payment',
     question: 'Which payment methods do you accept?',
-    answer: 'UPI, debit cards and credit cards, paid online at checkout. Cash on delivery is not available.',
+    answer: 'Cash on delivery is available now: pay in cash when your order arrives. UPI and debit/credit card payments are coming soon.',
   },
   {
     id: 'faq-gifting',

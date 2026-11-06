@@ -7,3 +7,6 @@ export function normalizePhone(raw: string): string {
   else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
   return /^[6-9]\d{9}$/.test(digits) ? digits : '';
 }
+
+/** Indian PIN codes are six digits and never start with 0. */
+export const PINCODE_PATTERN = /^[1-9]\d{5}$/;

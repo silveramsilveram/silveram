@@ -54,8 +54,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
     paragraphs: [
       'Product descriptions and photographs are provided to help you understand the designs. Material, purity, weight, dimensions, sizes, stock, and other specifications should be treated as confirmed only when they are explicitly stated for that product.',
       'Displayed prices are in Indian rupees. Shipping charges, taxes, delivery availability, and any other applicable amount must be shown or confirmed before an order is accepted.',
-      'Orders are placed and paid for online on this website by UPI, debit card or credit card. An order is accepted when payment succeeds and Silveram sends you a confirmation email. WhatsApp is for questions only and cannot be used to place an order.',
-      'Cash on delivery is not offered. Online checkout may be switched off while payments are being set up; do not treat this draft as a promise that an order can be placed.',
+      'Orders are placed on this website. Cash on delivery is currently the available payment method: you pay the delivery partner in cash when the order arrives. UPI and debit/credit card payments are coming soon. An order is accepted when Silveram sends you a confirmation. WhatsApp is for questions only and cannot be used to place an order.',
+      'We may call you to confirm a cash-on-delivery order, and may cancel an order that cannot be confirmed or delivered, for example when the address or phone number is wrong or the parcel is refused.',
       'This draft requires review and completion with the seller’s legal identity, contact details, tax treatment, and final commercial terms before publication.',
     ],
   },

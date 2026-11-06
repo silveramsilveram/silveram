@@ -23,7 +23,9 @@ export interface OrderItem {
 export interface OrderShipping {
   name: string;
   phone: string;
+  altPhone?: string;
   address: string;
+  landmark?: string;
   city: string;
   state: string;
   postalCode: string;

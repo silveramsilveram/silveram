@@ -144,15 +144,15 @@ export default function CartDrawer({ onCheckout }: CartDrawerProps) {
             
             <div className="flex items-center justify-between border-y border-border/80 py-2.5 text-xs text-text-muted">
               <span>Prices shown in INR</span>
-              <span>UPI, debit &amp; credit cards</span>
+              <span>Cash on delivery</span>
             </div>
 
             {isCheckoutEnabled ? (
               <Button variant="primary" size="lg" className="w-full" onClick={onCheckout}>
-                Checkout
+                Proceed to checkout
               </Button>
             ) : (
-              <p className="type-caption text-center text-text-muted">Online checkout is opening soon.</p>
+              <p className="type-caption text-center text-text-muted">Checkout is opening soon.</p>
             )}
             <a
               href="#/cart"

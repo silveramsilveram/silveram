@@ -78,6 +78,7 @@ let server;
 let base;
 const config = {
   liveCheckout: true,
+  codEnabled: true,
   razorpayEnabled: false,
   testPayments: true,
   storeName: 'Silveram',
@@ -157,10 +158,47 @@ test('guest checkout: order is stored, stock reserved, contact saved; paying by 
   assert.match(sent[0].text, /simulated UPI payment/);
 });
 
-test('cash on delivery is no longer accepted', async () => {
+test('guest COD: order is placed immediately, stock held, full address + contact stored, e-mail sent', async () => {
   seed();
-  const res = await call('/orders', order('guest-cod', { paymentMethod: 'cod' }));
-  assert.equal(res.status, 400);
+  const res = await call('/orders', order('guest-cod', {
+    paymentMethod: 'cod',
+    paymentChannel: undefined,
+    customer: { ...customer, altPhone: '9123456780', landmark: 'Near the temple' },
+  }));
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.status, 'placed_cod');
+  assert.equal(body.order.paymentMethod, 'cod');
+  assert.equal(body.order.guest, true);
+  assert.equal(body.order.shipping.altPhone, '9123456780');
+  assert.equal(body.order.shipping.landmark, 'Near the temple');
+  assert.equal(body.amountInPaise, 199800);
+  assert.equal(store.get('products/product-1').stockQuantity, 3);
+  assert.equal(store.get('orders/guest-cod').reservationExpiresAt, undefined);
+
+  const contact = docsOf('customers')[0];
+  assert.equal(contact.phone, '9876543210');
+  assert.equal(contact.altPhone, '9123456780');
+  assert.equal(JSON.parse(contact.addressJson).postalCode, '411001');
+
+  assert.equal(sent.length, 1);
+  assert.match(sent[0].text, /Cash on delivery/);
+  assert.match(sent[0].text, /Landmark: Near the temple/);
+});
+
+test('COD is refused when switched off, and bad alternate numbers are rejected', async () => {
+  seed();
+  config.codEnabled = false;
+  try {
+    const off = await call('/orders', order('guest-cod-off', { paymentMethod: 'cod', paymentChannel: undefined }));
+    assert.equal(off.status, 503);
+  } finally {
+    config.codEnabled = true;
+  }
+  const bad = await call('/orders', order('guest-cod-bad', {
+    paymentMethod: 'cod', paymentChannel: undefined, customer: { ...customer, altPhone: '12345' },
+  }));
+  assert.equal(bad.status, 400);
   assert.equal(store.get('products/product-1').stockQuantity, 5);
 });
 

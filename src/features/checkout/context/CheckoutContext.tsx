@@ -6,7 +6,11 @@ export interface CheckoutInfo {
   email: string;
   fullName: string;
   phone: string;
+  /** Optional second number the courier can call. '' when not given. */
+  altPhone: string;
   address: string;
+  /** Optional nearby landmark. '' when not given. */
+  landmark: string;
   city: string;
   state: string;
   postalCode: string;
@@ -25,7 +29,7 @@ function load(): CheckoutInfo | null {
   try {
     const parsed = JSON.parse(sessionStorage.getItem(KEY) || 'null') as Partial<CheckoutInfo> | null;
     if (!parsed) return null;
-    const keys: Array<keyof CheckoutInfo> = ['email', 'fullName', 'phone', 'address', 'city', 'state', 'postalCode'];
+    const keys: Array<keyof CheckoutInfo> = ['email', 'fullName', 'phone', 'altPhone', 'address', 'landmark', 'city', 'state', 'postalCode'];
     return keys.every((key) => typeof parsed[key] === 'string') ? (parsed as CheckoutInfo) : null;
   } catch {
     return null;

@@ -120,6 +120,8 @@ export const APPWRITE_SCHEMA = {
       ['email', 'string', true, 254],
       ['name', 'string', false, 100],
       ['phone', 'string', false, 10],
+      ['altPhone', 'string', false, 10],
+      ['addressJson', 'string', false, 1000],
       ['userId', 'string', false, 36],
       ['source', 'string', true, 16],
       ['cartJson', 'string', false, 6000],

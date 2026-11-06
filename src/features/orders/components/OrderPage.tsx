@@ -177,10 +177,17 @@ function OrderDetails({ order }: { order: Order }) {
             {order.shipping.name}
             <br />
             {order.shipping.address}
+            {order.shipping.landmark && (
+              <>
+                <br />
+                Landmark: {order.shipping.landmark}
+              </>
+            )}
             <br />
             {order.shipping.city}, {order.shipping.state} {order.shipping.postalCode}
             <br />
             India · {order.shipping.phone}
+            {order.shipping.altPhone ? `, ${order.shipping.altPhone}` : ''}
           </address>
         </section>
         <section aria-labelledby="pay-heading">
@@ -190,6 +197,11 @@ function OrderDetails({ order }: { order: Order }) {
           <p className="mt-2 text-sm leading-relaxed">
             {paymentText(order)}
           </p>
+          {order.paymentMethod === 'cod' && order.status === 'placed_cod' && (
+            <p className="mt-2 border border-border bg-surface-white p-3 text-sm leading-relaxed">
+              Please keep <strong>{money(order.amountInPaise)}</strong> in cash ready for the delivery partner. We may call you to confirm your order.
+            </p>
+          )}
         </section>
       </div>
 

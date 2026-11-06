@@ -85,13 +85,15 @@ test('Razorpay cannot be enabled before checkout and provider credentials are co
   assert.throws(() => loadConfig(), /Enable Razorpay only after checkout is enabled/);
 });
 
-test('live checkout requires a configured transactional email sender', (t) => {
+test('live checkout works without email (warns) and uses the SMTP settings when present', (t) => {
   configure(t, {
     NODE_ENV: 'production',
     FRONTEND_ORIGINS: 'https://silveram.example',
     STORE_LIVE_CHECKOUT: 'true',
   });
-  assert.throws(() => loadConfig(), /Live checkout requires SMTP_HOST, SMTP_USER, SMTP_PASSWORD and SMTP_FROM/);
+  t.mock.method(console, 'warn', () => {});
+  assert.equal(loadConfig().liveCheckout, true);
+  assert.equal(loadConfig().codEnabled, true);
 
   Object.assign(process.env, {
     SMTP_HOST: 'in-v3.mailjet.com',

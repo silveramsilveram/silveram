@@ -42,7 +42,7 @@ const CheckoutPaymentPage = lazy(() => import('@/features/checkout/components/Ch
 const HOME_META = {
   title: `${SITE.name} | Silver jewellery & gifting`,
   description:
-    'Silveram: devotional silver-finish frames, patterned silver kada and a peacock statement ring, chosen for gifting and celebration. Secure online payment by UPI, debit and credit card.',
+    'Silveram: devotional silver-finish frames, patterned silver kada and a peacock statement ring, chosen for gifting and celebration. Cash on delivery across India; UPI and card payments coming soon.',
 };
 
 function HomePage() {

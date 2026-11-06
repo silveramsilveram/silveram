@@ -12,11 +12,14 @@ export function customerId(email) {
   return hashToken(email.trim().toLowerCase()).slice(0, 36);
 }
 
-function contactFields(existing, { email, name, phone, userId, source }) {
+function contactFields(existing, { email, name, phone, altPhone, address, userId, source }) {
   return {
     email,
     ...(name ? { name: name.slice(0, 100) } : {}),
     ...(phone ? { phone } : {}),
+    ...(altPhone ? { altPhone } : {}),
+    // Last delivery address, so support can see it and repeat orders are quick to place.
+    ...(address ? { addressJson: JSON.stringify(address).slice(0, 1000) } : {}),
     ...(userId ? { userId } : {}),
     // Once someone has an account, they stay an account holder.
     source: existing?.source === 'account' || source === 'account' ? 'account' : 'guest',

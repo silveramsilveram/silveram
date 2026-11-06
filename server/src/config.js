@@ -87,7 +87,9 @@ export function loadConfig({ allowSetupKey = false } = {}) {
   }
   const mail = mailConfig();
   if (liveCheckout && (!mail.smtpHost || !mail.smtpUser || !mail.smtpPassword || !mail.smtpFrom)) {
-    throw new Error('Live checkout requires SMTP_HOST, SMTP_USER, SMTP_PASSWORD and SMTP_FROM so customers can receive order confirmations.');
+    // Orders are stored in Appwrite either way; without SMTP the customer simply gets no email
+    // (they still see the confirmation page and can track by order reference + email).
+    console.warn('SMTP is not fully configured: order confirmation emails will not be sent.');
   }
 
   const storeUrl = process.env.STORE_URL?.trim();
@@ -171,6 +173,8 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
     cloudinaryRootFolder: process.env.CLOUDINARY_ROOT_FOLDER?.trim() || 'silveram',
     liveCheckout,
+    // Cash on delivery is on whenever checkout is live, unless explicitly switched off.
+    codEnabled: process.env.COD_ENABLED !== 'false',
     razorpayEnabled,
     testPayments,
     otpTtlMinutes: positiveInteger('OTP_TTL_MINUTES', 10),

@@ -18,11 +18,12 @@ export function orderConfirmationEmail(config, order) {
   const name = oneLine(order.shipping.name);
   const address = [
     order.shipping.address,
+    ...(order.shipping.landmark ? [`Landmark: ${order.shipping.landmark}`] : []),
     `${order.shipping.city}, ${order.shipping.state} ${order.shipping.postalCode}`,
     'India',
   ];
   const paymentLine = cod
-    ? `Cash on delivery - please keep ${formatInr(order.amountInPaise)} ready.`
+    ? `Cash on delivery - please keep ${formatInr(order.amountInPaise)} ready to pay when your order arrives.`
     : order.paymentMethod === 'test'
     ? `TEST ORDER - simulated ${order.paymentChannel === 'upi' ? 'UPI' : order.paymentChannel === 'card' ? 'card' : ''} payment, no money was charged.`.replace('  ', ' ')
     : `Paid online${order.paymentChannel === 'upi' ? ' by UPI' : order.paymentChannel === 'card' ? ' by card' : ''}${order.razorpayPaymentId ? ` (transaction ${order.razorpayPaymentId})` : ''}.`;
@@ -47,7 +48,7 @@ export function orderConfirmationEmail(config, order) {
     'Delivering to:',
     name,
     ...address,
-    `Phone: ${order.shipping.phone}`,
+    `Phone: ${order.shipping.phone}${order.shipping.altPhone ? `, ${order.shipping.altPhone}` : ''}`,
     '',
     `${help.trim()}`,
     ...(ordersUrl ? ['', ordersUrl] : []),
@@ -77,7 +78,7 @@ export function orderConfirmationEmail(config, order) {
         </tr>
       </table>
       <p style="font-size:14px"><strong>Payment:</strong> ${escapeHtml(paymentLine)}</p>
-      <p style="font-size:14px"><strong>Delivering to:</strong><br>${escapeHtml(name)}<br>${address.map(escapeHtml).join('<br>')}<br>Phone: ${escapeHtml(order.shipping.phone)}</p>
+      <p style="font-size:14px"><strong>Delivering to:</strong><br>${escapeHtml(name)}<br>${address.map(escapeHtml).join('<br>')}<br>Phone: ${escapeHtml(order.shipping.phone)}${order.shipping.altPhone ? `, ${escapeHtml(order.shipping.altPhone)}` : ''}</p>
       <p style="font-size:14px;color:#555">${escapeHtml(help.trim())}</p>
     </div>
     <p style="text-align:center;color:#999;font-size:12px">This is a transactional email about your order.</p>

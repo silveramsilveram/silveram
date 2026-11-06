@@ -178,7 +178,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 <p className="type-caption text-text-muted">This piece can be added to the bag once a price is set.</p>
               )}
               <p className="type-caption text-text-muted">
-                Pay securely online with UPI, debit card or credit card.
+                Cash on delivery available across India. UPI and card payments coming soon.
               </p>
               <WhatsAppButton message={buildProductMessage(product)} variant="text" size="md" className="self-start">
                 Have a question? Chat with us

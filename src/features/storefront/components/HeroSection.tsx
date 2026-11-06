@@ -57,7 +57,7 @@ export default function HeroSection() {
             </span>
             <span className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              Secure online payment
+              Cash on delivery
             </span>
           </div>
         </div>

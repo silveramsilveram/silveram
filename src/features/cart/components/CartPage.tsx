@@ -122,12 +122,14 @@ export default function CartPage() {
               <div className="mt-6 space-y-3">
                 {isCheckoutEnabled ? (
                   <a href="#/checkout" className={buttonClasses('primary', 'lg', 'w-full')}>
-                    Checkout
+                    Proceed to checkout
                   </a>
                 ) : (
-                  <p className="type-caption text-text-muted">Online checkout is opening soon.</p>
+                  <p className="type-caption text-text-muted">Checkout is opening soon.</p>
                 )}
-                <p className="type-caption text-center text-text-muted">Pay securely online with UPI, debit or credit card.</p>
+                <p className="type-caption text-center text-text-muted">
+                  Pay with <strong className="font-semibold text-text-secondary">cash on delivery</strong>. UPI and cards coming soon.
+                </p>
                 <a href="#/shop" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
                   Continue shopping
                 </a>

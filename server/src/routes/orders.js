@@ -18,8 +18,8 @@ const HOUR = 60 * 60 * 1000;
 
 const requestSchema = z.object({
   requestId: orderIdSchema,
-  // Online payment only. Cash on delivery is no longer offered.
-  paymentMethod: z.enum(['razorpay', 'test']),
+  // Cash on delivery is the primary method; Razorpay/test are online payments, off until enabled.
+  paymentMethod: z.enum(['cod', 'razorpay', 'test']),
   // How the customer chose to pay (UPI or card); recorded for the receipt and for support.
   paymentChannel: z.enum(['upi', 'card']).optional(),
   // Required only when nobody is signed in (guest checkout).
@@ -27,7 +27,9 @@ const requestSchema = z.object({
   customer: z.object({
     name: z.string().trim().min(1).max(100),
     phone: z.string().regex(/^\d{10}$/),
+    altPhone: z.string().regex(/^\d{10}$/).optional(),
     address: z.string().trim().min(1).max(300),
+    landmark: z.string().trim().min(1).max(120).optional(),
     city: z.string().trim().min(1).max(100),
     state: z.string().trim().min(1).max(100),
     postalCode: z.string().regex(/^\d{6}$/),
@@ -162,7 +164,8 @@ async function reserveOrder(config, input, identity) {
         const data = {
           userId: identity.id,
           email: identity.email,
-          status: 'pending_payment',
+          // COD orders are confirmed immediately (stock is held, payment is collected on delivery).
+          status: input.paymentMethod === 'cod' ? 'placed_cod' : 'pending_payment',
           paymentMethod: input.paymentMethod,
           ...(input.paymentChannel && { paymentChannel: input.paymentChannel }),
           amountInPaise: total,
@@ -328,6 +331,9 @@ export function createOrdersRouter(config) {
       const parsed = requestSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Check your contact details, delivery details and bag.' });
       const input = parsed.data;
+      if (input.paymentMethod === 'cod' && !config.codEnabled) {
+        return res.status(503).json({ error: 'Cash on delivery is not available right now. Please contact the store.' });
+      }
       if (input.paymentMethod === 'razorpay' && !config.razorpayEnabled) {
         return res.status(503).json({ error: 'Online payments are not available yet. Please try again soon.' });
       }
@@ -359,6 +365,8 @@ export function createOrdersRouter(config) {
           email: identity.email,
           name: input.customer.name,
           phone: input.customer.phone,
+          altPhone: input.customer.altPhone,
+          address: input.customer,
           userId: req.user?.id,
           source: req.user ? 'account' : 'guest',
         });

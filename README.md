@@ -124,7 +124,7 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 
 ## Shopping journey, accounts and e-mails
 
-**Orders are placed and paid online only (UPI, debit card, credit card). There is no cash on delivery and no ordering through WhatsApp: WhatsApp (+91 77669 11777) is for questions only.**
+**Cash on delivery (COD) is the primary payment method. UPI and debit/credit cards (Razorpay) show as "Coming soon" until the gateway is approved and enabled. There is no ordering through WhatsApp: WhatsApp (+91 77669 11777) is for questions only.**
 
 Every step is its own page (hash routes, no server rewrites needed):
 
@@ -135,7 +135,7 @@ Every step is its own page (hash routes, no server rewrites needed):
 | Product | `#/product/<slug>` | Details, Add to Cart, Buy Now |
 | Bag | `#/cart` | Review items and quantities |
 | Details | `#/checkout` | Contact (guest e-mail or signed-in account) and delivery address |
-| Payment | `#/checkout/payment` | Choose UPI / card and pay |
+| Payment | `#/checkout/payment` | Cash on delivery (UPI / card: coming soon) |
 | Confirmation | `#/order/<id>` | Receipt and status |
 | Sign in / Create account | `#/signin`, `#/signup` | Passwordless: e-mail + 6-digit code |
 | Account | `#/account` | Order history, sign out |
@@ -148,12 +148,14 @@ Customers can shop three ways, all stored in Appwrite:
 |---|---|---|
 | **Create account** | Name + email, then a 6-digit code sent by Mailjet | A user in Appwrite Auth, a `profiles` record, an opaque `sessions` record |
 | **Sign in** | Email, then a 6-digit code (never creates an account by accident) | New session |
-| **Guest checkout** | Email + phone + address at checkout, no account | A `customers` record (email, name, phone) and the `orders` record |
+| **Guest checkout** | Email, name, mobile (+ optional alternate mobile), address, landmark (optional), city, state, PIN code. No account | A `customers` record (email, name, phones, last address) and the `orders` record with the full delivery details |
 
 E-mails (Mailjet SMTP, sent by the API):
 - **Order confirmation** after a successful payment, to the guest or account email.
 - **"Your bag is saved"** when a signed-in customer has items in the bag, or a guest enters their email at checkout. At most one every 6 hours per address; the bag is also saved in `customers`.
 - Sign-in / sign-up codes.
+
+**Going live with COD:** set `VITE_CHECKOUT_ENABLED=true` (build-time, shows the Checkout button) and `STORE_LIVE_CHECKOUT=true` (API). `COD_ENABLED` / `VITE_COD_ENABLED` default to on. Run `npm --prefix server run appwrite:setup` once for the new `customers.altPhone` / `customers.addressJson` attributes, set each product's `stockQuantity` and `active: true`, and redeploy. SMTP is optional: without it orders still save, but no confirmation email is sent.
 
 **Payments.** The real gateway is not connected yet. Until then set `PAYMENT_TEST_MODE=true` (API, needs `STORE_LIVE_CHECKOUT=true`) and `VITE_TEST_PAYMENT_ENABLED=true` (storefront): the payment page offers a dummy **UPI** form (`success@upi` succeeds, `failure@upi` is declined) and a dummy **card** form (`4111 1111 1111 1111` succeeds, `4000 0000 0000 0002` is declined). The order is marked paid with payment method `test` and the email says it is a test order. When Razorpay is configured (`RAZORPAY_ENABLED` / `VITE_RAZORPAY_ENABLED`), its hosted screen (UPI, debit and credit cards) is offered instead. If neither is enabled the payment page says payments are being set up. **Turn test mode off before accepting real orders.**
 
