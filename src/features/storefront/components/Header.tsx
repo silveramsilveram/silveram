@@ -34,12 +34,24 @@ export default function Header() {
 
   // The panel is for small screens only: close it if the window grows to the desktop layout,
   // and whenever the page changes.
+  const closedByResize = useRef(false);
   useEffect(() => {
     const query = window.matchMedia('(min-width: 768px)');
-    const onChange = () => query.matches && setMenuOpen(false);
+    const onChange = () => {
+      if (!query.matches) return;
+      closedByResize.current = true;
+      setMenuOpen(false);
+    };
     query.addEventListener('change', onChange);
     return () => query.removeEventListener('change', onChange);
   }, []);
+  // The menu button is hidden at desktop width, so it cannot take focus back after a resize.
+  // Declared after useDialog so it runs after the dialog has tried to restore focus.
+  useEffect(() => {
+    if (menuOpen || !closedByResize.current) return;
+    closedByResize.current = false;
+    document.querySelector<HTMLElement>('nav[aria-label="Primary"] a')?.focus();
+  }, [menuOpen]);
   useEffect(() => setMenuOpen(false), [hash]);
 
   /** Shop is the current page on the shop and product routes; in-page links mark the current section. */
