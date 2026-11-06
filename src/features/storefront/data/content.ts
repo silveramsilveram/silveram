@@ -4,14 +4,12 @@
  */
 export const NAV_LINKS = [
   { label: 'Shop', href: '#/shop' },
-  { label: 'Collection', href: '#collection' },
-  { label: 'Categories', href: '#categories' },
-  { label: 'Our Story', href: '#story' },
+  { label: 'Our story', href: '#story' },
   { label: 'Gifting', href: '#gifting' },
   { label: 'Contact', href: '#contact' },
 ] as const;
 
-export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Cash on delivery across India · UPI & cards coming soon';
+export const ANNOUNCEMENT = 'Cash on delivery across India';
 
 import { productImageUrl } from '@/shared/lib/cloudinary';
 
@@ -34,11 +32,6 @@ export const HERO = {
 export const COLLECTION = {
   heading: 'Three Pieces. Endless Meaning.',
   description: 'A carefully curated selection, each piece chosen for gifting, festivals and everyday celebration.',
-};
-
-export const CATEGORIES_SECTION = {
-  heading: 'Shop by category',
-  description: 'From the home temple to the wrist and the hand.',
 };
 
 export const STORY = {
