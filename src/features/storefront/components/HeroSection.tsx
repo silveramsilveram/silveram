@@ -1,89 +1,104 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
+import { PRODUCTS, getProductById, productPath } from '@/features/products/data/products';
+import { formatINR } from '@/shared/lib/money';
+import { responsiveSrcSet } from '@/shared/lib/cloudinary';
 import { buttonClasses } from '@/shared/ui/Button';
 import ImageSlot from '@/shared/ui/ImageSlot';
-import { ArrowRightIcon } from '@/shared/ui/icons';
 import { HERO } from '../data/content';
 
-export default function HeroSection() {
-  const rootRef = useRef<HTMLElement>(null);
+/** Source photographs are 922 px wide: never ask for more, so nothing is upscaled. */
+const HERO_WIDTHS = [480, 720, 922] as const;
 
-  // Authored entrance animation; honors prefers-reduced-motion
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const ctx = gsap.context(() => {
-      gsap
-        .timeline({ defaults: { ease: 'power3.out' } })
-        .from('[data-hero-text]', { y: 28, opacity: 0, duration: 0.9, stagger: 0.12 })
-        .from('[data-hero-visual]', { opacity: 0, scale: 0.96, duration: 1.1, ease: 'power2.out' }, 0.2);
-    }, root);
-    return () => ctx.revert();
+export default function HeroSection() {
+  const imageFrameRef = useRef<HTMLDivElement>(null);
+  const image = getProductById(HERO.productId)?.images[0];
+  const [lineOne, ...rest] = HERO.heading.split(/(?<=\.)\s+/);
+  const lineTwo = rest.join(' ');
+
+  // One authored moment: an ivory mask lifts off the photograph. The mask is added by script
+  // after the photograph is already in the page, so the image is never hidden by CSS and
+  // nothing changes for reduced-motion users or when scripts are slow.
+  useLayoutEffect(() => {
+    const frame = imageFrameRef.current;
+    if (!frame || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const mask = document.createElement('div');
+    mask.setAttribute('aria-hidden', 'true');
+    mask.className = 'absolute inset-0 z-10 bg-surface-primary';
+    frame.appendChild(mask);
+
+    const img = frame.querySelector('img');
+    const timeline = gsap
+      .timeline({ paused: true, defaults: { ease: 'expo.out' }, onComplete: () => mask.remove() })
+      .to(mask, { yPercent: -100, duration: 1.2 });
+    if (img) timeline.from(img, { scale: 1.06, duration: 1.4 }, 0);
+
+    // Start once the photograph has loaded, so the reveal never exposes an empty frame.
+    const play = () => timeline.play();
+    const fallbackTimer = window.setTimeout(play, 2000);
+    if (!img || img.complete) {
+      play();
+    } else {
+      img.addEventListener('load', play, { once: true });
+      img.addEventListener('error', play, { once: true });
+    }
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+      img?.removeEventListener('load', play);
+      img?.removeEventListener('error', play);
+      timeline.kill();
+      mask.remove();
+    };
   }, []);
 
   return (
-    <section
-      id="home"
-      ref={rootRef}
-      aria-labelledby="hero-heading"
-      className="on-navy silver-light relative overflow-hidden text-surface-primary"
-    >
-      <div className="page-container grid items-center gap-12 py-16 md:py-24 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16 lg:py-28">
-        <div>
-          <h1 id="hero-heading" data-hero-text className="type-display text-balance font-medium tracking-[-0.025em]">
-            {HERO.heading}
+    <section id="home" aria-labelledby="hero-heading" className="bg-surface-primary">
+      <div className="page-container grid gap-8 py-10 md:py-14 lg:grid-cols-12 lg:gap-x-12 lg:gap-y-10 lg:py-16">
+        <div className="lg:col-span-6 lg:row-start-1 lg:self-end">
+          <h1 id="hero-heading" className="type-hero text-balance">
+            <span className="block">{lineOne}</span>
+            {lineTwo && <span className="block">{lineTwo}</span>}
           </h1>
-          <p data-hero-text className="type-body-lg mt-6 max-w-xl text-surface-primary/85 leading-relaxed">
-            {HERO.description}
-          </p>
-          <div data-hero-text className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-            <a href="#collection" className={`${buttonClasses('inverse', 'lg')} group gap-3`}>
-              <span>Shop Collection</span>
-              <ArrowRightIcon size={16} className="transition-transform duration-200 group-hover:translate-x-1" />
-            </a>
-            <a href="#story" className={buttonClasses('outline-inverse', 'lg')}>
-              Our story & craft
-            </a>
-          </div>
-
-          <div data-hero-text className="mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-accent-silver/20 pt-6 text-xs uppercase tracking-[0.18em] text-accent-silver">
-            <span className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              Thoughtful gifting
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              Considered designs
-            </span>
-            <span className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              Cash on delivery
-            </span>
-          </div>
+          <p className="type-body-lg mt-6 max-w-md text-text-secondary">{HERO.description}</p>
+          <a href="#collection" className={`${buttonClasses('primary', 'lg')} mt-8 text-sm! normal-case! tracking-normal!`}>
+            Shop the collection
+          </a>
         </div>
 
-        <div data-hero-visual className="relative mx-auto w-full max-w-md lg:max-w-none">
-          <div className="relative overflow-hidden rounded-[2px] border border-accent-silver/40 shadow-2xl">
-            <ImageSlot
-              src={HERO.image?.src}
-              fallbackSrc={HERO.image?.fallbackSrc}
-              alt={HERO.image?.alt ?? 'Silveram collection – photograph coming soon'}
-              width={HERO.image?.width ?? 1}
-              height={HERO.image?.height ?? 1}
-              ratio="1 / 1"
-              tone="dark"
-              priority
-              sizes="(min-width: 1024px) 520px, 90vw"
-              placeholderLabel="Product photography coming soon"
-            />
-            <div className="absolute bottom-4 left-4 right-4 rounded-[2px] border border-white/10 bg-brand-primary/95 px-4 py-2.5">
-              <p className="type-caption flex items-center justify-between text-surface-primary">
-                <span className="font-semibold uppercase tracking-wider">Thoughtful gifting</span>
-                <span className="text-accent-silver">A considered collection</span>
-              </p>
-            </div>
-          </div>
+        <div ref={imageFrameRef} className="relative overflow-hidden lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1 lg:self-start">
+          <ImageSlot
+            src={image?.src}
+            fallbackSrc={image?.fallbackSrc}
+            srcSet={responsiveSrcSet(image?.src, HERO_WIDTHS)}
+            alt={image?.alt ?? 'Peacock Ring, photograph coming soon'}
+            width={image?.width ?? 922}
+            height={image?.height ?? 768}
+            ratio="6 / 5"
+            priority
+            sizes="(min-width: 1024px) 600px, calc(100vw - 2.5rem)"
+            placeholderLabel="Photograph coming soon"
+          />
         </div>
+
+        <nav aria-label="Pieces in the collection" className="border-t border-border lg:col-span-6 lg:row-start-2 lg:self-start">
+          <ul>
+            {PRODUCTS.map((product) => (
+              <li key={product.id}>
+                <a
+                  href={productPath(product)}
+                  className="flex min-h-12 items-baseline justify-between gap-4 border-b border-border py-3 text-text-primary transition-colors duration-200 hover:text-brand-primary"
+                >
+                  <span className="type-body font-medium">{product.name}</span>
+                  <span className="type-body tabular-nums text-text-secondary">
+                    {product.price === null ? 'Price on request' : formatINR(product.price)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </section>
   );

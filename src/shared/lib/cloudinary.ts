@@ -19,3 +19,13 @@ export function productImageUrl(
   const publicId = `${ROOT}/${ENV_FOLDER}/products/${sku.toLowerCase()}/${name}`;
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/f_auto,q_auto,c_limit,w_${width}/${publicId}`;
 }
+
+/**
+ * `srcset` for an image already built by productImageUrl(). Cloudinary URLs get one entry per
+ * width (c_limit means a width above the original photograph returns the original, never an
+ * upscaled copy). Returns undefined for local fallback paths, which have a single size.
+ */
+export function responsiveSrcSet(src: string | undefined, widths: readonly number[]): string | undefined {
+  if (!src || !src.includes('res.cloudinary.com') || !/\/w_\d+/.test(src)) return undefined;
+  return widths.map((width) => `${src.replace(/\/w_\d+/, `/w_${width}`)} ${width}w`).join(', ');
+}
