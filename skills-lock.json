@@ -1,11 +1,29 @@
 {
   "version": 1,
   "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "106acf230014cbb43ca34e6410371321b56ca742f9ee0442e8ec05bf02eb0384"
+    },
     "landing-page-design": {
       "source": "elayadesign/ai-design-skills",
       "sourceType": "github",
       "skillPath": "skills/landing-page-design/SKILL.md",
       "computedHash": "c4f760690439298d9ef3238534919ee3fd558a3345c414ff6c7e7acacd973a08"
+    },
+    "redesign-existing-projects": {
+      "source": "elayadesign/redesign-skill",
+      "sourceType": "github",
+      "skillPath": "skills/redesign-existing-projects/SKILL.md",
+      "computedHash": "43eb09c37ea47027914cc3f318fc645c7609bda3f9b698038a95da011783e72d"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
     }
   }
 }
