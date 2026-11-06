@@ -9,10 +9,9 @@ import AccountPage from '@/features/auth/components/AccountPage';
 import AuthPage from '@/features/auth/components/AuthPage';
 import { AuthProvider } from '@/features/auth/context/AuthContext';
 import CartPage from '@/features/cart/components/CartPage';
-import { CartProvider, useCart } from '@/features/cart/context/CartContext';
+import { CartProvider } from '@/features/cart/context/CartContext';
 import { useSignedInCartSync } from '@/features/cart/lib/syncCart';
 import OrderPage from '@/features/orders/components/OrderPage';
-import CartDrawer from '@/features/cart/components/CartDrawer';
 import { CheckoutProvider } from '@/features/checkout/context/CheckoutContext';
 import TrackOrderPage from '@/features/orders/components/TrackOrderPage';
 import PolicyPage from '@/features/policies/components/PolicyPage';
@@ -92,7 +91,6 @@ function HomePage() {
 
 function Storefront() {
   const route = useHashRoute();
-  const { setIsCartOpen } = useCart();
   useSignedInCartSync();
 
   return (
@@ -131,14 +129,8 @@ function Storefront() {
 
       <FooterSection />
 
-      <CartDrawer
-        onCheckout={() => {
-          setIsCartOpen(false);
-          window.location.hash = '#/checkout';
-        }}
-      />
-
-      <FloatingWhatsApp />
+      {/* Focused checkout: no floating chat button over the bag / checkout actions. */}
+      {!['cart', 'checkout', 'payment'].includes(route.name) && <FloatingWhatsApp />}
       <Toast />
     </>
   );

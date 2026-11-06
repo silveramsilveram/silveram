@@ -18,8 +18,11 @@ export default function CartPage() {
 
   return (
     <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <div className="page-container pb-16 pt-8 md:pb-24 md:pt-12">
-        <h1 className="type-h1">Your bag</h1>
+      <div className="page-container pb-32 pt-8 md:pb-24 md:pt-12">
+        <h1 className="type-h1">
+          Your bag
+          {itemCount > 0 && <span className="ml-3 text-lg font-normal text-text-muted">({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>}
+        </h1>
 
         {cart.length === 0 ? (
           <div className="mt-10 max-w-xl border border-border bg-surface-white p-8 text-center">
@@ -127,14 +130,29 @@ export default function CartPage() {
                 ) : (
                   <p className="type-caption text-text-muted">Checkout is opening soon.</p>
                 )}
-                <p className="type-caption text-center text-text-muted">
-                  Pay with <strong className="font-semibold text-text-secondary">cash on delivery</strong>. UPI and cards coming soon.
-                </p>
+                <ul className="space-y-1.5 border-t border-border pt-4 text-xs text-text-secondary">
+                  <li>✓ Cash on delivery: pay when your order arrives</li>
+                  <li>✓ Checkout as a guest, no account needed</li>
+                  <li>✓ Order confirmation sent by email</li>
+                  <li className="text-text-muted">UPI &amp; card payments coming soon</li>
+                </ul>
                 <a href="#/shop" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
                   Continue shopping
                 </a>
               </div>
             </aside>
+          </div>
+        )}
+
+        {cart.length > 0 && isCheckoutEnabled && (
+          <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-4 border-t border-border bg-surface-primary px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] lg:hidden">
+            <div>
+              <p className="text-xs text-text-muted">Total</p>
+              <p className="text-lg font-semibold tabular-nums text-brand-primary">{formatINR(subtotal)}</p>
+            </div>
+            <a href="#/checkout" className={buttonClasses('primary', 'lg', 'flex-1 max-w-56')}>
+              Checkout
+            </a>
           </div>
         )}
       </div>

@@ -158,7 +158,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 size="lg"
                 className="w-full"
                 disabled={!canBuy}
-                onClick={() => addToCart(product, false, quantity)}
+                onClick={() => addToCart(product, true, quantity)}
               >
                 Add to Cart
               </Button>

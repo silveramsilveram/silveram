@@ -19,12 +19,11 @@ interface CartContextType {
   cart: CartItem[];
   itemCount: number;
   subtotal: number;
-  addToCart: (product: Product, openCartAfter?: boolean, quantity?: number) => void;
+  /** `goToBag` redirects to the bag page after adding (Amazon / Flipkart style). */
+  addToCart: (product: Product, goToBag?: boolean, quantity?: number) => void;
   updateQuantity: (id: string, delta: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
-  isCartOpen: boolean;
-  setIsCartOpen: (open: boolean) => void;
   toastMessage: string | null;
   liveAnnouncement: string;
 }
@@ -78,7 +77,6 @@ function loadCart(): CartItem[] {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(loadCart);
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
 
@@ -105,7 +103,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addToCart = useCallback(
-    (product: Product, openCartAfter = false, quantity = 1) => {
+    (product: Product, goToBag = false, quantity = 1) => {
       const qty = Math.max(1, Math.min(MAX_ITEM_QUANTITY, Math.floor(quantity)));
       const next = toCartItem(product, qty);
       if (!next) {
@@ -115,7 +113,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const existing = cart.find((item) => item.id === product.id);
       if (existing && existing.quantity >= MAX_ITEM_QUANTITY) {
         announce(`Maximum ${MAX_ITEM_QUANTITY} of each item per order`);
-        if (openCartAfter) setIsCartOpen(true);
+        if (goToBag) window.location.hash = '#/cart';
         return;
       }
       setCart((prev) =>
@@ -128,7 +126,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           : [...prev, next],
       );
       announce(`${product.name} added to bag`);
-      if (openCartAfter) setIsCartOpen(true);
+      if (goToBag) window.location.hash = '#/cart';
     },
     [cart, announce],
   );
@@ -158,12 +156,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       updateQuantity,
       removeItem,
       clearCart,
-      isCartOpen,
-      setIsCartOpen,
       toastMessage,
       liveAnnouncement,
     }),
-    [cart, addToCart, updateQuantity, removeItem, clearCart, isCartOpen, toastMessage, liveAnnouncement],
+    [cart, addToCart, updateQuantity, removeItem, clearCart, toastMessage, liveAnnouncement],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

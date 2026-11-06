@@ -145,6 +145,34 @@ function OrderDetails({ order }: { order: Order }) {
         <p className="text-text-secondary sm:col-span-3">{status.detail}</p>
       </dl>
 
+      {order.status === 'placed_cod' && (
+        <section aria-labelledby="next-heading" className="mt-8 border border-border bg-surface-white p-6">
+          <h2 id="next-heading" className="type-h3">What happens next</h2>
+          <ol className="mt-4 space-y-4 text-sm">
+            {[
+              ['Order placed', 'We have received your order.', true],
+              ['We confirm with you', `We may call ${order.shipping.phone} to confirm your address.`, false],
+              ['Dispatched', 'Your parcel is packed and handed to the courier.', false],
+              ['Delivered, pay in cash', `Pay ${money(order.amountInPaise)} to the delivery partner.`, false],
+            ].map(([title, detail, done]) => (
+              <li key={String(title)} className="flex gap-3">
+                <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.65rem] ${done ? 'bg-brand-primary text-surface-primary' : 'border border-border-strong text-text-muted'}`}>
+                  {done ? '✓' : ''}
+                </span>
+                <span>
+                  <span className="block font-medium">{title}</span>
+                  <span className="text-text-muted">{detail}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-4 text-xs text-text-muted">
+            Save your order reference <span className="font-mono">{order.id}</span> and your email to track this order any time.{' '}
+            <a href="#/track" className="underline underline-offset-4">Track order</a>
+          </p>
+        </section>
+      )}
+
       <section aria-labelledby="items-heading" className="mt-8">
         <h2 id="items-heading" className="type-h3">
           Items

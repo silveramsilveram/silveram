@@ -1,6 +1,7 @@
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 
-export const isCheckoutEnabled = import.meta.env.VITE_CHECKOUT_ENABLED === 'true';
+/** On by default; switch off with VITE_CHECKOUT_ENABLED=false. The API also needs STORE_LIVE_CHECKOUT=true. */
+export const isCheckoutEnabled = import.meta.env.VITE_CHECKOUT_ENABLED !== 'false';
 /** Cash on delivery: on by default, switch off with VITE_COD_ENABLED=false. Must match COD_ENABLED on the API. */
 export const isCodEnabled = import.meta.env.VITE_COD_ENABLED !== 'false';
 export const isRazorpayEnabled = import.meta.env.VITE_RAZORPAY_ENABLED === 'true';

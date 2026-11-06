@@ -5,7 +5,7 @@ import { useCart } from '@/features/cart/context/CartContext';
 import { NAV_LINKS } from '../data/content';
 
 export default function Header() {
-  const { itemCount, setIsCartOpen } = useCart();
+  const { itemCount } = useCart();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -55,11 +55,10 @@ export default function Header() {
               {user ? 'Account' : 'Sign in'}
             </span>
           </a>
-          <button
-            type="button"
-            onClick={() => setIsCartOpen(true)}
+          <a
+            href="#/cart"
             className="group relative flex h-11 w-11 items-center justify-center rounded-[2px] text-brand-primary transition-colors hover:bg-surface-secondary active:scale-95"
-            aria-label={`Open shopping bag, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
+            aria-label={`Shopping bag, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
           >
             <BagIcon size={24} className="transition-transform group-hover:scale-105" />
             {itemCount > 0 && (
@@ -67,7 +66,7 @@ export default function Header() {
                 {itemCount}
               </span>
             )}
-          </button>
+          </a>
           <button
             ref={toggleRef}
             type="button"
