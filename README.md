@@ -2,7 +2,7 @@
 
 Silveram is an Indian silver gifting and jewellery storefront. The repository contains a React storefront and an Express API deployed together on Vercel. Appwrite provides backend authentication and application data; Cloudinary stores and delivers all product/site images and videos.
 
-> **Launch status:** the storefront is available at [silveram-peach.vercel.app](https://silveram-peach.vercel.app/). Email checkout, COD, Razorpay, and newsletter signup remain disabled by default. Configure Appwrite, Cloudinary, email, verified product/inventory facts, policies, and production environment variables before enabling any transactional feature.
+> **Launch status:** the storefront is available at [silveram.in](https://silveram.in/). Email checkout, COD, Razorpay, and newsletter signup remain disabled by default. Configure Appwrite, Cloudinary, email, verified product/inventory facts, policies, and production environment variables before enabling any transactional feature.
 
 ## Architecture
 

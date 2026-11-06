@@ -15,11 +15,11 @@ function TrustIcon({ id }: { id: string }) {
   };
 
   switch (id) {
-    case 'authenticity':
+    case 'selected':
       return (
         <svg {...props}>
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-          <path d="m9 12 2 2 4-4" />
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8.5 12.5 2.5 2.5 4.5-5" />
         </svg>
       );
     case 'transparency':
@@ -60,7 +60,7 @@ export default function TrustSection() {
             Why Choose Silveram
           </h2>
           <p className="type-body mt-3 text-text-secondary">
-            Thoughtfully crafted silver backed by verified authenticity, transparent specs, and attentive care.
+            A small, considered collection. We show a product detail only once it has been verified.
           </p>
         </div>
 
