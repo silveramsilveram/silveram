@@ -8,56 +8,65 @@ web
 
 ## Users
 
-Direct-to-consumer (D2C) Indian buyers, particularly Gen-Z and millennial shoppers, looking for authentic 925 sterling silver everyday pieces, style statements, and festive gifting. They shop on mobile and desktop, valuing visual polish, transparency in metal purity, quick WhatsApp interaction, and straightforward ordering.
+Direct-to-consumer Indian buyers, mainly Gen Z and millennials, who shop on mobile and want silver gifts and everyday statement pieces for festivals, weddings, anniversaries and housewarmings. They expect clear prices in rupees, honest product details, cash on delivery, and a quick way to ask a question. Many arrive from Instagram or WhatsApp, and some are local customers of the physical shop.
 
 ## Product Purpose
 
-Silveram is an e-commerce storefront showcasing curated 925 sterling silver jewellery. It bridges digital visual storytelling with trusted Indian purchasing habits: high-fidelity product galleries, clear purity and pricing transparency, and low-friction purchasing via WhatsApp communication or self-serve checkout.
+Silveram is an online storefront for a small, considered collection of silver gifting and jewellery (currently three pieces: Silver Frame, Silver Kada and Peacock Ring). The store lets a customer browse real photography, add pieces to a bag and place a cash-on-delivery order as a guest or with an account, without having to message anyone.
 
 ## Positioning
 
-Trendy, youth-centric silver jewellery combining playful, vibrant energy and modern kinetic motion with hallmarked 925 authenticity. Unlike traditional, heavy Indian jewellery houses or sterile generic e-commerce templates, Silveram delivers energetic, design-forward shopping tailored for young style-conscious collectors.
+An editorial, premium and youthful silver jewellery brand. Unlike heavy traditional jewellery houses or generic template stores, Silveram presents a few pieces the way a printed lookbook would: large photography, calm typography and plain, honest information. The brand has a real shop in Motihari, Bihar.
 
 ## Operating Context
 
-- Primary sales interaction: Hybrid channel — browsing online catalogue with direct WhatsApp ordering (`VITE_WHATSAPP_NUMBER`) and self-serve checkout options.
-- Market & Currency: Indian domestic market (INR ₹ pricing, Cash on Delivery, mobile-first responsive web).
-- Backend & Storage: Node/Express API with Appwrite for authentication and application data, Cloudinary for optimized image/video delivery.
+- **Market**: India only. Prices in INR. Mobile-first.
+- **How orders are placed**: on the website only. Customer flow is product, bag page, delivery details, payment, order confirmation. WhatsApp is **not** used to take orders.
+- **Payment**: **cash on delivery is the available method and the default.** UPI and debit/credit card (Razorpay) are shown as "Coming soon" until the payment gateway is approved and enabled. Online payment must stay disabled until then.
+- **Accounts**: optional. Guests check out with email, name, mobile (plus an optional alternate mobile), address, optional landmark, city, state and PIN code. Accounts use a passwordless email code.
+- **Support**: WhatsApp (+91 77669 11777) and Instagram (@silveram__) are customer-support and enquiry channels. The shop address is shown on the site.
+- **Platform**: React single-page storefront with hash routes, an Express API on Vercel, Appwrite for authentication and application data (orders, customers, products), Cloudinary for product images, and email through Mailjet when configured.
+- **Canonical domain**: https://silveram.in
 
 ## Capabilities and Constraints
 
 - Capabilities:
-  - Product catalogue display with purity, weight, dimensions, and high-resolution galleries.
-  - Cart drawer state management with item counts and price calculations.
-  - Verification & Checkout: Email OTP authentication, delivery details entry, COD selection, and Razorpay payment support.
-  - WhatsApp order message builder with prefilled item details and SKU references.
-  - Admin image uploads directly to Cloudinary via signed upload tokens.
+  - Product listing and detail pages with photo galleries and an image lightbox.
+  - Persistent shopping bag with quantity updates, shown on its own page.
+  - Guest or account checkout with cash on delivery, delivery-detail validation, order creation, confirmation page and email, order tracking by reference and email, and an account order history.
+  - Admin-side order status changes and Cloudinary image uploads through the API.
 - Constraints:
-  - Responsive web targeting mobile (primary viewport for Indian social/WhatsApp traffic) and desktop.
-  - Fast load performance with optimized media delivery.
+  - **Only verified product information may be shown.** The store has not supplied confirmed metal, purity, hallmarking, weight or dimensions for the current products, so none are displayed and none may be implied in copy or metadata.
+  - Store policies (shipping, returns, privacy, terms) are drafts pending the store's approval.
+  - Product photographs are limited in resolution (about 508 px and 922 by 768 px). They must not be upscaled. Higher-resolution originals are a documented future improvement.
+  - Routing uses URL hashes and stays that way for now. Individual product pages are not separately indexable by search engines; a separate technical SEO project is planned.
+  - Commerce behaviour (bag, checkout validation, COD, authentication, API) must be preserved during any redesign.
 
 ## Brand Commitments
 
 - Name: Silveram
-- Voice & Personality: Trendy, youth-centric, vibrant, confident, and playful with dynamic motion (GSAP), avoiding stuffy corporate or purely traditional heritage clichés while honoring silver authenticity.
-- Visual Language: Clean typography with expressive accents (League Spartan), high contrast, deliberate kinetic transitions, and high-polish metallic reflections.
+- Voice: calm, clear and quietly confident. Plain language in sentence case, specific rather than promotional, never exaggerated.
+- Visual language: editorial lookbook. Photography leads; League Spartan throughout; Midnight Navy, Ivory and Sterling Silver palette; flat surfaces; 2px corners; light theme only. See DESIGN.md.
 
 ## Evidence on Hand
 
-- Core code: React 19, TypeScript, Tailwind CSS v4, GSAP, Vite 8.
-- Catalogue structure: `src/features/products/data/products.ts` with defined product interfaces.
-- Copy & Sections: `src/features/storefront/data/content.ts` (Hero, Collection, Story, Gifting, Trust items, Policies).
-- Media system: Cloudinary signed uploads and transformations implemented in `server/src/storage/cloudinary/`.
+- Product data: `src/features/products/data/products.ts`.
+- Storefront copy: `src/features/storefront/data/content.ts`.
+- Design tokens: `src/styles/tokens.css` and DESIGN.md.
+- Real photography for all three pieces (Silver Frame: 6 photos, Silver Kada: 1, Peacock Ring: 2).
+- Store address and contact details in `src/shared/config/site.ts`.
 
 ## Product Principles
 
-1. **Energy with Authenticity**: Infuse youthful vibrancy and playful micro-interactions without ever compromising the seriousness of 925 metal purity and verified product truth.
-2. **Effortless Conversion**: Seamlessly support both quick WhatsApp conversational ordering and instant self-serve checkout.
-3. **Mobile-First Sensory Richness**: Prioritize rapid loading and fluid tactile gestures on mobile screens, where Indian e-commerce shoppers spend most of their time.
-4. **Transparent Simplicity**: Never conceal pricing, weight, or metal composition; eliminate unnecessary friction and ambiguity.
+1. **Photography first**: let the pieces be seen, at honest scale.
+2. **Honest information**: show only what is verified; say plainly when something is not yet confirmed.
+3. **Effortless ordering**: every step is its own clear page, guest checkout is always possible, and cash on delivery is the default.
+4. **Mobile first**: the bag, forms and checkout must work comfortably on a phone.
+5. **Quiet confidence**: restraint, space and consistency over decoration.
 
-## Accessibility & Inclusion
+## Accessibility and Inclusion
 
-- Adherence to WCAG AA contrast standards across light and dynamic surfaces.
-- Fully keyboard-accessible navigation, modals, and cart drawers with accessible focus management.
-- Semantic HTML tags for screen readers across all product listings, forms, and announcements.
+- WCAG AA: 4.5:1 for text, 3:1 for large text and UI component boundaries.
+- Full keyboard operation with a visible focus indicator, skip link, semantic landmarks, labelled form fields with inline errors, and announcements for bag changes.
+- Respect reduced-motion preferences.
+- Touch targets of at least 44px on mobile.
