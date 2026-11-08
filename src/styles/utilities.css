@@ -69,7 +69,8 @@
   .field {
     width: 100%;
     min-height: 2.75rem;
-    border: 1px solid var(--color-border-strong);
+    /* text-muted (#5e6471) keeps the outline above 3:1 on white and ivory; border-strong is only ~2.3:1. */
+    border: 1px solid var(--color-text-muted);
     border-radius: var(--radius-sm);
     background: var(--color-surface-white);
     padding: 0.625rem 0.75rem;

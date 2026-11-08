@@ -16,7 +16,7 @@ export default function FaqSection() {
             Frequently Asked Questions
           </h2>
           <p className="type-body mt-4 max-w-sm text-text-secondary leading-relaxed">
-            Everything you need to know about our silver purity, care guidelines, and ordering process.
+            Answers about our products, ordering and delivery.
           </p>
 
           {whatsappUrl && (

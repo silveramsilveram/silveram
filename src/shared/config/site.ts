@@ -36,7 +36,7 @@ const fullAddress = [...STORE_ADDRESS.lines, STORE_ADDRESS.locality, STORE_ADDRE
 
 export const SITE = {
   name: 'Silveram',
-  url: 'https://silveram-peach.vercel.app',
+  url: 'https://silveram.in',
   tagline: 'Timeless craft. Lasting meaning.',
   instagramUrl:
     readInstagramUrl(import.meta.env.VITE_INSTAGRAM_URL) ?? 'https://www.instagram.com/silveram__',

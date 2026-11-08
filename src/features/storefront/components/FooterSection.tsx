@@ -145,7 +145,7 @@ export default function FooterSection() {
                   value={newsletterEmail}
                   onChange={(event) => setNewsletterEmail(event.target.value)}
                   placeholder="Email address"
-                  className="min-w-0 flex-1 rounded-[2px] border border-accent-silver/50 bg-transparent px-3 py-2 text-sm text-surface-primary placeholder:text-surface-primary/60"
+                  className="min-w-0 flex-1 rounded-[2px] border border-accent-silver bg-transparent px-3 py-2 text-sm text-surface-primary placeholder:text-surface-primary/60"
                 />
                 <button
                   type="submit"
