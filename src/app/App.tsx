@@ -52,7 +52,7 @@ function HomePage() {
     setStructuredData({
       '@context': 'https://schema.org',
       '@type': 'JewelryStore',
-      name: SITE.name,
+      name: SITE.legalName,
       url: SITE.url,
       telephone: '+917766911777',
       sameAs: [SITE.instagramUrl],

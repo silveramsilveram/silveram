@@ -32,10 +32,15 @@ const STORE_ADDRESS = {
   country: 'IN',
 } as const;
 
+const STORE_CONTACT_EMAIL = 'silveramsilveram@gmail.com';
+const STORE_CONTACT_PHONE = '+91 77669 11777';
+
 const fullAddress = [...STORE_ADDRESS.lines, STORE_ADDRESS.locality, STORE_ADDRESS.region, STORE_ADDRESS.postalCode].join(', ');
 
 export const SITE = {
   name: 'Silveram',
+  legalName: 'RANJAN JEWER MAHAL',
+  ownerName: 'ADITYA RANJAN',
   url: 'https://silveram.in',
   tagline: 'Timeless craft. Lasting meaning.',
   instagramUrl:
@@ -44,8 +49,9 @@ export const SITE = {
   address: STORE_ADDRESS,
   fullAddress,
   /** Opens Google Maps directions to the shop. */
-  directionsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`Silveram, ${fullAddress}`)}`,
+  directionsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`RANJAN JEWER MAHAL, ${fullAddress}`)}`,
   /** The shop's Google share link. */
   googleListingUrl: 'https://share.google/5Q2kGLPzUP73IbaxY',
-  contactEmail: readEmail(import.meta.env.VITE_CONTACT_EMAIL),
+  contactPhone: STORE_CONTACT_PHONE,
+  contactEmail: readEmail(import.meta.env.VITE_CONTACT_EMAIL) ?? STORE_CONTACT_EMAIL,
 } as const;
