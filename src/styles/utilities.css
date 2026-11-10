@@ -6,6 +6,13 @@
     font-weight: 500;
     letter-spacing: -0.02em;
   }
+  /* Display scale tuned for the half-width hero column: same weight, leading and tracking as type-display. */
+  .type-hero {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 1.02;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
   .type-h1 {
     font-size: clamp(2.25rem, 5.5vw, 3.75rem);
     line-height: 1.05;

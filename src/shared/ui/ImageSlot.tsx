@@ -10,6 +10,8 @@ interface ImageSlotProps {
   ratio?: string;
   /** Eager + high priority for above-the-fold images. */
   priority?: boolean;
+  /** Responsive candidates for `src` (not applied to `fallbackSrc`). */
+  srcSet?: string;
   sizes?: string;
   /** "cover" crops to fill the frame; "contain" shows the whole photograph on a stone mat. */
   fit?: 'cover' | 'contain';
@@ -34,6 +36,7 @@ export default function ImageSlot({
   height,
   ratio,
   priority = false,
+  srcSet,
   sizes,
   fit = 'cover',
   className = '',
@@ -60,6 +63,7 @@ export default function ImageSlot({
       {showImage ? (
         <img
           src={imageSrc}
+          srcSet={imageSrc === src ? srcSet : undefined}
           alt={alt}
           width={width}
           height={height}

@@ -1,6 +1,6 @@
 ---
 name: Silveram
-description: Midnight Silver design tokens and visual language for authentic 925 sterling silver jewellery
+description: Midnight Silver design tokens and editorial lookbook visual language for Silveram silver gifting and jewellery
 colors:
   brand-primary: "#182d49"
   brand-primary-hover: "#243f63"
@@ -94,93 +94,115 @@ components:
 
 ## Overview
 
-Silveram's design language couples the restrained sophistication of fine jewellery with dynamic, youth-centric energy and kinetic motion. The palette is centered around deep **Midnight Navy** (`#182d49`), soft warm **Ivory** (`#f8f7f4`), and refined **Sterling Silver** accents (`#a7adb5`). Sharp, architectural 2px corners and geometric typography give the brand a modern, editorial silhouette distinct from both generic e-commerce templates and traditional bridal gold portals.
+Silveram is a small, considered collection of silver gifting and jewellery, sold from a physical shop in Motihari, Bihar and online across India. The interface is an **editorial lookbook**: photography leads, the interface stays quiet, and every page reads like a printed catalogue page for a few pieces rather than a marketplace template.
+
+The palette is **Midnight Navy** (`#182d49`), warm **Ivory** (`#f8f7f4`) and **Sterling Silver** (`#a7adb5`). Sharp 2px corners, flat surfaces and hairline borders give a precise, contemporary look. The audience is young Indian buyers (Gen Z and millennials) shopping mostly on mobile, so the tone is premium and calm, never loud, with confidence coming from space, scale and photography.
+
+Light theme only.
 
 ## Colors
 
-The palette is strictly intentional and restrained. Contrast is achieved through light and dark blocks rather than multi-color saturation.
+The palette is restrained. Contrast comes from ivory, stone and navy bands, not from saturation.
 
-- **Brand & Primary Interactive**:
-  - `brand-primary` (`#182d49`): Deep Midnight Navy. The anchor of all primary actions, key headlines, and dark showcase sections.
-  - `brand-primary-hover` (`#243f63`): Elevated navy on hover.
-  - `brand-primary-active` (`#101f34`): Compressed navy for active/pressed states.
-- **Surfaces**:
-  - `surface-primary` (`#f8f7f4`): Warm Ivory background, softening pure white glare.
-  - `surface-secondary` (`#eeece7`): Soft Stone for contrast cards, filter bars, and alternating section bands.
-  - `surface-white` (`#ffffff`): Pure white reserved for product image stages, modal sheets, and form fields.
-- **Text & Editorial**:
-  - `text-primary` (`#20232b`): Near-black charcoal for primary readability.
-  - `text-secondary` (`#4a4f5c`): Medium charcoal for secondary descriptions and specs.
-  - `text-muted` (`#5e6471`): Subtle gray for timestamps, breadcrumbs, and disabled states.
-- **Accents & Metals**:
-  - `accent-silver` (`#a7adb5`): Sterling silver tone used for refined dividers, subtle borders, and specular highlight simulations.
-  - `border` (`#d9dadc`): Soft neutral container outline.
-  - `border-strong` (`#a7adb5`): High-definition boundary line.
-- **Feedback**:
-  - `danger` (`#9b2c2c`): Reserved exclusively for errors and stock depletion alerts. Never used decoratively.
+- **Brand and primary interactive**
+  - `brand-primary` (`#182d49`): primary actions, key headings, and the two dark moments on the page (the gifting band and the footer).
+  - `brand-primary-hover` (`#243f63`), `brand-primary-active` (`#101f34`): hover and pressed states.
+- **Surfaces**
+  - `surface-primary` (`#f8f7f4`): the page background.
+  - `surface-secondary` (`#eeece7`): the mat behind photographs and alternate bands.
+  - `surface-white` (`#ffffff`): form fields, order summaries and sheets.
+- **Text**
+  - `text-primary` (`#20232b`), `text-secondary` (`#4a4f5c`), `text-muted` (`#5e6471`).
+- **Lines and accents**
+  - `border` (`#d9dadc`): hairlines and dividers.
+  - `border-strong` / `accent-silver` (`#a7adb5`): decorative hairlines and silver on navy only. It is about 2.3:1 on white, so it must **not** be the only visible edge of a form control or other interactive component. Fields use `text-muted` for their outline.
+- **Feedback**
+  - `danger` (`#9b2c2c`): errors and stock problems only.
+
+Contrast rule: body text 4.5:1 or better, large text and UI component boundaries 3:1 or better (WCAG AA). Silver is never used as text on ivory.
 
 ## Typography
 
-A single font family—**League Spartan**—powers the entire interface across display, body, and UI controls. Its clean geometric sans-serif geometry provides both bold editorial punch in headings and crisp, readable micro-copy.
+League Spartan is the only typeface, used at every level.
 
-- **Display & Headings**:
-  - `type-display`: `clamp(2.75rem, 7.5vw, 5rem)`, weight 500, line-height 1.02, letter-spacing `-0.02em`. Used for editorial hero statements.
-  - `type-h1`: `clamp(2.25rem, 5.5vw, 3.75rem)`, weight 500, line-height 1.05. Primary page banners.
-  - `type-h2`: `clamp(1.875rem, 4vw, 3rem)`, weight 500, line-height 1.1. Section headings.
-  - `type-h3`: `clamp(1.375rem, 2.4vw, 2rem)`, weight 500, line-height 1.2. Product titles and card headers.
-- **Body & Controls**:
-  - `type-body-lg`: `1.125rem`, line-height 1.6, weight 400. Introductory paragraphs and lead copy.
-  - `type-body`: `1rem`, line-height 1.65, weight 400. Descriptions, product details, specs.
-  - `type-caption`: `0.8125rem`, line-height 1.5, weight 400. Disclaimers, dimensions, delivery notices.
-  - `type-eyebrow`: `0.75rem`, weight 600, letter-spacing `0.22em`, uppercase. Category markers and section badges.
+- `type-display`: `clamp(2.75rem, 7.5vw, 5rem)`, weight 500. The hero headline only.
+- `type-h1` to `type-h3`: page and section headings, weight 500.
+- `type-body-lg`, `type-body`: weight 400. Keep line length under about 70 characters.
+- `type-caption`: `0.8125rem`. Fine print and helper text.
+- `type-eyebrow`: kept as a token for footer column titles only. **Do not place an eyebrow label above a heading.**
+
+Casing: **sentence case** for headings, buttons, navigation and labels ("Shop the collection", "Add to bag"). No all-caps button labels. No italics. No weights above semibold.
 
 ## Layout
 
-- **Page Container**: Max-width `80rem` (1280px) centered with responsive padding (`1.25rem` mobile, `2.5rem` desktop).
-- **Rhythm & Sections**: Section padding alternates consistently with `4rem` (mobile) to `6rem` (desktop) vertical breathing room (`.section-pad`).
-- **Product Grids**:
-  - Mobile: Single or 2-column compact grid with tap-friendly touch targets.
-  - Tablet/Desktop: 3-column asymmetric or balanced showcase grid.
-- **Navigation & Sticky Shells**: Fixed top banner with announcement ribbon and quick-access Cart drawer.
+- **Container**: max width `80rem`, side padding `1.25rem` on mobile and `2.5rem` from 768px.
+- **Grid**: 12 columns on desktop with deliberately asymmetric spans. Headings are left-aligned; avoid a centred header over every section.
+- **Collection**: three staggered editorial bands (a different photo scale and side for each piece), not a repeated three-column card grid.
+- **Rhythm**: section padding `4rem` mobile and `6rem` desktop. Vary the scale of photographs between sections.
+- **Pages, not drawers**: the bag, delivery details, payment and order confirmation are each their own page. Navigation uses hash routes (`#/cart`, `#/checkout`, `#/checkout/payment`, `#/order/<id>`).
 
-## Elevation & Depth
+## Elevation and depth
 
-- **Flat & Precise**: Avoid generic muddy drop-shadows. Elevation is conveyed primarily through high-contrast boundary borders (`border` and `border-strong`) and crisp surface tint shifts.
-- **Silver Lighting (`.silver-light`)**: Subtle radial metallic silver illuminations on navy backgrounds simulating specular reflections on polished silver.
-- **Overlays**: Soft darkened backdrop blur (`backdrop-blur-sm bg-black/40`) for the cart drawer and authentication dialogs.
+Flat. Depth comes from 1px borders and surface shifts between ivory, stone and navy.
+
+- No gradients, including text gradients and radial "light" effects on the hero or navy sections.
+- No glass or blur as decoration, and no floating pill navigation.
+- Avoid shadows; where one is needed it must be subtle and offset, never a coloured halo.
+- Modal overlays (the image lightbox, sign-in dialogs) use a solid dimmed backdrop.
 
 ## Shapes
 
-- **Corner Radii**: Strictly sharp and architectural (`2px` / `--radius-sm`).
-- **No Pill Buttons**: Buttons and input fields maintain straight, disciplined edges to evoke the precision of cut metals.
+- Corner radius is `2px` everywhere.
+- **No pill buttons and no round badges.** Counts and tags use 2px-radius rectangles.
+- *Known deviations to migrate*: round step indicators in checkout, round badges on the bag count and payment options, and the round floating WhatsApp button still use fully rounded shapes.
+
+## Photography
+
+Photography is the product. Use only the store's real photographs, never generated or stock jewellery images.
+
+- Show each photograph at or below its native resolution. Current sources are about 508 px wide (Silver Frame) and 922 by 768 px (Silver Kada, Peacock Ring). Do not upscale; display widths should stay at or below about 480 px for the frame and about 700 px for the others.
+- Serve images through Cloudinary with `f_auto,q_auto,c_limit` and responsive `srcset` widths so phones do not download desktop sizes.
+- Choose an explicit crop and focus point per photograph rather than a single global aspect ratio.
+- Higher-resolution originals would most improve the hero, the product-page zoom and the frame photographs.
 
 ## Components
 
-- **Buttons**:
-  - Primary: Midnight Navy background with Ivory text, sharp 2px corners, uppercase or tracking typography, expanding smoothly on hover (`--color-brand-primary-hover`).
-  - Secondary/Outline: Transparent background with `border-strong` border and charcoal text.
-  - WhatsApp CTA: Bold button featuring brand contrast with green badge icon accent or WhatsApp logo.
-- **Product Card**:
-  - Clean photographic stage with aspect ratio 1:1 or 4:5.
-  - Hover reveals secondary angle or gentle scale with GSAP kinetic polish.
-  - Price rendered prominently in INR (`₹`) with purity badge ("925 Silver").
-- **Cart Drawer**:
-  - Slide-over panel anchored to the right viewport edge.
-  - Line-item breakdown with quantity adjusters, subtotal, and dual checkout actions (Instant WhatsApp Order vs. Direct Checkout).
-- **Form Fields (`.field`)**:
-  - Clean white background, 1px border (`border-strong`), crisp focus ring with 2px solid Midnight Navy.
+- **Buttons**: primary is navy with ivory text and 2px corners, in sentence case, semibold. Secondary is an outlined navy button. One primary action per view. Hover darkens to `brand-primary-hover`; every button has visible focus, pressed and disabled states.
+- **Product card (shop and related items)**: a photograph on a stone mat with no nested borders, a fixed crop, the product name, the price, and one text link. "Add to bag" is secondary.
+- **Bag page**: item list with quantity steppers, a summary with a primary "Proceed to checkout" button, and a sticky total and checkout bar on mobile.
+- **Checkout**: step indicator (bag, details, payment, confirmation), one inline error per field with the first invalid field focused, a collapsible order summary on mobile, and a payment step.
+- **Payment options**: cash on delivery is the available method and is selected by default. UPI and debit/credit card are shown as "Coming soon" and cannot be selected until a gateway is approved and enabled.
+- **Form fields (`.field`)**: white background, 1px `text-muted` outline, 2px navy focus ring.
+- **Order confirmation**: reference number, status, items, delivery address, payment method and a "what happens next" timeline.
+- **WhatsApp**: a customer-support channel for questions about a piece, gifting or an order. It is **not** an ordering channel and never appears as a checkout action.
 
-## Do's and Don'ts
+## Motion
+
+Use motion sparingly and only where it communicates something. Respect `prefers-reduced-motion` (show final states with no movement).
+
+- **Hero entrance**: one authored reveal of the hero photograph. Content must be visible without waiting for the animation.
+- **Tagline reveal**: one large statement whose words darken one at a time as they scroll into view.
+- **Feedback**: hover, press, "added to bag" and gallery transitions. Animate `transform` and `opacity`; list transition properties explicitly (never `transition: all`).
+- Do not add a fade-up entrance to every section.
+
+## Content rules
+
+- Use **only verified facts**. Metal, purity, hallmarking, weight and dimensions are shown on a product only once the store has confirmed them. Do not state "925", "sterling" or similar unless it is verified for that product.
+- Do not invent testimonials, statistics, guarantees, delivery times or policies. Policy text is draft until the store approves it.
+- Say "bag" consistently (add to bag, your bag).
+- Errors say what went wrong and how to fix it. Calm tone, no exclamation marks.
+
+## Do's and don'ts
 
 ### Do
-- Pair rich photography of polished silver against clean Ivory or deep Midnight Navy.
-- Maintain League Spartan across all UI levels to preserve typographic harmony.
-- Keep micro-interactions snappy, tactile, and purposeful using GSAP.
-- Make metal purity (925 sterling silver) immediately clear on every product representation.
+- Let the photograph be the largest thing on the page, and vary its scale.
+- Keep League Spartan, the 2px radius and the palette exactly as defined.
+- Make the next step obvious on every page, especially in the bag and checkout.
+- Keep everything usable by keyboard with a visible focus indicator.
 
 ### Don't
-- Don't use generic purple/blue gradients or neon aesthetic accents.
-- Don't use round pill buttons or bubbly curved cards (`rounded-2xl`, `rounded-full`).
-- Don't bury WhatsApp order actions or force mandatory account creation before browsing.
-- Don't clutter product gallery viewports with aggressive discount badges or faux timers.
-
+- No gradients, glassmorphism, floating pill navigation, decorative floating elements or heavy shadows.
+- No repeated three-card grids, icon-card feature blocks or identical entrance animations.
+- No uppercase button labels, eyebrow labels above headings, or italics.
+- No unverified product, purity or commercial claims.
+- Do not force account creation before checkout; guest checkout stays available.

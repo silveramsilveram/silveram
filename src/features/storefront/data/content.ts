@@ -4,14 +4,12 @@
  */
 export const NAV_LINKS = [
   { label: 'Shop', href: '#/shop' },
-  { label: 'Collection', href: '#collection' },
-  { label: 'Categories', href: '#categories' },
-  { label: 'Our Story', href: '#story' },
+  { label: 'Our story', href: '#story' },
   { label: 'Gifting', href: '#gifting' },
   { label: 'Contact', href: '#contact' },
 ] as const;
 
-export const ANNOUNCEMENT = 'Thoughtfully selected gifting & jewellery · Cash on delivery across India · UPI & cards coming soon';
+export const ANNOUNCEMENT = 'Cash on delivery across India';
 
 import { productImageUrl } from '@/shared/lib/cloudinary';
 
@@ -24,27 +22,16 @@ interface Img {
 }
 
 export const HERO = {
-  eyebrow: 'Silver gifting & jewellery',
   heading: 'Small keepsakes. Lasting meaning.',
   description:
     'A devotional frame, patterned bangles and a peacock-inspired ring, thoughtfully chosen for meaningful occasions.',
-  image: {
-    src: productImageUrl('SV-001', 'silver-frame-01', 1400, '/images/products/silver-frame-01.webp'),
-    fallbackSrc: '/images/products/silver-frame-01.webp',
-    width: 508,
-    height: 508,
-    alt: 'Lakshmi and Ganesha devotional frame on royal blue velvet',
-  } as Img,
+  /** The hero photograph is the first Peacock Ring image in products.ts. */
+  productId: 'product-3',
 };
 
 export const COLLECTION = {
-  heading: 'Three Pieces. Endless Meaning.',
+  heading: 'Three pieces. Endless meaning.',
   description: 'A carefully curated selection, each piece chosen for gifting, festivals and everyday celebration.',
-};
-
-export const CATEGORIES_SECTION = {
-  heading: 'Shop by category',
-  description: 'From the home temple to the wrist and the hand.',
 };
 
 export const STORY = {

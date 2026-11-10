@@ -16,7 +16,7 @@ export default function FooterSection() {
   const [newsletterBusy, setNewsletterBusy] = useState(false);
   const [newsletterMessage, setNewsletterMessage] = useState('');
   const whatsappUrl = buildWhatsAppUrl(buildGeneralMessage());
-  const hasContact = Boolean(whatsappUrl || SITE.instagramUrl || SITE.contactEmail);
+  const hasContact = Boolean(whatsappUrl || SITE.instagramUrl || SITE.contactEmail || SITE.contactPhone);
 
   async function submitNewsletter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,8 +81,10 @@ export default function FooterSection() {
         <div>
           <h2 className="type-eyebrow text-accent-silver">Visit &amp; contact</h2>
           <address className="type-body mt-3 not-italic text-surface-primary/80">
-            <strong className="font-semibold text-surface-primary">Silveram</strong>
+            <strong className="font-semibold text-surface-primary">{SITE.legalName}</strong>
             <br />
+            {SITE.ownerName && <span>Owner: {SITE.ownerName}</span>}
+            {SITE.ownerName && <><br /></>}
             {SITE.address.lines.map((line) => (
               <span key={line}>
                 {line}
@@ -113,6 +115,13 @@ export default function FooterSection() {
                 <a href={SITE.instagramUrl} target="_blank" rel="noopener noreferrer" className={`${linkClass} gap-2`}>
                   <InstagramIcon size={18} /> {SITE.instagramHandle}
                   <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </li>
+            )}
+            {SITE.contactPhone && (
+              <li>
+                <a href={`tel:${SITE.contactPhone.replace(/\s+/g, '')}`} className={linkClass}>
+                  {SITE.contactPhone}
                 </a>
               </li>
             )}

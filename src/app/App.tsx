@@ -18,7 +18,6 @@ import PolicyPage from '@/features/policies/components/PolicyPage';
 import ShopPage from '@/features/shop/ShopPage';
 import ProductPage from '@/features/products/components/ProductPage';
 import AnnouncementBar from '@/features/storefront/components/AnnouncementBar';
-import CategoriesSection from '@/features/storefront/components/CategoriesSection';
 import CollectionSection from '@/features/storefront/components/CollectionSection';
 import CraftsmanshipSection from '@/features/storefront/components/CraftsmanshipSection';
 import FaqSection from '@/features/storefront/components/FaqSection';
@@ -53,7 +52,7 @@ function HomePage() {
     setStructuredData({
       '@context': 'https://schema.org',
       '@type': 'JewelryStore',
-      name: SITE.name,
+      name: SITE.legalName,
       url: SITE.url,
       telephone: '+917766911777',
       sameAs: [SITE.instagramUrl],
@@ -79,7 +78,6 @@ function HomePage() {
     <main id="main-content" tabIndex={-1} ref={rootRef} className="focus:outline-none">
       <HeroSection />
       <CollectionSection />
-      <CategoriesSection />
       <StorySection />
       <CraftsmanshipSection />
       <GiftingSection />
