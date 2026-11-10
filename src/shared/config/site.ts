@@ -39,8 +39,8 @@ const fullAddress = [...STORE_ADDRESS.lines, STORE_ADDRESS.locality, STORE_ADDRE
 
 export const SITE = {
   name: 'Silveram',
-  legalName: 'RANJAN JEWER MAHAL',
-  ownerName: 'ADITYA RANJAN',
+  legalName: 'Ranjan Jewer Mahal',
+  ownerName: 'Aditya Ranjan',
   url: 'https://silveram.in',
   tagline: 'Timeless craft. Lasting meaning.',
   instagramUrl:
@@ -49,7 +49,7 @@ export const SITE = {
   address: STORE_ADDRESS,
   fullAddress,
   /** Opens Google Maps directions to the shop. */
-  directionsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`RANJAN JEWER MAHAL, ${fullAddress}`)}`,
+  directionsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${'Ranjan Jewer Mahal'}, ${fullAddress}`)}`,
   /** The shop's Google share link. */
   googleListingUrl: 'https://share.google/5Q2kGLPzUP73IbaxY',
   contactPhone: STORE_CONTACT_PHONE,
