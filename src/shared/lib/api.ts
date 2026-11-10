@@ -4,7 +4,8 @@ const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/+$/,
 export const isCheckoutEnabled = import.meta.env.VITE_CHECKOUT_ENABLED !== 'false';
 /** Cash on delivery: on by default, switch off with VITE_COD_ENABLED=false. Must match COD_ENABLED on the API. */
 export const isCodEnabled = import.meta.env.VITE_COD_ENABLED !== 'false';
-export const isRazorpayEnabled = import.meta.env.VITE_RAZORPAY_ENABLED === 'true';
+/** Cashfree (UPI / QR / cards). Keep in step with CASHFREE_ENABLED on the API. */
+export const isCashfreeEnabled = import.meta.env.VITE_CASHFREE_ENABLED === 'true';
 /** Dummy "test card" payment option. Keep in step with PAYMENT_TEST_MODE on the API. */
 export const isTestPaymentEnabled = import.meta.env.VITE_TEST_PAYMENT_ENABLED === 'true';
 export const isNewsletterEnabled = import.meta.env.VITE_NEWSLETTER_ENABLED === 'true';

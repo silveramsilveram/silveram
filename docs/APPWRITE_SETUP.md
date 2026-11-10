@@ -35,7 +35,7 @@ The JSON attribute sizes are intentionally bounded to fit Appwrite Cloud collect
 | `rate_limits` | Shared per-window API limits | Hashed action/identity key, fixed window start and atomic counter |
 | `products` | Catalog and inventory | SKU, text, category, price in paise, active state, stock, Cloudinary reference JSON |
 | `orders` | Order and payment records | Owner/email, status, amount, item and shipping snapshots, payment references |
-| `webhook_events` | Razorpay webhook idempotency | Hashed document ID, provider event ID/type and received timestamp |
+| `webhook_events` | Cashfree webhook idempotency | Hashed document ID, provider event ID/type and received timestamp |
 | `email_claims` | Order confirmation send claims | Order ID, claim timestamp and sent timestamp |
 
 Database numeric timestamps are Unix milliseconds. Orders store item and shipping snapshots as JSON strings to keep private, nested customer/order data in Appwrite. Product image metadata is JSON; the image/video binaries themselves belong only in Cloudinary.
@@ -43,7 +43,7 @@ Database numeric timestamps are Unix milliseconds. Orders store item and shippin
 ## 3. Appwrite access model
 
 - Keep all collections private (`permissions: []`, document security off); only server API keys access them.
-- Do not put an Appwrite API key, Cloudinary API secret, Mailjet secret, Razorpay secret, OTP pepper, or session token in a `VITE_*` setting.
+- Do not put an Appwrite API key, Cloudinary API secret, Mailjet secret, Cashfree secret, OTP pepper, or session token in a `VITE_*` setting.
 - Use a separate temporary setup key from the runtime API key. Revoke the setup key after provisioning.
 - Restrict `ADMIN_EMAILS` to the exact normalized staff email addresses. Never trust a client-supplied role.
 - Enable Appwrite’s built-in MFA for project owners/admins and use unique operator accounts. Protect project and API-key access with MFA.
@@ -63,9 +63,9 @@ Set `OTP_PEPPER` to a cryptographically random value of at least 32 bytes. Keep 
 
 Run `npm --prefix server run seed:catalog` after schema setup. Starter products are created inactive with zero stock. This script does not activate products or replace images/stock on an active product.
 
-The server validates order quantities and re-reads current product price/stock from Appwrite. Order creation and inventory reservation use Appwrite database transactions; stock restoration on cancellation/expired reservation is also transactional. Checkout remains disabled unless `STORE_LIVE_CHECKOUT=true`, the frontend checkout feature flag is enabled, and transactional email is configured. Razorpay has additional independent gates. Keep both off until staging workflows are fully verified.
+The server validates order quantities and re-reads current product price/stock from Appwrite. Order creation and inventory reservation use Appwrite database transactions; stock restoration on cancellation/expired reservation is also transactional. Checkout remains disabled unless `STORE_LIVE_CHECKOUT=true`, the frontend checkout feature flag is enabled, and transactional email is configured. Cashfree has additional independent gates. Keep both off until staging workflows are fully verified.
 
-The local/long-running Node server starts reservation and email retry sweepers. Vercel serverless functions do not keep background timers alive. COD does not require the Razorpay reservation sweeper, but do not enable Razorpay on Vercel until a Vercel Cron or Appwrite scheduled function has been deployed and verified for expiry/email retries.
+The local/long-running Node server starts reservation and email retry sweepers. Vercel serverless functions do not keep background timers alive. COD does not require the Cashfree reservation sweeper, but do not enable Cashfree on Vercel until a Vercel Cron or Appwrite scheduled function has been deployed and verified for expiry/email retries.
 
 ## 6. Cloudinary media and Appwrite Storage
 

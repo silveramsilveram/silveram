@@ -4,12 +4,12 @@ import { useCart } from '@/features/cart/context/CartContext';
 import { rememberGuestOrder, saveLastOrder } from '@/features/orders/storage';
 import type { Order } from '@/features/orders/types';
 import { orderPath } from '@/shared/hooks/useHashRoute';
-import { apiRequest, isCheckoutEnabled, isCodEnabled, isRazorpayEnabled, isTestPaymentEnabled } from '@/shared/lib/api';
+import { apiRequest, isCashfreeEnabled, isCheckoutEnabled, isCodEnabled, isTestPaymentEnabled } from '@/shared/lib/api';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import Button, { buttonClasses } from '@/shared/ui/Button';
 import { useCheckout } from '../context/CheckoutContext';
-import { loadRazorpay } from '../lib/razorpay';
+import { openCashfreeCheckout } from '../lib/cashfree';
 import { CheckoutFrame } from './CheckoutLayout';
 import {
   DECLINE_CARD,
@@ -23,7 +23,7 @@ import {
   type TestCard,
 } from './TestCardPanel';
 
-type PayOption = 'cod' | 'upi' | 'card' | 'razorpay';
+type PayOption = 'cod' | 'upi' | 'card' | 'cashfree';
 
 interface OrderResponse {
   order: Order;
@@ -31,12 +31,12 @@ interface OrderResponse {
   amountInPaise: number;
   currency: 'INR';
   status: string;
-  razorpayOrderId?: string;
-  razorpayKeyId?: string;
+  cashfreePaymentSessionId?: string;
+  cashfreeMode?: 'sandbox' | 'production';
 }
 
 /** Online payment (UPI / cards) is not approved yet: it shows as "Coming soon" until a gateway is switched on. */
-const onlineAvailable = isRazorpayEnabled || isTestPaymentEnabled;
+const onlineAvailable = isCashfreeEnabled || isTestPaymentEnabled;
 
 /** Checkout page 2 of 2: choose how to pay. Cash on delivery is primary; UPI and cards are coming soon. */
 export default function CheckoutPaymentPage() {
@@ -44,7 +44,7 @@ export default function CheckoutPaymentPage() {
   const { cart, subtotal, clearCart } = useCart();
   const { info, clearInfo } = useCheckout();
 
-  const [option, setOption] = useState<PayOption>(isCodEnabled ? 'cod' : isTestPaymentEnabled ? 'upi' : 'razorpay');
+  const [option, setOption] = useState<PayOption>(isCodEnabled ? 'cod' : isCashfreeEnabled ? 'cashfree' : 'upi');
   const [upiId, setUpiId] = useState(SUCCESS_UPI);
   const [card, setCard] = useState<TestCard>({ number: SUCCESS_CARD, expiry: '12/34', cvv: '123' });
   const [busy, setBusy] = useState(false);
@@ -115,7 +115,7 @@ export default function CheckoutPaymentPage() {
       country: 'IN' as const,
     };
     const items = cart.map(({ id, quantity }) => ({ id, quantity }));
-    const paymentMethod = option === 'cod' ? 'cod' : option === 'razorpay' ? 'razorpay' : 'test';
+    const paymentMethod = option === 'cod' ? 'cod' : option === 'cashfree' ? 'cashfree' : 'test';
     const paymentChannel = option === 'upi' || option === 'card' ? option : undefined;
     const requestId = requestIdFor(JSON.stringify([paymentMethod, paymentChannel, email, customer, items]));
 
@@ -139,6 +139,25 @@ export default function CheckoutPaymentPage() {
         return;
       }
 
+      if (paymentMethod === 'cashfree') {
+        if (!placed.cashfreePaymentSessionId) {
+          throw new Error('The payment provider is not configured. Please contact the store.');
+        }
+        await openCashfreeCheckout(placed.cashfreePaymentSessionId, placed.cashfreeMode ?? 'production');
+        // The popup closing is not proof of payment: the server asks Cashfree before confirming.
+        const checked = await apiRequest<{ success: boolean; order: Order }>(
+          `/orders/${encodeURIComponent(placed.orderId)}/verify-cashfree`,
+          { method: 'POST', body: JSON.stringify(user ? {} : { email }) },
+        );
+        if (checked.success) {
+          complete(checked.order);
+          return;
+        }
+        setError('We have not received your payment yet. If money was deducted, do not pay again: it will confirm automatically, or contact the store. Otherwise you can try again.');
+        setBusy(false);
+        return;
+      }
+
       if (paymentMethod === 'test') {
         const declined = option === 'upi' ? upiId.toLowerCase() === DECLINE_UPI : card.number === DECLINE_CARD;
         const result = await apiRequest<{ order: Order }>(`/orders/${encodeURIComponent(placed.orderId)}/test-payment`, {
@@ -149,38 +168,7 @@ export default function CheckoutPaymentPage() {
         return;
       }
 
-      if (!placed.razorpayOrderId || !placed.razorpayKeyId) {
-        throw new Error('The payment provider is not configured. Please contact the store.');
-      }
-      await loadRazorpay();
-      if (!window.Razorpay) throw new Error('Payment could not be loaded. Please try again.');
-      new window.Razorpay({
-        key: placed.razorpayKeyId,
-        amount: placed.amountInPaise,
-        currency: placed.currency,
-        name: 'Silveram',
-        description: 'Jewellery order',
-        order_id: placed.razorpayOrderId,
-        prefill: { name: customer.name, email, contact: customer.phone },
-        theme: { color: '#182D49' },
-        modal: { ondismiss: () => setBusy(false) },
-        handler: async (payment) => {
-          try {
-            const verified = await apiRequest<{ order?: Order }>(`/orders/${encodeURIComponent(placed.orderId)}/verify`, {
-              method: 'POST',
-              body: JSON.stringify({ ...payment, ...(user ? {} : { email }) }),
-            });
-            complete(verified.order ?? placed.order);
-          } catch (reason) {
-            setError(
-              reason instanceof Error
-                ? `${reason.message} Do not retry the payment; contact the store with your payment reference.`
-                : 'Payment verification failed. Contact the store before retrying.',
-            );
-            setBusy(false);
-          }
-        },
-      }).open();
+      throw new Error('This payment method is not available.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to complete your payment. Please try again.');
       setBusy(false);
@@ -260,7 +248,7 @@ export default function CheckoutPaymentPage() {
 
           {isTestPaymentEnabled && optionCard('upi', 'UPI', 'Pay with any UPI app using your UPI ID')}
           {isTestPaymentEnabled && optionCard('card', 'Debit or credit card', 'Visa, Mastercard, RuPay')}
-          {isRazorpayEnabled && optionCard('razorpay', 'UPI, debit card or credit card', 'Choose your method on the secure payment screen')}
+          {isCashfreeEnabled && optionCard('cashfree', 'UPI, QR code, debit or credit card', 'Pay securely with Cashfree: scan a QR, use any UPI app, or enter card details')}
           {!onlineAvailable && (
             <>
               {optionCard('upi', 'UPI', 'Google Pay, PhonePe, Paytm and other UPI apps', { comingSoon: true })}
@@ -292,7 +280,7 @@ export default function CheckoutPaymentPage() {
                 : 'Processing payment…'
               : option === 'cod'
                 ? `Place order · Pay ${formatINR(subtotal)} on delivery`
-                : `Pay ${formatINR(subtotal)}${isTestPaymentEnabled && option !== 'razorpay' ? ' (test)' : ''}`}
+                : `Pay ${formatINR(subtotal)}${isTestPaymentEnabled && option !== 'cashfree' ? ' (test)' : ''}`}
           </Button>
           <p className="mt-4 min-h-5 text-sm text-danger" role="alert">
             {error}

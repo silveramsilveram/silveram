@@ -25,7 +25,7 @@ export function createApp(config) {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Razorpay-Signature', 'X-Razorpay-Event-Id'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }));
   app.use(cookieParser());
   app.use('/api/webhooks', express.raw({ type: 'application/json', limit: '1mb' }));

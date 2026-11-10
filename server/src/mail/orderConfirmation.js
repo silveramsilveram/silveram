@@ -6,7 +6,7 @@ const CONFIRMABLE = ['paid', 'placed_cod'];
 const CLAIM_TTL_MS = 5 * 60 * 1000;
 
 // Sends the purchase acknowledgement at most once per order, even if the browser verify call,
-// the Razorpay webhook and the retry sweep all fire together. The claim is an atomic update;
+// the Cashfree webhook and the retry sweep all fire together. The claim is an atomic update;
 // a failed send releases it so the sweep (or the next trigger) can try again.
 export async function sendOrderConfirmation(config, orderId) {
   const mailer = getMailer(config);

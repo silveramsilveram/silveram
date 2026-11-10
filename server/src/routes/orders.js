@@ -6,10 +6,11 @@ import { sendOrderConfirmationBestEffort } from '../mail/orderConfirmation.js';
 import { consumeRateLimit } from '../security.js';
 import { recordCustomerOrder } from '../customers.js';
 import {
-  createRazorpayOrder,
-  verifyCapturedPayment,
-  verifyRazorpayCheckoutSignature,
-} from '../payments/razorpay/client.js';
+  channelFor,
+  createCashfreeOrder,
+  findSuccessfulPayment,
+  getCashfreeOrder,
+} from '../payments/cashfree/client.js';
 
 const emailSchema = z.string().trim().email().max(254).transform((email) => email.toLowerCase());
 const orderIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/);
@@ -18,8 +19,8 @@ const HOUR = 60 * 60 * 1000;
 
 const requestSchema = z.object({
   requestId: orderIdSchema,
-  // Cash on delivery is the primary method; Razorpay/test are online payments, off until enabled.
-  paymentMethod: z.enum(['cod', 'razorpay', 'test']),
+  // Cash on delivery and Cashfree (UPI / QR / cards) are the real methods; 'test' is a dummy gateway.
+  paymentMethod: z.enum(['cod', 'cashfree', 'test']),
   // How the customer chose to pay (UPI or card); recorded for the receipt and for support.
   paymentChannel: z.enum(['upi', 'card']).optional(),
   // Required only when nobody is signed in (guest checkout).
@@ -88,7 +89,7 @@ function publicOrder(order) {
   };
 }
 
-function orderResponse(order, keyId) {
+function orderResponse(order, config) {
   return {
     order: publicOrder(order),
     orderId: order.$id,
@@ -96,7 +97,10 @@ function orderResponse(order, keyId) {
     currency: 'INR',
     paymentMethod: order.paymentMethod,
     status: order.status,
-    ...(order.razorpayOrderId && { razorpayOrderId: order.razorpayOrderId, razorpayKeyId: keyId }),
+    ...(order.cashfreePaymentSessionId && order.status === 'pending_payment' && {
+      cashfreePaymentSessionId: order.cashfreePaymentSessionId,
+      cashfreeMode: config.cashfreeEnv,
+    }),
   };
 }
 
@@ -119,7 +123,13 @@ async function reserveOrder(config, input, identity) {
     ) {
       throw Object.assign(new Error('This order can no longer be paid. Please contact the store.'), { status: 409 });
     }
-    if (existing.paymentMethod === 'cod' || existing.paymentMethod === 'test' || existing.razorpayOrderId) return existing;
+    if (existing.paymentMethod === 'cod' || existing.paymentMethod === 'test') return existing;
+    if (existing.paymentMethod === 'cashfree' && existing.cashfreeOrderId) {
+      if (existing.status === 'pending_payment') {
+        existing.cashfreePaymentSessionId = (await getCashfreeOrder(config, existing.$id)).payment_session_id;
+      }
+      return existing;
+    }
   }
 
   if (!order) {
@@ -194,15 +204,16 @@ async function reserveOrder(config, input, identity) {
   }
 
   if (order.paymentMethod === 'cod' || order.paymentMethod === 'test') return order;
-  if (order.razorpayOrderId) return order;
-  const razorpayOrder = await createRazorpayOrder(config, {
-    ...orderData(order),
-    _id: order.$id,
-  }, { id: identity.id });
-  order = await updateDocument('orders', order.$id, {
-    razorpayOrderId: razorpayOrder.id,
-    updatedAt: Date.now(),
-  });
+  if (order.paymentMethod === 'cashfree') {
+    if (order.cashfreeOrderId) return order;
+    const cashfreeOrder = await createCashfreeOrder(config, { ...orderData(order), _id: order.$id }, identity);
+    const updated = await updateDocument('orders', order.$id, {
+      cashfreeOrderId: String(cashfreeOrder.order_id || order.$id).slice(0, 100),
+      updatedAt: Date.now(),
+    });
+    updated.cashfreePaymentSessionId = cashfreeOrder.payment_session_id;
+    return updated;
+  }
   return order;
 }
 
@@ -334,7 +345,7 @@ export function createOrdersRouter(config) {
       if (input.paymentMethod === 'cod' && !config.codEnabled) {
         return res.status(503).json({ error: 'Cash on delivery is not available right now. Please contact the store.' });
       }
-      if (input.paymentMethod === 'razorpay' && !config.razorpayEnabled) {
+      if (input.paymentMethod === 'cashfree' && !config.cashfreeEnabled) {
         return res.status(503).json({ error: 'Online payments are not available yet. Please try again soon.' });
       }
       if (input.paymentMethod === 'test' && !config.testPayments) {
@@ -374,7 +385,7 @@ export function createOrdersRouter(config) {
         console.error('Saving customer contact failed:', error?.message || error);
       }
       if (order.status === 'placed_cod') await sendOrderConfirmationBestEffort(config, order.$id);
-      return res.json(orderResponse(order, config.razorpayKeyId));
+      return res.json(orderResponse(order, config));
     } catch (error) {
       if (error?.status) return res.status(error.status).json({ error: error.message });
       next(error);
@@ -418,49 +429,39 @@ export function createOrdersRouter(config) {
     }
   });
 
-  router.post('/:id/verify', optionalUser, async (req, res, next) => {
+  // Called by the browser after Cashfree checkout closes (or when the customer returns to the
+  // order page). The browser's word is never trusted: we ask Cashfree for the payment ourselves.
+  router.post('/:id/verify-cashfree', optionalUser, async (req, res, next) => {
     try {
-      if (!config.liveCheckout || !config.razorpayEnabled) {
+      if (!config.liveCheckout || !config.cashfreeEnabled) {
         return res.status(503).json({ error: 'Payment verification is not configured.' });
       }
-      const input = z.object({
-        razorpay_payment_id: z.string().min(1).max(100),
-        razorpay_order_id: z.string().min(1).max(100),
-        razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/i),
-        email: emailSchema.optional(),
-      }).strict().safeParse(req.body);
-      if (!input.success) return res.status(400).json({ error: 'The payment response is invalid.' });
-
-      const { razorpay_payment_id: paymentId, razorpay_order_id: razorpayOrderId, razorpay_signature: signature } = input.data;
+      const input = z.object({ email: emailSchema.optional() }).strict().safeParse(req.body ?? {});
+      if (!input.success || !orderIdSchema.safeParse(req.params.id).success) {
+        return res.status(400).json({ error: 'The payment verification request is invalid.' });
+      }
       const order = await getDocument('orders', req.params.id);
-      if (!ownsOrder(order, req.user, input.data.email) || order.paymentMethod !== 'razorpay' || order.razorpayOrderId !== razorpayOrderId) {
-        return res.status(403).json({ error: 'This payment does not match your order.' });
+      if (!ownsOrder(order, req.user, input.data.email) || order.paymentMethod !== 'cashfree') {
+        return res.status(404).json({ error: 'Order not found.' });
       }
-      if (order.status === 'paid' && order.razorpayPaymentId === paymentId) {
-        await sendOrderConfirmationBestEffort(config, order.$id);
-        return res.json({ success: true, orderId: order.$id, order: publicOrder(order) });
+      if (!(await consumeRateLimit(order.$id, 'cashfree-verify-order', 60, HOUR))) {
+        return res.status(429).json({ error: 'Too many verification attempts. Please try again later.' });
       }
+      if (order.status === 'paid') return res.json({ success: true, order: publicOrder(order) });
       if (order.status !== 'pending_payment') {
-        return res.status(409).json({ error: 'This order is no longer awaiting payment.' });
+        return res.status(409).json({ error: 'This order is no longer awaiting payment.', order: publicOrder(order) });
       }
-      if (!verifyRazorpayCheckoutSignature(razorpayOrderId, paymentId, signature, config.razorpayKeySecret)) {
-        return res.status(400).json({ error: 'Payment verification failed.' });
+      const payment = await findSuccessfulPayment(config, order);
+      if (!payment) {
+        // Not an error: the customer may still be mid-payment, or the payment may have failed.
+        return res.status(202).json({ success: false, pending: true, order: publicOrder(order) });
       }
-      if (!(await verifyCapturedPayment(config, { ...order, _id: order.$id }, paymentId))) {
-        return res.status(409).json({ error: 'The payment has not been captured. Please contact the store if your account was charged.' });
-      }
-      const latest = await getDocument('orders', order.$id);
-      if (latest?.status === 'pending_payment' && latest.razorpayOrderId === razorpayOrderId) {
-        await updateDocument('orders', order.$id, {
-          status: 'paid',
-          razorpayPaymentId: paymentId,
-          updatedAt: Date.now(),
-        });
-      } else if (latest?.status !== 'paid' || latest.razorpayPaymentId !== paymentId) {
-        return res.status(409).json({ error: 'The order status changed while payment was being verified.' });
-      }
-      await sendOrderConfirmationBestEffort(config, order.$id);
-      return res.json({ success: true, orderId: order.$id, order: publicOrder(await getDocument('orders', order.$id)) });
+      const channel = channelFor(payment.payment_group);
+      await markPaid(config, order, {
+        cashfreePaymentId: String(payment.cf_payment_id).slice(0, 100),
+        ...(channel && { paymentChannel: channel }),
+      });
+      return res.json({ success: true, order: publicOrder(await getDocument('orders', order.$id)) });
     } catch (error) {
       next(error);
     }

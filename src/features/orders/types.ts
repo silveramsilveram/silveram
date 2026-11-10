@@ -8,7 +8,7 @@ export type OrderStatus =
   | 'refunded'
   | 'payment_review';
 
-export type PaymentMethod = 'razorpay' | 'cod' | 'test';
+export type PaymentMethod = 'cashfree' | 'cod' | 'test';
 export type PaymentChannel = 'upi' | 'card';
 
 export interface OrderItem {
@@ -61,6 +61,6 @@ export const STATUS_LABEL: Record<OrderStatus, { label: string; detail: string }
 
 export const PAYMENT_LABEL: Record<PaymentMethod, string> = {
   cod: 'Cash on delivery',
-  razorpay: 'Paid online',
+  cashfree: 'Paid online',
   test: 'Test payment (no money charged)',
 };
