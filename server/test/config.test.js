@@ -23,10 +23,11 @@ const configNames = [
   'FRONTEND_ORIGINS',
   'TRUST_PROXY_HOPS',
   'STORE_LIVE_CHECKOUT',
-  'RAZORPAY_ENABLED',
-  'RAZORPAY_KEY_ID',
-  'RAZORPAY_KEY_SECRET',
-  'RAZORPAY_WEBHOOK_SECRET',
+  'CASHFREE_ENABLED',
+  'CASHFREE_ENV',
+  'CASHFREE_APP_ID',
+  'CASHFREE_SECRET_KEY',
+  'STORE_URL',
   'MAILJET_API_KEY',
   'MAILJET_SECRET_KEY',
   'MAILJET_CONTACT_LIST_ID',
@@ -64,7 +65,7 @@ test('production config requires HTTPS website origins', (t) => {
   assert.throws(() => loadConfig(), /valid HTTPS website origins/);
 });
 
-test('production config keeps COD checkout gated and Razorpay disabled by default', (t) => {
+test('production config keeps COD checkout gated and Cashfree disabled by default', (t) => {
   configure(t, {
     NODE_ENV: 'production',
     FRONTEND_ORIGINS: 'https://silveram.example',
@@ -72,17 +73,22 @@ test('production config keeps COD checkout gated and Razorpay disabled by defaul
   });
   const config = loadConfig();
   assert.equal(config.liveCheckout, false);
-  assert.equal(config.razorpayEnabled, false);
+  assert.equal(config.cashfreeEnabled, false);
   assert.equal(config.trustProxyHops, 1);
 });
 
-test('Razorpay cannot be enabled before checkout and provider credentials are configured', (t) => {
-  configure(t, {
-    NODE_ENV: 'production',
-    FRONTEND_ORIGINS: 'https://silveram.example',
-    RAZORPAY_ENABLED: 'true',
-  });
-  assert.throws(() => loadConfig(), /Enable Razorpay only after checkout is enabled/);
+test('Cashfree needs live checkout, credentials and a store URL before it can be enabled', (t) => {
+  const base = { NODE_ENV: 'production', FRONTEND_ORIGINS: 'https://silveram.example', CASHFREE_ENABLED: 'true' };
+  configure(t, base);
+  assert.throws(() => loadConfig(), /Enable Cashfree only after checkout is enabled/);
+  configure(t, { ...base, STORE_LIVE_CHECKOUT: 'true', CASHFREE_APP_ID: 'id', CASHFREE_SECRET_KEY: 'secret' });
+  assert.throws(() => loadConfig(), /STORE_URL/);
+  configure(t, { ...base, STORE_LIVE_CHECKOUT: 'true', CASHFREE_APP_ID: 'id', CASHFREE_SECRET_KEY: 'secret', STORE_URL: 'https://silveram.example', CASHFREE_ENV: 'production' });
+  const config = loadConfig();
+  assert.equal(config.cashfreeEnabled, true);
+  assert.equal(config.cashfreeEnv, 'production');
+  configure(t, { ...base, CASHFREE_ENV: 'live' });
+  assert.throws(() => loadConfig(), /CASHFREE_ENV/);
 });
 
 test('live checkout works without email (warns) and uses the SMTP settings when present', (t) => {

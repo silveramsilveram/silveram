@@ -79,7 +79,7 @@ let base;
 const config = {
   liveCheckout: true,
   codEnabled: true,
-  razorpayEnabled: false,
+  cashfreeEnabled: false,
   testPayments: true,
   storeName: 'Silveram',
   storeUrl: 'https://silveram.example',

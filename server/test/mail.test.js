@@ -6,8 +6,8 @@ import { escapeHtml, formatInr, orderConfirmationEmail } from '../src/mail/templ
 const config = { storeName: 'Silveram', storeUrl: 'https://silveram.example', supportEmail: 'help@silveram.example' };
 const order = {
   _id: 'req-123',
-  paymentMethod: 'razorpay',
-  razorpayPaymentId: 'pay_ABC',
+  paymentMethod: 'cashfree',
+  cashfreePaymentId: 'pay_ABC',
   amountInPaise: 249900,
   createdAt: new Date('2026-11-01T10:00:00Z'),
   shipping: { name: 'A <b>Buyer</b>\r\nBcc: x@y.z', phone: '9876543210', address: '1 MG Road', city: 'Pune', state: 'MH', postalCode: '411001' },
@@ -26,7 +26,7 @@ test('order email escapes customer text and keeps the subject on one line', () =
 });
 
 test('cod email asks for cash on delivery', () => {
-  const mail = orderConfirmationEmail(config, { ...order, paymentMethod: 'cod', razorpayPaymentId: undefined });
+  const mail = orderConfirmationEmail(config, { ...order, paymentMethod: 'cod', cashfreePaymentId: undefined });
   assert.match(mail.text, /Cash on delivery/);
 });
 

@@ -5,7 +5,7 @@ import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import { buttonClasses } from '@/shared/ui/Button';
 import { CheckIcon } from '@/shared/ui/icons';
-import { fetchMyOrder, lookupGuestOrder } from '../api';
+import { fetchMyOrder, lookupGuestOrder, verifyCashfreePayment } from '../api';
 import { getGuestOrders, loadLastOrder, saveLastOrder } from '../storage';
 import { PAYMENT_LABEL, STATUS_LABEL, type Order } from '../types';
 import OrderLookupForm from './OrderLookupForm';
@@ -21,7 +21,7 @@ function paymentText(order: Order): string {
   const channel = order.paymentChannel === 'upi' ? 'UPI' : order.paymentChannel === 'card' ? 'Card' : '';
   if (order.paymentMethod === 'test') return `Test payment${channel ? ` (${channel})` : ''} - no money charged`;
   if (order.paymentMethod === 'cod') return PAYMENT_LABEL.cod;
-  return channel ? `Paid online by ${channel}` : PAYMENT_LABEL.razorpay;
+  return channel ? `Paid online by ${channel}` : PAYMENT_LABEL.cashfree;
 }
 
 export default function OrderPage({ orderId }: { orderId: string }) {
@@ -39,9 +39,18 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   useEffect(() => {
     if (authStatus === 'loading') return;
     let active = true;
-    const show = (order: Order) => {
+    const show = (order: Order, email?: string) => {
       saveLastOrder(order);
       if (active) setState({ kind: 'ready', order });
+      // Returned from a UPI app / redirect before the payment was confirmed: ask the server to re-check.
+      if (order.paymentMethod === 'cashfree' && order.status === 'pending_payment') {
+        verifyCashfreePayment(order.id, email)
+          .then((paid) => {
+            saveLastOrder(paid);
+            if (active) setState({ kind: 'ready', order: paid });
+          })
+          .catch(() => undefined);
+      }
     };
     const fallback = () => {
       if (active) setState((current) => (current.kind === 'ready' ? current : { kind: 'needsLookup' }));
@@ -59,7 +68,7 @@ export default function OrderPage({ orderId }: { orderId: string }) {
       const remembered = getGuestOrders().find((entry) => entry.id === orderId);
       if (remembered) {
         try {
-          show(await lookupGuestOrder(orderId, remembered.email));
+          show(await lookupGuestOrder(orderId, remembered.email), remembered.email);
           return;
         } catch {
           // Fall through to the manual lookup form.

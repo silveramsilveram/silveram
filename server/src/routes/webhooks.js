@@ -2,71 +2,61 @@ import { Router } from 'express';
 import { createHash } from 'node:crypto';
 import { createDocument, findDocument, getAppwrite, runTransaction, updateDocument } from '../platform/appwrite.js';
 import { queueOrderConfirmation } from '../mail/orderConfirmation.js';
-import { verifyRazorpayWebhookSignature } from '../payments/razorpay/signatures.js';
+import { verifyCashfreeWebhookSignature } from '../payments/cashfree/signatures.js';
+import { channelFor, toPaise } from '../payments/cashfree/client.js';
 
 export function createWebhookRouter(config) {
   const router = Router();
-  router.post('/razorpay', async (req, res, next) => {
+  router.post('/cashfree', async (req, res, next) => {
     try {
-      if (!config.razorpayEnabled || !Buffer.isBuffer(req.body) || !verifyRazorpayWebhookSignature(
+      if (!config.cashfreeEnabled || !Buffer.isBuffer(req.body) || !verifyCashfreeWebhookSignature(
         req.body,
-        req.get('x-razorpay-signature'),
-        config.razorpayWebhookSecret,
+        req.get('x-webhook-signature'),
+        req.get('x-webhook-timestamp'),
+        config.cashfreeSecretKey,
       )) {
         return res.status(400).json({ error: 'Webhook signature is invalid.' });
       }
-      const eventId = req.get('x-razorpay-event-id');
-      if (!eventId || eventId.length > 200) {
-        return res.status(400).json({ error: 'Webhook event ID is missing.' });
-      }
       const event = JSON.parse(req.body.toString('utf8'));
-      const payment = event.payload?.payment?.entity;
-      const eventDocId = createHash('sha256').update(eventId).digest('hex').slice(0, 36);
+      const type = String(event.type || 'unknown').slice(0, 100);
+      const cfOrderId = event.data?.order?.order_id;
+      const payment = event.data?.payment;
+      const refund = event.data?.refund;
+      // Cashfree has no event id header, so identify an event by what it says happened.
+      const eventId = createHash('sha256').update(JSON.stringify([
+        type, cfOrderId, payment?.cf_payment_id, payment?.payment_status, refund?.cf_refund_id, refund?.refund_status,
+      ])).digest('hex');
+      const eventDocId = eventId.slice(0, 36);
       if (await findDocument('webhookEvents', 'eventId', eventId)) return res.status(200).json({ received: true });
       let confirmationOrderId;
       try {
         await runTransaction(async (transactionId) => {
           const { databases, databaseId, collections } = getAppwrite();
-          await createDocument('webhookEvents', eventDocId, {
-            eventId,
-            eventType: String(event.event || 'unknown').slice(0, 100),
-            receivedAt: Date.now(),
-          }, transactionId);
-          if (!payment?.order_id) return;
-
-          const order = await findDocument('orders', 'razorpayOrderId', payment.order_id);
+          await createDocument('webhookEvents', eventDocId, { eventId, eventType: type, receivedAt: Date.now() }, transactionId);
+          if (typeof cfOrderId !== 'string') return;
+          const order = await findDocument('orders', 'cashfreeOrderId', cfOrderId);
           if (!order) return;
-          if (event.event === 'payment.captured') {
-            if (
-              order.status === 'pending_payment' &&
-              order.amountInPaise === payment.amount &&
-              order.currency === payment.currency
-            ) {
-              await databases.updateDocument({
-                databaseId,
-                collectionId: collections.orders,
-                documentId: order.$id,
-                data: { status: 'paid', razorpayPaymentId: payment.id, updatedAt: Date.now() },
-                transactionId,
-              });
+          const update = (data) => databases.updateDocument({
+            databaseId,
+            collectionId: collections.orders,
+            documentId: order.$id,
+            data: { ...data, updatedAt: Date.now() },
+            transactionId,
+          });
+          if (type === 'PAYMENT_SUCCESS_WEBHOOK' && payment?.payment_status === 'SUCCESS') {
+            const amountMatches = toPaise(payment.payment_amount) === order.amountInPaise && payment.payment_currency === 'INR';
+            const cashfreePaymentId = String(payment.cf_payment_id).slice(0, 100);
+            if (order.status === 'pending_payment' && amountMatches) {
+              const channel = channelFor(payment.payment_group);
+              await update({ status: 'paid', cashfreePaymentId, ...(channel && { paymentChannel: channel }) });
               confirmationOrderId = order.$id;
-            } else if (order.status === 'expired') {
-              await databases.updateDocument({
-                databaseId,
-                collectionId: collections.orders,
-                documentId: order.$id,
-                data: { status: 'payment_review', razorpayPaymentId: payment.id, updatedAt: Date.now() },
-                transactionId,
-              });
+            } else if (order.status === 'expired' || (order.status === 'pending_payment' && !amountMatches)) {
+              // Money was taken for an order we released (or for the wrong amount): a human must look.
+              await update({ status: 'payment_review', cashfreePaymentId });
             }
-          } else if (event.event === 'payment.refunded' && order.status === 'paid') {
-            await databases.updateDocument({
-              databaseId,
-              collectionId: collections.orders,
-              documentId: order.$id,
-              data: { status: 'refunded', updatedAt: Date.now() },
-              transactionId,
-            });
+          } else if (type === 'REFUND_STATUS_WEBHOOK' && refund?.refund_status === 'SUCCESS' &&
+            order.status === 'paid' && toPaise(refund.refund_amount) >= order.amountInPaise) {
+            await update({ status: 'refunded' });
           }
         });
       } catch (error) {

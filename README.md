@@ -2,7 +2,7 @@
 
 Silveram is an Indian silver gifting and jewellery storefront. The repository contains a React storefront and an Express API deployed together on Vercel. Appwrite provides backend authentication and application data; Cloudinary stores and delivers all product/site images and videos.
 
-> **Launch status:** the storefront is available at [silveram.in](https://silveram.in/). Email checkout, COD, Razorpay, and newsletter signup remain disabled by default. Configure Appwrite, Cloudinary, email, verified product/inventory facts, policies, and production environment variables before enabling any transactional feature.
+> **Launch status:** the storefront is available at [silveram.in](https://silveram.in/). Email checkout, COD, Cashfree, and newsletter signup remain disabled by default. Configure Appwrite, Cloudinary, email, verified product/inventory facts, policies, and production environment variables before enabling any transactional feature.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ Customer browser
                                       ├─ Cloudinary: all product/site images and video
                                       ├─ Mailjet SMTP/REST: verification, order and optional
                                       │  newsletter email
-                                      └─ Razorpay: optional online payments (disabled)
+                                      └─ Cashfree: UPI, QR and card payments
 ```
 
 The browser never receives an Appwrite server API key or connects to the private application database directly. Browser requests go to the Vercel API function; the server validates input and uses server-side Appwrite credentials. Appwrite collections have no public permissions. Cloudinary is the only image/video binary store; Appwrite stores their metadata/references.
@@ -32,7 +32,7 @@ The browser never receives an Appwrite server API key or connects to the private
 | Accounts/data | Appwrite Auth, Databases, and SDK; server-only access |
 | Media | Cloudinary signed uploads and CDN delivery |
 | Email | Mailjet SMTP and optional contact-list API |
-| Payments | Razorpay integration, disabled until separately configured |
+| Payments | Cashfree Payments (UPI, UPI QR, debit/credit cards), disabled until configured |
 | Deployment | One Vercel project, Vite output plus Vercel Node.js API function |
 
 ## Features
@@ -42,7 +42,7 @@ The browser never receives an Appwrite server API key or connects to the private
 - Express API routes for Appwrite-backed email OTP, sessions, catalog administration, orders, stock reservations, image-upload signatures and newsletter subscriptions.
 - Server-side price/stock validation and Appwrite database transactions for order inventory changes.
 - Cloudinary uploads use short-lived, admin-authorized signatures; media binaries do not pass through the API.
-- Checkout, Razorpay, and newsletter features remain disabled unless explicitly enabled and configured.
+- Checkout, Cashfree, and newsletter features remain disabled unless explicitly enabled and configured.
 
 ## Repository structure
 
@@ -76,7 +76,7 @@ server/
     routes/                        Auth, products, orders, admin, upload, email/webhook APIs
     security.js                    OTP hashing, opaque sessions and persisted rate limits
     mail/                          Mailjet transport and transactional email templates
-    payments/razorpay/             Payment creation and signature verification (gated)
+    payments/cashfree/             Order creation, payment verification, webhook signature (gated)
     storage/cloudinary/            Signed image/video upload helpers and folder policies
     scripts/                       Appwrite provisioning, checks, catalog seed and media upload
   test/                             Node test suite
@@ -124,7 +124,7 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 
 ## Shopping journey, accounts and e-mails
 
-**Cash on delivery (COD) is the primary payment method. UPI and debit/credit cards (Razorpay) show as "Coming soon" until the gateway is approved and enabled. There is no ordering through WhatsApp: WhatsApp (+91 77669 11777) is for questions only.**
+**Cash on delivery (COD) is the primary payment method. UPI and debit/credit cards (Cashfree) show as "Coming soon" until the gateway is approved and enabled. There is no ordering through WhatsApp: WhatsApp (+91 77669 11777) is for questions only.**
 
 Every step is its own page (hash routes, no server rewrites needed):
 
@@ -157,7 +157,7 @@ E-mails (Mailjet SMTP, sent by the API):
 
 **Going live with COD:** set `VITE_CHECKOUT_ENABLED=true` (build-time, shows the Checkout button) and `STORE_LIVE_CHECKOUT=true` (API). `COD_ENABLED` / `VITE_COD_ENABLED` default to on. Run `npm --prefix server run appwrite:setup` once for the new `customers.altPhone` / `customers.addressJson` attributes, set each product's `stockQuantity` and `active: true`, and redeploy. SMTP is optional: without it orders still save, but no confirmation email is sent.
 
-**Payments.** The real gateway is not connected yet. Until then set `PAYMENT_TEST_MODE=true` (API, needs `STORE_LIVE_CHECKOUT=true`) and `VITE_TEST_PAYMENT_ENABLED=true` (storefront): the payment page offers a dummy **UPI** form (`success@upi` succeeds, `failure@upi` is declined) and a dummy **card** form (`4111 1111 1111 1111` succeeds, `4000 0000 0000 0002` is declined). The order is marked paid with payment method `test` and the email says it is a test order. When Razorpay is configured (`RAZORPAY_ENABLED` / `VITE_RAZORPAY_ENABLED`), its hosted screen (UPI, debit and credit cards) is offered instead. If neither is enabled the payment page says payments are being set up. **Turn test mode off before accepting real orders.**
+**Payments.** The real gateway is not connected yet. Until then set `PAYMENT_TEST_MODE=true` (API, needs `STORE_LIVE_CHECKOUT=true`) and `VITE_TEST_PAYMENT_ENABLED=true` (storefront): the payment page offers a dummy **UPI** form (`success@upi` succeeds, `failure@upi` is declined) and a dummy **card** form (`4111 1111 1111 1111` succeeds, `4000 0000 0000 0002` is declined). The order is marked paid with payment method `test` and the email says it is a test order. When Cashfree is configured (`RAZORPAY_ENABLED` / `VITE_RAZORPAY_ENABLED`), its hosted screen (UPI, debit and credit cards) is offered instead. If neither is enabled the payment page says payments are being set up. **Turn test mode off before accepting real orders.**
 
 After pulling this change run `npm --prefix server run appwrite:setup` once to create the new `customers` collection and the `paymentChannel` order attribute, then set each product's `stockQuantity` and `active: true` in Appwrite (seeded products start inactive with zero stock, so orders are refused until you do).
 
@@ -190,7 +190,7 @@ The seed script creates products **inactive with zero inventory** and will not a
 - User sessions use random opaque tokens in `HttpOnly`, `SameSite=Lax` cookies; only a hash is stored in Appwrite. OTPs are HMAC-digested, short-lived, attempt-limited, and rate-limited.
 - Email, database and Cloudinary failures return explicit API errors; do not enable checkout as a way to test missing integrations.
 - Appwrite database transactions protect stock/order writes. Vercel Cron calls the secret-protected `/api/cron/cleanup` route daily to prune expired sessions, challenges, rate-limit records, webhook records, and stale email claims. `CRON_SECRET` must be a random value of at least 32 bytes.
-- Payment reservation expiry and email retry jobs run in the long-running local server only; do not enable Razorpay on Vercel until those jobs are migrated to a verified scheduler.
+- Payment reservation expiry and email retry jobs run in the long-running local server only; do not enable Cashfree on Vercel until those jobs are migrated to a verified scheduler.
 - Appwrite is not configured in this workspace and no live Appwrite, Cloudinary or Mailjet call has been verified. A green local build is not proof of production readiness.
 - The privacy/terms/shipping/returns text is marked as a draft and requires business/legal review. The domain, commercial terms, product claims and stock must be confirmed before launch.
 - Previously exposed credentials must be revoked/rotated. Never re-use credentials that were pasted into chat.

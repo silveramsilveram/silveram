@@ -73,10 +73,20 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     throw new Error('Production FRONTEND_ORIGINS must contain only valid HTTPS website origins.');
   }
 
-  const razorpayEnabled = process.env.RAZORPAY_ENABLED === 'true';
   const liveCheckout = process.env.STORE_LIVE_CHECKOUT === 'true';
-  if (razorpayEnabled && (!liveCheckout || !process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || !process.env.RAZORPAY_WEBHOOK_SECRET)) {
-    throw new Error('Enable Razorpay only after checkout is enabled and all Razorpay keys are configured.');
+  const cashfreeEnabled = process.env.CASHFREE_ENABLED === 'true';
+  const cashfreeEnv = process.env.CASHFREE_ENV?.trim() || 'sandbox';
+  if (!['sandbox', 'production'].includes(cashfreeEnv)) {
+    throw new Error('CASHFREE_ENV must be "sandbox" or "production".');
+  }
+  if (cashfreeEnabled && (!liveCheckout || !process.env.CASHFREE_APP_ID?.trim() || !process.env.CASHFREE_SECRET_KEY?.trim())) {
+    throw new Error('Enable Cashfree only after checkout is enabled and CASHFREE_APP_ID and CASHFREE_SECRET_KEY are configured.');
+  }
+  if (cashfreeEnabled && !process.env.STORE_URL?.trim()) {
+    throw new Error('Cashfree needs STORE_URL (the public https website URL) for payment return and webhook links.');
+  }
+  if (cashfreeEnabled && nodeEnv === 'production' && cashfreeEnv === 'sandbox') {
+    console.warn('Cashfree is in SANDBOX mode: no real money will move. Set CASHFREE_ENV=production to go live.');
   }
   const testPayments = process.env.PAYMENT_TEST_MODE === 'true';
   if (testPayments && !liveCheckout) {
@@ -175,14 +185,14 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     liveCheckout,
     // Cash on delivery is on whenever checkout is live, unless explicitly switched off.
     codEnabled: process.env.COD_ENABLED !== 'false',
-    razorpayEnabled,
+    cashfreeEnabled,
+    cashfreeEnv,
     testPayments,
     otpTtlMinutes: positiveInteger('OTP_TTL_MINUTES', 10),
     otpMaxAttempts: positiveInteger('OTP_MAX_ATTEMPTS', 5),
     otpResendSeconds: positiveInteger('OTP_RESEND_SECONDS', 60),
     ...mail,
-    razorpayKeyId: process.env.RAZORPAY_KEY_ID?.trim() || '',
-    razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
-    razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+    cashfreeAppId: process.env.CASHFREE_APP_ID?.trim() || '',
+    cashfreeSecretKey: process.env.CASHFREE_SECRET_KEY?.trim() || '',
   };
 }

@@ -26,7 +26,7 @@ export function orderConfirmationEmail(config, order) {
     ? `Cash on delivery - please keep ${formatInr(order.amountInPaise)} ready to pay when your order arrives.`
     : order.paymentMethod === 'test'
     ? `TEST ORDER - simulated ${order.paymentChannel === 'upi' ? 'UPI' : order.paymentChannel === 'card' ? 'card' : ''} payment, no money was charged.`.replace('  ', ' ')
-    : `Paid online${order.paymentChannel === 'upi' ? ' by UPI' : order.paymentChannel === 'card' ? ' by card' : ''}${order.razorpayPaymentId ? ` (transaction ${order.razorpayPaymentId})` : ''}.`;
+    : `Paid online${order.paymentChannel === 'upi' ? ' by UPI' : order.paymentChannel === 'card' ? ' by card' : ''}${order.cashfreePaymentId ? ` (transaction ${order.cashfreePaymentId})` : ''}.`;
   const help = config.supportEmail ? ` Questions? Reply to this email or write to ${config.supportEmail}.` : ' Questions? Just reply to this email.';
   const ordersUrl = config.storeUrl ? `${config.storeUrl}/#/order/${reference}` : '';
 
