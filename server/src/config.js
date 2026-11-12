@@ -106,6 +106,9 @@ export function loadConfig({ allowSetupKey = false } = {}) {
   if (storeUrl && (!/^https?:\/\//.test(storeUrl) || (nodeEnv === 'production' && !storeUrl.startsWith('https://')))) {
     throw new Error('STORE_URL must be the public website URL (HTTPS in production).');
   }
+  if (cashfreeEnabled && !process.env.CRON_SECRET?.trim()) {
+    throw new Error('Enable Cashfree only after CRON_SECRET is configured for payment reservation expiry.');
+  }
 
   const cloudinaryVars = ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
   const cloudinarySet = cloudinaryVars.filter((name) => process.env[name]?.trim());
