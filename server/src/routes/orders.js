@@ -138,8 +138,12 @@ async function reserveOrder(config, input, identity) {
         const { databases, databaseId, collections } = getAppwrite();
         const lines = [];
         let total = 0;
-        for (const [id, quantity] of requested) {
-          const product = await getDocument('products', id);
+        // Read every product at once (a 3-item bag costs one round trip, not three).
+        const entries = [...requested];
+        const products = await Promise.all(entries.map(([id]) => getDocument('products', id)));
+        const stockUpdates = [];
+        for (const [index, [, quantity]] of entries.entries()) {
+          const product = products[index];
           if (!product || product.active !== true || product.currency !== 'INR') {
             throw Object.assign(new Error('An item in your bag is no longer available.'), { status: 400 });
           }
@@ -159,14 +163,15 @@ async function reserveOrder(config, input, identity) {
             unitPriceInPaise: product.priceInPaise,
             lineTotalInPaise,
           });
-          await databases.updateDocument({
+          stockUpdates.push(databases.updateDocument({
             databaseId,
             collectionId: collections.products,
             documentId: product.$id,
             data: { stockQuantity: product.stockQuantity - quantity, updatedAt: Date.now() },
             transactionId,
-          });
+          }));
         }
+        await Promise.all(stockUpdates);
         if (!Number.isSafeInteger(total) || total > 2147483647) {
           throw Object.assign(new Error('The order total is above the supported checkout limit.'), { status: 400 });
         }
@@ -374,10 +379,11 @@ export function createOrdersRouter(config) {
         return res.status(400).json({ error: 'Enter your email address to check out as a guest.' });
       }
 
-      if (
-        !(await consumeRateLimit(req.ip, 'order-ip', 30, HOUR)) ||
-        !(await consumeRateLimit(identity.email, 'order-email', 15, HOUR))
-      ) {
+      const [ipAllowed, emailAllowed] = await Promise.all([
+        consumeRateLimit(req.ip, 'order-ip', 30, HOUR),
+        consumeRateLimit(identity.email, 'order-email', 15, HOUR),
+      ]);
+      if (!ipAllowed || !emailAllowed) {
         return res.status(429).json({ error: 'Too many order attempts. Please try again later.' });
       }
 

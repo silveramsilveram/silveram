@@ -1,5 +1,5 @@
-import { findDocument } from './platform/appwrite.js';
 import { hashToken } from './security.js';
+import { lookupSession } from './sessions.js';
 
 export function requireLiveCheckout(config) {
   return (req, res, next) => {
@@ -14,8 +14,8 @@ export async function requireUser(req, res, next) {
   try {
     const token = req.cookies?.silveram_session;
     if (!token) return res.status(401).json({ error: 'Verify your email before continuing.' });
-    const session = await findDocument('sessions', 'tokenHash', hashToken(token));
-    if (!session || session.expiresAt <= Date.now()) {
+    const session = await lookupSession(hashToken(token));
+    if (!session) {
       return res.status(401).json({ error: 'Your session expired. Verify your email again.' });
     }
     req.user = { id: session.userId, email: session.email };
@@ -31,8 +31,8 @@ export async function optionalUser(req, _res, next) {
   try {
     const token = req.cookies?.silveram_session;
     if (token) {
-      const session = await findDocument('sessions', 'tokenHash', hashToken(token));
-      if (session && session.expiresAt > Date.now()) {
+      const session = await lookupSession(hashToken(token));
+      if (session) {
         req.user = { id: session.userId, email: session.email };
       }
     }

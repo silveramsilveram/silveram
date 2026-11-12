@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Button, { buttonClasses } from '@/shared/ui/Button';
 import { MinusIcon, PlusIcon } from '@/shared/ui/icons';
 import ProductCard from './ProductCard';
-import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/context/CartContext';
+import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/store/cartStore';
 import { WhatsAppButton, buildProductMessage } from '@/features/whatsapp';
 import { SITE } from '@/shared/config/site';
 import { setPageMeta, setStructuredData } from '@/shared/lib/seo';

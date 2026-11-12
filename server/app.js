@@ -1,6 +1,6 @@
 import { createApp } from './src/app.js';
 import { loadConfig } from './src/config.js';
-import { connectDatabase } from './src/platform/appwrite.js';
+import { configureAppwrite } from './src/platform/appwrite.js';
 
 // Vercel entrypoint. Nothing heavy runs at import time: a missing env var or an
 // unreachable database must not crash the function before it can answer.
@@ -12,7 +12,9 @@ function init() {
   if (!appPromise) {
     appPromise = (async () => {
       const config = loadConfig();
-      await connectDatabase(config);
+      // Configure only: the old startup "ping" added a full cross-region round trip to every cold
+      // start. /api/health still verifies the database, and real requests fail loudly if it is down.
+      configureAppwrite(config);
       return createApp(config);
     })().catch((error) => {
       appPromise = undefined;

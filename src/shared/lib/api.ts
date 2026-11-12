@@ -19,20 +19,31 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T = void>(
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
+/** A stalled connection fails after this long instead of leaving a spinner forever (function limit is 30s). */
+const REQUEST_TIMEOUT_MS = 25_000;
+
+/** Identical GETs made while one is already in flight share a single network request. */
+const inFlightGets = new Map<string, Promise<unknown>>();
+
+async function send<T>(path: string, init: RequestInit): Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...init,
-    headers,
-    credentials: 'include',
-  });
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}${path}`, {
+      ...init,
+      headers,
+      credentials: 'include',
+      signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
+    });
+  } catch (error) {
+    if (timeout.aborted) throw new ApiError('The server is taking too long to respond. Please try again.', 504);
+    throw error;
+  }
 
   if (!response.ok) {
     let message = 'The request could not be completed. Please try again.';
@@ -47,4 +58,15 @@ export async function apiRequest<T = void>(
 
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+export function apiRequest<T = void>(path: string, init: RequestInit = {}): Promise<T> {
+  const method = (init.method ?? 'GET').toUpperCase();
+  if (method !== 'GET' || init.signal) return send<T>(path, init);
+
+  const existing = inFlightGets.get(path);
+  if (existing) return existing as Promise<T>;
+  const request = send<T>(path, init).finally(() => inFlightGets.delete(path));
+  inFlightGets.set(path, request);
+  return request;
 }

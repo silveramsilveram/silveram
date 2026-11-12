@@ -1,5 +1,5 @@
 import Button, { buttonClasses } from '@/shared/ui/Button';
-import { useCart } from '@/features/cart/context/CartContext';
+import { useCart } from '@/features/cart/store/cartStore';
 import ImageSlot from '@/shared/ui/ImageSlot';
 import { productPath, type Product } from '../data/products';
 import PriceLabel from './PriceLabel';

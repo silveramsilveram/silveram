@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { setPageMeta } from '@/shared/lib/seo';
-import { useAuth, type AuthMode } from '../context/AuthContext';
+import { useAuth, type AuthMode } from '../store/authStore';
 import { getAuthEmail, takeAfterAuth } from '../redirect';
 import AuthForm from './AuthForm';
 

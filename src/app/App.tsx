@@ -5,18 +5,10 @@
 
 import { lazy, Suspense, useEffect, useRef } from 'react';
 
-import AccountPage from '@/features/auth/components/AccountPage';
-import AuthPage from '@/features/auth/components/AuthPage';
-import { AuthProvider } from '@/features/auth/context/AuthContext';
-import CartPage from '@/features/cart/components/CartPage';
-import { CartProvider } from '@/features/cart/context/CartContext';
+import { restoreSession } from '@/features/auth/store/authStore';
 import { useSignedInCartSync } from '@/features/cart/lib/syncCart';
-import OrderPage from '@/features/orders/components/OrderPage';
 import { CheckoutProvider } from '@/features/checkout/context/CheckoutContext';
-import TrackOrderPage from '@/features/orders/components/TrackOrderPage';
-import PolicyPage from '@/features/policies/components/PolicyPage';
-import ShopPage from '@/features/shop/ShopPage';
-import ProductPage from '@/features/products/components/ProductPage';
+import { preloadCashfree } from '@/features/checkout/lib/cashfree';
 import AnnouncementBar from '@/features/storefront/components/AnnouncementBar';
 import CollectionSection from '@/features/storefront/components/CollectionSection';
 import CraftsmanshipSection from '@/features/storefront/components/CraftsmanshipSection';
@@ -34,8 +26,49 @@ import { SITE } from '@/shared/config/site';
 import { setPageMeta, setStructuredData } from '@/shared/lib/seo';
 import Toast from '@/shared/ui/Toast';
 
-const CheckoutDetailsPage = lazy(() => import('@/features/checkout/components/CheckoutDetailsPage'));
-const CheckoutPaymentPage = lazy(() => import('@/features/checkout/components/CheckoutPaymentPage'));
+/**
+ * Route code is split into chunks: the home page ships only what it needs, and every other page is
+ * downloaded the first time it is visited. The loaders are kept in one object so the same
+ * `import()` can be reused to prefetch a page before the customer clicks it.
+ */
+const loaders = {
+  shop: () => import('@/features/shop/ShopPage'),
+  product: () => import('@/features/products/components/ProductPage'),
+  cart: () => import('@/features/cart/components/CartPage'),
+  auth: () => import('@/features/auth/components/AuthPage'),
+  account: () => import('@/features/auth/components/AccountPage'),
+  track: () => import('@/features/orders/components/TrackOrderPage'),
+  order: () => import('@/features/orders/components/OrderPage'),
+  policy: () => import('@/features/policies/components/PolicyPage'),
+  checkout: () => import('@/features/checkout/components/CheckoutDetailsPage'),
+  payment: () => import('@/features/checkout/components/CheckoutPaymentPage'),
+};
+
+const ShopPage = lazy(loaders.shop);
+const ProductPage = lazy(loaders.product);
+const CartPage = lazy(loaders.cart);
+const AuthPage = lazy(loaders.auth);
+const AccountPage = lazy(loaders.account);
+const TrackOrderPage = lazy(loaders.track);
+const OrderPage = lazy(loaders.order);
+const PolicyPage = lazy(loaders.policy);
+const CheckoutDetailsPage = lazy(loaders.checkout);
+const CheckoutPaymentPage = lazy(loaders.payment);
+
+/** Once the browser is idle, warm the pages a shopper is most likely to open next. */
+function prefetchLikelyRoutes() {
+  const run = () => {
+    void loaders.product();
+    void loaders.cart();
+    void loaders.checkout();
+    void loaders.payment();
+    void loaders.auth();
+  };
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
+    .requestIdleCallback;
+  if (idle) idle(run, { timeout: 4000 });
+  else setTimeout(run, 2000);
+}
 
 const HOME_META = {
   title: `${SITE.name} | Silver jewellery & gifting`,
@@ -91,6 +124,17 @@ function Storefront() {
   const route = useHashRoute();
   useSignedInCartSync();
 
+  useEffect(() => {
+    void restoreSession();
+    prefetchLikelyRoutes();
+  }, []);
+
+  // The Cashfree SDK is ~100 kB from another origin: fetch it while the customer reads the
+  // payment page so the popup opens instantly on "Pay".
+  useEffect(() => {
+    if (route.name === 'payment' || route.name === 'checkout') preloadCashfree();
+  }, [route.name]);
+
   return (
     <>
       <a
@@ -104,24 +148,25 @@ function Storefront() {
       <Header />
 
       {route.name === 'home' && <HomePage />}
-      {route.name === 'shop' && <ShopPage />}
-      {route.name === 'product' && <ProductPage key={route.slug} slug={route.slug} />}
-      {route.name === 'cart' && <CartPage />}
-      {route.name === 'signin' && <AuthPage mode="signin" />}
-      {route.name === 'signup' && <AuthPage mode="signup" />}
-      {route.name === 'account' && <AccountPage />}
-      {route.name === 'track' && <TrackOrderPage />}
-      {route.name === 'policy' && <PolicyPage key={route.id} id={route.id} />}
-      {route.name === 'order' && <OrderPage key={route.id} orderId={route.id} />}
-      {(route.name === 'checkout' || route.name === 'payment') && (
+      {route.name !== 'home' && (
         <Suspense
           fallback={
             <p className="page-container py-16 text-sm text-text-secondary" role="status">
-              Loading checkout…
+              Loading…
             </p>
           }
         >
-          {route.name === 'checkout' ? <CheckoutDetailsPage /> : <CheckoutPaymentPage />}
+          {route.name === 'shop' && <ShopPage />}
+          {route.name === 'product' && <ProductPage key={route.slug} slug={route.slug} />}
+          {route.name === 'cart' && <CartPage />}
+          {route.name === 'signin' && <AuthPage mode="signin" />}
+          {route.name === 'signup' && <AuthPage mode="signup" />}
+          {route.name === 'account' && <AccountPage />}
+          {route.name === 'track' && <TrackOrderPage />}
+          {route.name === 'policy' && <PolicyPage key={route.id} id={route.id} />}
+          {route.name === 'order' && <OrderPage key={route.id} orderId={route.id} />}
+          {route.name === 'checkout' && <CheckoutDetailsPage />}
+          {route.name === 'payment' && <CheckoutPaymentPage />}
         </Suspense>
       )}
 
@@ -136,12 +181,8 @@ function Storefront() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <CheckoutProvider>
-          <Storefront />
-        </CheckoutProvider>
-      </CartProvider>
-    </AuthProvider>
+    <CheckoutProvider>
+      <Storefront />
+    </CheckoutProvider>
   );
 }

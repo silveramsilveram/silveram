@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/context/AuthContext';
+import { useAuth } from '@/features/auth/store/authStore';
 import { WhatsAppButton } from '@/features/whatsapp';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';

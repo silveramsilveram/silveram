@@ -1,4 +1,4 @@
-import { useCart } from '@/features/cart/context/CartContext';
+import { useCart } from '@/features/cart/store/cartStore';
 import PriceLabel from '@/features/products/components/PriceLabel';
 import { getProductById, productPath, type Product } from '@/features/products/data/products';
 import { responsiveSrcSet } from '@/shared/lib/cloudinary';
