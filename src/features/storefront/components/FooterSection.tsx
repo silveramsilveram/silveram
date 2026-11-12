@@ -4,7 +4,7 @@ import { SITE } from '@/shared/config/site';
 import { PRODUCTS, productPath } from '@/features/products/data/products';
 import { WHATSAPP_DISPLAY, buildGeneralMessage, buildWhatsAppUrl } from '@/features/whatsapp';
 import { POLICIES, type PolicyId } from '@/features/policies/data/policies';
-import { policyPath } from '@/shared/hooks/useHashRoute';
+import { policyPath } from '@/shared/routing/router';
 import { apiRequest, isNewsletterEnabled } from '@/shared/lib/api';
 
 const linkClass =
@@ -63,11 +63,11 @@ export default function FooterSection() {
         <nav aria-label="Company and policies">
           <h2 className="type-eyebrow text-accent-silver">Silveram</h2>
           <ul className="mt-3">
-            <li><a href="#/shop" className={linkClass}>Shop</a></li>
-            <li><a href="#story" className={linkClass}>About us</a></li>
-            <li><a href="#gifting" className={linkClass}>Gifting</a></li>
-            <li><a href="#faq" className={linkClass}>FAQ</a></li>
-            <li><a href="#/track" className={linkClass}>Track your order</a></li>
+            <li><a href="/shop" className={linkClass}>Shop</a></li>
+            <li><a href="/#story" className={linkClass}>About us</a></li>
+            <li><a href="/#gifting" className={linkClass}>Gifting</a></li>
+            <li><a href="/#faq" className={linkClass}>FAQ</a></li>
+            <li><a href="/track" className={linkClass}>Track your order</a></li>
             {(Object.keys(POLICIES) as PolicyId[]).map((id) => (
               <li key={id}>
                 <a href={policyPath(id)} className={linkClass}>

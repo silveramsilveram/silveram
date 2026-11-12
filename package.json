@@ -10,11 +10,13 @@
     "dev": "vite --port=3000 --host=0.0.0.0",
     "dev:server": "npm --prefix server run dev",
     "start:server": "npm --prefix server start",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run typecheck && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true }); rmSync('server.js', { force: true });\"",
     "lint": "npm run typecheck",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "npm --prefix server test",
+    "validate": "npm run build && npm --prefix server run check && npm --prefix server test"
   },
   "dependencies": {
     "@fontsource-variable/league-spartan": "^5.3.0",
@@ -33,5 +35,6 @@
     "esbuild": "^0.28.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
-  }
+  },
+  "description": "Silveram: silver jewellery & gifting storefront (React + Vite) and Express API on Vercel."
 }

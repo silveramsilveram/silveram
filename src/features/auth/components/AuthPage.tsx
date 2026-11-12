@@ -3,6 +3,7 @@ import { setPageMeta } from '@/shared/lib/seo';
 import { useAuth, type AuthMode } from '../store/authStore';
 import { getAuthEmail, takeAfterAuth } from '../redirect';
 import AuthForm from './AuthForm';
+import { navigate } from '@/shared/routing/router';
 
 const COPY: Record<AuthMode, { title: string; lead: string; switchText: string; switchLabel: string; switchHref: string }> = {
   signin: {
@@ -10,14 +11,14 @@ const COPY: Record<AuthMode, { title: string; lead: string; switchText: string; 
     lead: 'Enter your email and we will send you a one-time code. No password needed.',
     switchText: 'New to Silveram?',
     switchLabel: 'Create an account',
-    switchHref: '#/signup',
+    switchHref: '/signup',
   },
   signup: {
     title: 'Create your account',
     lead: 'Save your orders and check out faster. We will email you a one-time code to confirm your address. No password needed.',
     switchText: 'Already have an account?',
     switchLabel: 'Sign in',
-    switchHref: '#/signin',
+    switchHref: '/signin',
   },
 };
 
@@ -33,7 +34,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
 
   // Already signed in: nothing to do here.
   useEffect(() => {
-    if (user) window.location.hash = takeAfterAuth();
+    if (user) navigate(takeAfterAuth());
   }, [user]);
 
   return (
@@ -50,7 +51,7 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
             </a>
           </p>
           <p className="type-caption mt-3 text-text-muted">
-            Just browsing or buying once? You can <a href="#/shop" className="underline underline-offset-4">continue as a guest</a> at checkout.
+            Just browsing or buying once? You can <a href="/shop" className="underline underline-offset-4">continue as a guest</a> at checkout.
           </p>
         </div>
       </div>

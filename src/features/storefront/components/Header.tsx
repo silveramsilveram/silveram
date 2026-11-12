@@ -3,28 +3,18 @@ import { BagIcon, CloseIcon, MenuIcon, UserIcon } from '@/shared/ui/icons';
 import { useAuthStore } from '@/features/auth/store/authStore';
 import { useCartStore } from '@/features/cart/store/cartStore';
 import { useDialog } from '@/shared/hooks/useDialog';
-import { useHashRoute } from '@/shared/hooks/useHashRoute';
+import { useHash, useLocationKey, useRoute } from '@/shared/routing/router';
 import { NAV_LINKS } from '../data/content';
 
 const WORDMARK =
   'inline-flex min-h-11 items-center text-lg font-semibold uppercase tracking-[0.3em] text-brand-primary transition-opacity hover:opacity-85';
 
-/** Tracks the URL hash so in-page links (#story, #gifting, #contact) can show where you are. */
-function useHash() {
-  const [hash, setHash] = useState(() => window.location.hash);
-  useEffect(() => {
-    const onChange = () => setHash(window.location.hash);
-    window.addEventListener('hashchange', onChange);
-    return () => window.removeEventListener('hashchange', onChange);
-  }, []);
-  return hash;
-}
-
 export default function Header() {
   const itemCount = useCartStore((state) => state.itemCount);
   const user = useAuthStore((state) => state.user);
-  const route = useHashRoute();
+  const route = useRoute();
   const hash = useHash();
+  const locationKey = useLocationKey();
   const [menuOpen, setMenuOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -52,17 +42,17 @@ export default function Header() {
     closedByResize.current = false;
     document.querySelector<HTMLElement>('nav[aria-label="Primary"] a')?.focus();
   }, [menuOpen]);
-  useEffect(() => setMenuOpen(false), [hash]);
+  useEffect(() => setMenuOpen(false), [locationKey]);
 
   /** Shop is the current page on the shop and product routes; in-page links mark the current section. */
   const currentFor = (href: string): 'page' | 'location' | undefined => {
-    if (href === '#/shop') return route.name === 'shop' || route.name === 'product' ? 'page' : undefined;
-    return route.name === 'home' && hash === href ? 'location' : undefined;
+    if (href === '/shop') return route.name === 'shop' || route.name === 'product' ? 'page' : undefined;
+    return route.name === 'home' && `/${hash}` === href ? 'location' : undefined;
   };
 
   const accountCurrent = ['account', 'signin', 'signup'].includes(route.name) ? 'page' : undefined;
   const bagCurrent = route.name === 'cart' ? 'page' : undefined;
-  const accountHref = user ? '#/account' : '#/signin';
+  const accountHref = user ? '/account' : '/signin';
   const accountLabel = user ? 'Your account' : 'Sign in';
   const bagLabel = `Shopping bag, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`;
 
@@ -76,7 +66,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface-primary">
       <div className="page-container flex h-16 items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr]">
-        <a href="#home" className={WORDMARK} aria-label="Silveram, home">
+        <a href="/" className={WORDMARK} aria-label="Silveram, home">
           Silveram
         </a>
 
@@ -96,7 +86,7 @@ export default function Header() {
             <UserIcon size={22} />
             <span className="type-body hidden font-medium lg:inline">{user ? 'Account' : 'Sign in'}</span>
           </a>
-          <a href="#/cart" aria-current={bagCurrent} className={`${iconLink} relative w-11 px-0!`} aria-label={bagLabel}>
+          <a href="/cart" aria-current={bagCurrent} className={`${iconLink} relative w-11 px-0!`} aria-label={bagLabel}>
             <BagIcon size={24} />
             {itemCount > 0 && (
               <span
@@ -131,7 +121,7 @@ export default function Header() {
           className="fixed inset-0 z-50 flex flex-col overflow-y-auto overscroll-contain bg-surface-primary focus:outline-none md:hidden"
         >
           <div className="page-container flex h-16 shrink-0 items-center justify-between border-b border-border">
-            <a href="#home" onClick={closeMenu} className={WORDMARK} aria-label="Silveram, home">
+            <a href="/" onClick={closeMenu} className={WORDMARK} aria-label="Silveram, home">
               Silveram
             </a>
             <button
@@ -173,13 +163,13 @@ export default function Header() {
                 </a>
               </li>
               <li>
-                <a href="#/cart" aria-current={bagCurrent} onClick={closeMenu} className="type-body flex min-h-12 items-center gap-3 font-medium">
+                <a href="/cart" aria-current={bagCurrent} onClick={closeMenu} className="type-body flex min-h-12 items-center gap-3 font-medium">
                   <BagIcon size={22} />
                   Bag{itemCount > 0 ? ` (${itemCount})` : ''}
                 </a>
               </li>
               <li>
-                <a href="#/track" onClick={closeMenu} className="type-body flex min-h-12 items-center font-medium text-text-secondary">
+                <a href="/track" onClick={closeMenu} className="type-body flex min-h-12 items-center font-medium text-text-secondary">
                   Track your order
                 </a>
               </li>

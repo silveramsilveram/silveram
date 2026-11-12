@@ -30,7 +30,7 @@ export default function CartPage() {
             <p className="type-body mt-2 text-text-secondary">
               Explore the collection and add your favourite pieces.
             </p>
-            <a href="#/shop" className={buttonClasses('primary', 'lg', 'mt-6')}>
+            <a href="/shop" className={buttonClasses('primary', 'lg', 'mt-6')}>
               View collection
             </a>
           </div>
@@ -124,7 +124,7 @@ export default function CartPage() {
 
               <div className="mt-6 space-y-3">
                 {isCheckoutEnabled ? (
-                  <a href="#/checkout" className={buttonClasses('primary', 'lg', 'w-full')}>
+                  <a href="/checkout" className={buttonClasses('primary', 'lg', 'w-full')}>
                     Proceed to checkout
                   </a>
                 ) : (
@@ -136,7 +136,7 @@ export default function CartPage() {
                   <li>✓ Order confirmation sent by email</li>
                   <li className="text-text-muted">UPI &amp; card payments coming soon</li>
                 </ul>
-                <a href="#/shop" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
+                <a href="/shop" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
                   Continue shopping
                 </a>
               </div>
@@ -150,7 +150,7 @@ export default function CartPage() {
               <p className="text-xs text-text-muted">Total</p>
               <p className="text-lg font-semibold tabular-nums text-brand-primary">{formatINR(subtotal)}</p>
             </div>
-            <a href="#/checkout" className={buttonClasses('primary', 'lg', 'flex-1 max-w-56')}>
+            <a href="/checkout" className={buttonClasses('primary', 'lg', 'flex-1 max-w-56')}>
               Checkout
             </a>
           </div>

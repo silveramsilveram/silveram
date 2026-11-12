@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import Button from '@/shared/ui/Button';
-import { orderPath } from '@/shared/hooks/useHashRoute';
+import { orderPath, navigate } from '@/shared/routing/router';
 import { lookupGuestOrder } from '../api';
 import { rememberGuestOrder, saveLastOrder } from '../storage';
 
@@ -20,7 +20,7 @@ export default function OrderLookupForm({ initialOrderId = '', onFound }: { init
       saveLastOrder(order);
       rememberGuestOrder({ id: order.id, email: order.email });
       onFound?.();
-      window.location.hash = orderPath(order.id);
+      navigate(orderPath(order.id));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'We could not find that order.');
     } finally {

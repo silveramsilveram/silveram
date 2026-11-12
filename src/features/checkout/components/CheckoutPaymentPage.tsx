@@ -3,7 +3,7 @@ import { useAuth } from '@/features/auth/store/authStore';
 import { useCart } from '@/features/cart/store/cartStore';
 import { rememberGuestOrder, saveLastOrder } from '@/features/orders/storage';
 import type { Order } from '@/features/orders/types';
-import { orderPath } from '@/shared/hooks/useHashRoute';
+import { orderPath, navigate } from '@/shared/routing/router';
 import { apiRequest, isCashfreeEnabled, isCheckoutEnabled, isCodEnabled, isTestPaymentEnabled } from '@/shared/lib/api';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
@@ -58,7 +58,7 @@ export default function CheckoutPaymentPage() {
 
   // Details come first: send people who land here directly back to page one.
   useEffect(() => {
-    if (isCheckoutEnabled && cart.length > 0 && !info) window.location.hash = '#/checkout';
+    if (isCheckoutEnabled && cart.length > 0 && !info) navigate('/checkout');
   }, [cart.length, info]);
 
   if (!isCheckoutEnabled || cart.length === 0 || !info) {
@@ -68,7 +68,7 @@ export default function CheckoutPaymentPage() {
         <p className="type-body-lg mt-4 text-text-secondary">
           {cart.length === 0 ? 'Your bag is empty.' : 'Please enter your delivery details first.'}
         </p>
-        <a href={cart.length === 0 ? '#/shop' : '#/checkout'} className={buttonClasses('primary', 'lg', 'mt-8')}>
+        <a href={cart.length === 0 ? '/shop' : '/checkout'} className={buttonClasses('primary', 'lg', 'mt-8')}>
           {cart.length === 0 ? 'Shop the collection' : 'Enter details'}
         </a>
       </main>
@@ -88,7 +88,7 @@ export default function CheckoutPaymentPage() {
     if (order.guest) rememberGuestOrder({ id: order.id, email: order.email });
     clearCart();
     clearInfo();
-    window.location.hash = orderPath(order.id);
+    navigate(orderPath(order.id));
   };
 
   const submit = async (event: FormEvent) => {
@@ -235,7 +235,7 @@ export default function CheckoutPaymentPage() {
             {info.landmark ? `, near ${info.landmark}` : ''}, {info.city}, {info.state} {info.postalCode}
           </p>
         </div>
-        <a href="#/checkout" className="text-text-secondary underline underline-offset-4 hover:text-text-primary sm:col-span-2">
+        <a href="/checkout" className="text-text-secondary underline underline-offset-4 hover:text-text-primary sm:col-span-2">
           Change details
         </a>
       </div>
@@ -287,10 +287,10 @@ export default function CheckoutPaymentPage() {
           </p>
           <p className="type-caption text-text-muted">
             By placing your order you agree to Silveram’s{' '}
-            <a href="#/policy/terms" className="underline underline-offset-4">terms</a> and{' '}
-            <a href="#/policy/returns" className="underline underline-offset-4">return policy</a>.
+            <a href="/policy/terms" className="underline underline-offset-4">terms</a> and{' '}
+            <a href="/policy/returns" className="underline underline-offset-4">return policy</a>.
           </p>
-          <a href="#/checkout" className="mt-2 inline-block min-h-11 text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
+          <a href="/checkout" className="mt-2 inline-block min-h-11 text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
             ← Back to delivery details
           </a>
         </div>

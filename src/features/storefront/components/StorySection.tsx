@@ -33,7 +33,7 @@ export default function StorySection() {
           </div>
 
           <div className="mt-9">
-            <a href="#collection" className={buttonClasses('outline-inverse', 'lg')}>
+            <a href="/#collection" className={buttonClasses('outline-inverse', 'lg')}>
               Explore the pieces
             </a>
           </div>

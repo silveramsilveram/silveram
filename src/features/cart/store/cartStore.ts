@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 import { getProductById, type Product } from '@/features/products/data/products';
+import { navigate } from '@/shared/routing/router';
 
 export const MAX_ITEM_QUANTITY = 10;
 
@@ -111,7 +112,7 @@ export const useCartStore = create<CartState>()((set, get) => {
       const existing = cart.find((item) => item.id === product.id);
       if (existing && existing.quantity >= MAX_ITEM_QUANTITY) {
         announce(`Maximum ${MAX_ITEM_QUANTITY} of each item per order`);
-        if (goToBag) window.location.hash = '#/cart';
+        if (goToBag) navigate('/cart');
         return;
       }
       set(
@@ -126,7 +127,7 @@ export const useCartStore = create<CartState>()((set, get) => {
         ),
       );
       announce(`${product.name} added to bag`);
-      if (goToBag) window.location.hash = '#/cart';
+      if (goToBag) navigate('/cart');
     },
 
     updateQuantity: (id, delta) =>

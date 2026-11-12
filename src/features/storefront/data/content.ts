@@ -3,10 +3,10 @@
  * (or deliberately neutral) belong here — no invented policies, claims or metrics.
  */
 export const NAV_LINKS = [
-  { label: 'Shop', href: '#/shop' },
-  { label: 'Our story', href: '#story' },
-  { label: 'Gifting', href: '#gifting' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Shop', href: '/shop' },
+  { label: 'Our story', href: '/#story' },
+  { label: 'Gifting', href: '/#gifting' },
+  { label: 'Contact', href: '/#contact' },
 ] as const;
 
 export const ANNOUNCEMENT = 'Cash on delivery across India';

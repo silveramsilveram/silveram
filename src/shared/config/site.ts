@@ -41,7 +41,8 @@ export const SITE = {
   name: 'Silveram',
   legalName: 'Ranjan Jewer Mahal',
   ownerName: 'Aditya Ranjan',
-  url: 'https://silveram.in',
+  /** Canonical origin (the apex silveram.in redirects here). Override with VITE_SITE_URL. */
+  url: (import.meta.env.VITE_SITE_URL?.trim() || 'https://www.silveram.in').replace(/\/+$/, ''),
   tagline: 'Timeless craft. Lasting meaning.',
   instagramUrl:
     readInstagramUrl(import.meta.env.VITE_INSTAGRAM_URL) ?? 'https://www.instagram.com/silveram__',

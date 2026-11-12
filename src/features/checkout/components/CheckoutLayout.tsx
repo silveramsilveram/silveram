@@ -67,7 +67,7 @@ function SummaryBody() {
         </div>
       </dl>
       <p className="type-caption mt-4 text-text-muted">The final amount is confirmed by Silveram when the order is placed.</p>
-      <a href="#/cart" className="mt-3 inline-block min-h-11 text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
+      <a href="/cart" className="mt-3 inline-block min-h-11 text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
         Edit bag
       </a>
     </>
