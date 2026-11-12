@@ -2,14 +2,30 @@
  * Editable storefront copy. Only statements that are true of the site as built
  * (or deliberately neutral) belong here — no invented policies, claims or metrics.
  */
+/** Primary navigation (desktop bar and mobile menu). */
 export const NAV_LINKS = [
   { label: 'Shop', href: '/shop' },
   { label: 'Our story', href: '/#story' },
   { label: 'Gifting', href: '/#gifting' },
+] as const;
+
+/** Extra links that live in the mobile menu only (the footer carries them on desktop). */
+export const MENU_EXTRA_LINKS = [
   { label: 'Contact', href: '/#contact' },
+  { label: 'Track your order', href: '/track' },
 ] as const;
 
 export const ANNOUNCEMENT = 'Cash on delivery across India';
+
+/**
+ * Announcement ticker. Every line is a fact the site already states elsewhere (checkout, footer, FAQ).
+ * Do not add offers, discounts or delivery times here until the store has confirmed them.
+ */
+export const ANNOUNCEMENT_ITEMS = [
+  ANNOUNCEMENT,
+  'Visit the store in Motihari, Bihar',
+  'Questions about a piece? Message us on WhatsApp',
+] as const;
 
 import { productImageUrl } from '@/shared/lib/cloudinary';
 
@@ -21,12 +37,28 @@ interface Img {
   alt: string;
 }
 
+/** A hero film uploaded to Cloudinary: `<root>/<env>/products/<sku>/<name>` as a video resource. */
+export interface HeroFilm {
+  sku: string;
+  /** File name (public ID tail) of the film in the product's Cloudinary folder. */
+  name: string;
+  alt: string;
+  /** Native pixel size of the original film; sets the aspect ratio and is never exceeded. */
+  width: number;
+  height: number;
+}
+
 export const HERO = {
   heading: 'Small keepsakes. Lasting meaning.',
   description:
     'A devotional frame, patterned bangles and a peacock-inspired ring, thoughtfully chosen for meaningful occasions.',
   /** The hero photograph is the first Peacock Ring image in products.ts. */
   productId: 'product-3',
+  /**
+   * Film-ready slot. Upload a film to Cloudinary under the product's folder, describe it here, and the hero plays it
+   * silently while visible (first frame as poster, the photograph as fallback if it cannot load). `null` = photograph only.
+   */
+  film: null as HeroFilm | null,
 };
 
 export const COLLECTION = {

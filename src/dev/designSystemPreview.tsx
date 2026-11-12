@@ -7,6 +7,7 @@ import Marquee from '../shared/ui/Marquee';
 import Media from '../shared/ui/Media';
 import Stamp from '../shared/ui/Stamp';
 import WordSculpture from '../shared/ui/WordSculpture';
+import HeroSection from '../features/storefront/components/HeroSection';
 
 /** [token, hex, role, measured pairing] from DESIGN.md. */
 const SWATCHES: Array<[string, string, string, string]> = [
@@ -145,6 +146,10 @@ function Preview() {
 
       <Section title="Word sculpture" scene="scene-deep">
         <WordSculpture />
+      </Section>
+
+      <Section title="Hero: full-bleed variant (for a future film; photo shown here is only 920px wide, so it is stretched and would be replaced)">
+        <HeroSection variant="bleed" />
       </Section>
     </>
   );
