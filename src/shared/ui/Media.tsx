@@ -43,6 +43,8 @@ export interface VideoMediaProps extends MediaBase {
   src?: string;
   /** First-frame still: shown before play, under reduced motion, and if the film cannot load. */
   poster?: string;
+  /** Photograph shown if the film and its poster cannot load (for example the product photograph). */
+  fallbackSrc?: string;
   /** `inView` plays while on screen; `never` waits for the visitor to press play. */
   autoplay?: 'inView' | 'never';
   loop?: boolean;
@@ -59,6 +61,7 @@ function saveDataOn(): boolean {
 function VideoMedia({
   src,
   poster,
+  fallbackSrc,
   alt,
   width,
   height,
@@ -109,6 +112,7 @@ function VideoMedia({
     return (
       <ImageSlot
         src={poster}
+        fallbackSrc={fallbackSrc}
         alt={alt}
         width={width}
         height={height}

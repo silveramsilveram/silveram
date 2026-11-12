@@ -444,3 +444,98 @@ html[data-motion="paused"] .anim-blink {
   .anim-spin, .anim-blink { animation: none !important; }
   .btn-pill, .btn-pill::after, .btn-round { transition-duration: 0.01ms !important; }
 }
+
+/* =============================================================================
+ * Milestone 3: header, announcement strip and hero.
+ * ========================================================================== */
+@layer components {
+  .btn-round--sm { width: 1.75rem; height: 1.75rem; }
+
+  /* Nav link: underline draws in from the left on hover and marks the current page/section. */
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--color-brand-primary);
+    transition: color var(--dur-state) ease-in-out;
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.55rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-state) var(--ease-out);
+  }
+  .nav-link:hover::after,
+  .nav-link[aria-current]::after { transform: scaleX(1); }
+
+  /* Round or pill header controls (account, bag). */
+  .header-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--color-brand-primary);
+    border-radius: var(--radius-pill);
+    color: var(--color-brand-primary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+      background-color var(--dur-state) ease-in-out,
+      color var(--dur-state) ease-in-out,
+      transform 150ms var(--ease-out);
+  }
+  .header-chip:hover,
+  .header-chip[aria-current="page"] { background-color: var(--color-brand-primary); color: var(--color-surface-primary); }
+  .header-chip:active { transform: scale(0.97); }
+
+  /* Hero: each headline line rises from behind a mask. Text is always painted (no opacity fade), so it
+   * never delays first paint; the mask just reveals it. */
+  .line-reveal {
+    display: block;
+    overflow: hidden;
+    padding-block: 0.1em;
+    margin-block: -0.1em;
+  }
+  .line-reveal > span {
+    display: inline-block;
+    animation: line-up 850ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 110ms + 120ms);
+  }
+  /* Photograph settles in: transform only, so it never delays the largest contentful paint. */
+  .hero-media-in img,
+  .hero-media-in video { animation: media-settle 1400ms var(--ease-out) both; }
+  .hero-fade-in { animation: hero-fade 700ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 110ms + 350ms); }
+
+  /* Mobile menu panel and its staggered links. */
+  .menu-in { animation: menu-fade 220ms ease-out both; }
+  .menu-link-in { animation: menu-item 320ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+}
+
+@keyframes line-up { from { transform: translateY(105%); } to { transform: none; } }
+@keyframes media-settle { from { transform: scale(1.06); } to { transform: none; } }
+@keyframes hero-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes menu-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes menu-item { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .line-reveal > span,
+  .hero-media-in img,
+  .hero-media-in video,
+  .hero-fade-in,
+  .menu-in,
+  .menu-link-in { animation: none !important; }
+  .nav-link::after { transition: none; }
+}
