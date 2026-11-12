@@ -127,11 +127,7 @@ export default function FloatingWhatsApp() {
         tabIndex={hidden ? -1 : undefined}
         style={overlapsAction ? { transitionDuration: '0ms' } : undefined}
         className={`group fixed bottom-5 right-5 z-30 flex items-center gap-2.5 rounded-full border border-accent-silver/50 bg-brand-primary p-3 text-surface-primary shadow-xl transition-[transform,opacity,visibility,background-color,box-shadow] duration-300 hover:scale-105 hover:bg-brand-primary-hover hover:shadow-2xl active:scale-95 md:bottom-7 md:right-7 ${
-          overlapsAction
-            ? 'pointer-events-none invisible translate-y-3 opacity-0'
-            : hidden
-              ? 'pointer-events-none invisible translate-y-3 opacity-0'
-              : 'visible translate-y-0 opacity-100'
+          hidden ? 'pointer-events-none invisible translate-y-3 opacity-0' : 'visible translate-y-0 opacity-100'
         }`}
       >
         <span className="relative flex h-8 w-8 items-center justify-center">
