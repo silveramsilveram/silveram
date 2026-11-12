@@ -7,17 +7,17 @@ import { buildGeneralMessage } from '../messages';
 const COMPACT_QUERY = '(max-width: 1023px)';
 const ACTION_SELECTOR = [
   'main a[href]',
-  'main button:not([disabled])',
-  'main input:not([disabled])',
-  'main select:not([disabled])',
+  'main button',
+  'main input',
+  'main select',
   'main summary',
-  'main textarea:not([disabled])',
+  'main textarea',
   'footer a[href]',
-  'footer button:not([disabled])',
-  'footer input:not([disabled])',
-  'footer select:not([disabled])',
+  'footer button',
+  'footer input',
+  'footer select',
   'footer summary',
-  'footer textarea:not([disabled])',
+  'footer textarea',
 ].join(',');
 
 /**
