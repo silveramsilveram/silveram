@@ -58,35 +58,32 @@ function useHiddenWhenOverlappingAction(): boolean {
   const overlapRef = useRef(false);
 
   useEffect(() => {
-    let frame = 0;
     let settleTimer = 0;
     const update = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        const floating = document.querySelector<HTMLElement>('aside[aria-label="WhatsApp contact"] a');
-        if (!floating) return;
+      const floating = document.querySelector<HTMLElement>('aside[aria-label="WhatsApp contact"] a');
+      if (!floating) return;
 
-        const floatingRect = floating.getBoundingClientRect();
-        const collides = Array.from(document.querySelectorAll<HTMLElement>(ACTION_SELECTOR)).some((target) => {
-          const style = window.getComputedStyle(target);
-          if (style.display === 'none' || style.visibility === 'hidden') return false;
+      const floatingRect = floating.getBoundingClientRect();
+      const collides = Array.from(document.querySelectorAll<HTMLElement>(ACTION_SELECTOR)).some((target) => {
+        const rect = target.getBoundingClientRect();
+        if (
+          rect.width <= 0 ||
+          rect.height <= 0 ||
+          rect.left >= floatingRect.right ||
+          rect.right <= floatingRect.left ||
+          rect.top >= floatingRect.bottom ||
+          rect.bottom <= floatingRect.top
+        ) {
+          return false;
+        }
 
-          const rect = target.getBoundingClientRect();
-          return (
-            rect.width > 0 &&
-            rect.height > 0 &&
-            rect.left < floatingRect.right &&
-            rect.right > floatingRect.left &&
-            rect.top < floatingRect.bottom &&
-            rect.bottom > floatingRect.top
-          );
-        });
-
-        if (collides === overlapRef.current) return;
-        overlapRef.current = collides;
-        setOverlap(collides);
+        const style = window.getComputedStyle(target);
+        return style.display !== 'none' && style.visibility !== 'hidden';
       });
+
+      if (collides === overlapRef.current) return;
+      overlapRef.current = collides;
+      setOverlap(collides);
     };
     const onScroll = () => {
       update();
@@ -109,7 +106,6 @@ function useHiddenWhenOverlappingAction(): boolean {
       window.removeEventListener('resize', update);
       resizeObserver?.disconnect();
       mutationObserver.disconnect();
-      if (frame) window.cancelAnimationFrame(frame);
       window.clearTimeout(settleTimer);
     };
   }, []);
@@ -136,7 +132,11 @@ export default function FloatingWhatsApp() {
         tabIndex={hidden ? -1 : undefined}
         style={overlapsAction ? { transition: 'none' } : undefined}
         className={`group fixed bottom-5 right-5 z-30 flex items-center gap-2.5 rounded-full border border-accent-silver/50 bg-brand-primary p-3 text-surface-primary shadow-xl transition-[transform,opacity,visibility,background-color,box-shadow] duration-300 hover:scale-105 hover:bg-brand-primary-hover hover:shadow-2xl active:scale-95 md:bottom-7 md:right-7 ${
-          hidden ? 'pointer-events-none invisible translate-y-3 opacity-0' : 'visible translate-y-0 opacity-100'
+          overlapsAction
+            ? 'pointer-events-none invisible opacity-0'
+            : hidden
+              ? 'pointer-events-none invisible translate-y-3 opacity-0'
+              : 'visible translate-y-0 opacity-100'
         }`}
       >
         <span className="relative flex h-8 w-8 items-center justify-center">
