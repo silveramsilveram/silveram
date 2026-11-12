@@ -8,7 +8,7 @@ import { useHash, useLocationKey, useRoute } from '@/shared/routing/router';
 import { MENU_EXTRA_LINKS, NAV_LINKS } from '../data/content';
 
 const WORDMARK =
-  'inline-flex min-h-11 items-center font-display text-[1.75rem] uppercase leading-none tracking-[0.06em] text-brand-primary transition-opacity duration-[250ms] hover:opacity-80';
+  'inline-flex min-h-11 items-center justify-self-start font-display text-[1.75rem] uppercase leading-none tracking-[0.06em] text-brand-primary transition-opacity duration-[250ms] hover:opacity-80';
 
 export default function Header() {
   const itemCount = useCartStore((state) => state.itemCount);
