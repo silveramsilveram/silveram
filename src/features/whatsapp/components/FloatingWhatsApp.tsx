@@ -59,6 +59,7 @@ function useHiddenWhenOverlappingAction(): boolean {
 
   useEffect(() => {
     let frame = 0;
+    let settleTimer = 0;
     const update = () => {
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
@@ -87,9 +88,14 @@ function useHiddenWhenOverlappingAction(): boolean {
         setOverlap(collides);
       });
     };
+    const onScroll = () => {
+      update();
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(update, 150);
+    };
 
-    window.addEventListener('scroll', update, { passive: true });
-    document.addEventListener('scroll', update, { passive: true, capture: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true });
     window.addEventListener('resize', update);
     const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
     resizeObserver?.observe(document.body);
@@ -98,12 +104,13 @@ function useHiddenWhenOverlappingAction(): boolean {
     update();
 
     return () => {
-      window.removeEventListener('scroll', update);
-      document.removeEventListener('scroll', update, true);
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', update);
       resizeObserver?.disconnect();
       mutationObserver.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
+      window.clearTimeout(settleTimer);
     };
   }, []);
 
