@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useCart } from '@/features/cart/context/CartContext';
+import { useAuth } from '@/features/auth/store/authStore';
+import { useCart } from '@/features/cart/store/cartStore';
 import { rememberGuestOrder, saveLastOrder } from '@/features/orders/storage';
 import type { Order } from '@/features/orders/types';
 import { orderPath } from '@/shared/hooks/useHashRoute';

@@ -39,8 +39,15 @@ export function createApp(config) {
   app.use('/api/webhooks', createWebhookRouter(config));
   app.use(express.json({ limit: '32kb' }));
 
+  // Uptime monitors poll this often: the database check is remembered for 30 s instead of
+  // costing a cross-region Appwrite call every time.
+  let lastDatabaseCheck = 0;
   app.get('/api/health', async (_req, res) => {
-    await checkDatabase();
+    if (Date.now() - lastDatabaseCheck > 30_000) {
+      await checkDatabase();
+      lastDatabaseCheck = Date.now();
+    }
+    res.set('Cache-Control', 'no-store');
     return res.json({ status: 'ok' });
   });
   app.use('/api/auth', createAuthRouter(config));

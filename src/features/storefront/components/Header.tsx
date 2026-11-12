@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { BagIcon, CloseIcon, MenuIcon, UserIcon } from '@/shared/ui/icons';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useCart } from '@/features/cart/context/CartContext';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { useCartStore } from '@/features/cart/store/cartStore';
 import { useDialog } from '@/shared/hooks/useDialog';
 import { useHashRoute } from '@/shared/hooks/useHashRoute';
 import { NAV_LINKS } from '../data/content';
@@ -21,8 +21,8 @@ function useHash() {
 }
 
 export default function Header() {
-  const { itemCount } = useCart();
-  const { user } = useAuth();
+  const itemCount = useCartStore((state) => state.itemCount);
+  const user = useAuthStore((state) => state.user);
   const route = useHashRoute();
   const hash = useHash();
   const [menuOpen, setMenuOpen] = useState(false);

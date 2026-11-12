@@ -10,6 +10,19 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    // Long-lived caching: React/Zustand rarely change, so they live in their own file and stay
+    // cached across deployments while the (frequently changing) app code is re-downloaded.
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/node_modules[\/](react|react-dom|scheduler|zustand)[\/]/.test(id)) return 'vendor';
+          return undefined;
+        },
+      },
+    },
+  },
   server: {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modify—file watching is disabled to prevent flickering during agent edits.

@@ -35,6 +35,11 @@ export function loadCashfree(): Promise<void> {
   return scriptPromise;
 }
 
+/** Starts downloading the SDK in the background (errors are ignored; "Pay" will retry and report them). */
+export function preloadCashfree(): void {
+  void loadCashfree().catch(() => undefined);
+}
+
 /** Opens the Cashfree payment popup. Resolves when it closes; the server decides whether money arrived. */
 export async function openCashfreeCheckout(paymentSessionId: string, mode: 'sandbox' | 'production'): Promise<void> {
   await loadCashfree();

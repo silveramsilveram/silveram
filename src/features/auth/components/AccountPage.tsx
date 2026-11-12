@@ -6,7 +6,7 @@ import { orderPath } from '@/shared/hooks/useHashRoute';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import Button, { buttonClasses } from '@/shared/ui/Button';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../store/authStore';
 
 export default function AccountPage() {
   const { user, status, signOut } = useAuth();

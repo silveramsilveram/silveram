@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useCart } from '@/features/cart/context/CartContext';
+import { useCart } from '@/features/cart/store/cartStore';
 import { formatINR } from '@/shared/lib/money';
 import ImageSlot from '@/shared/ui/ImageSlot';
 import { CheckIcon } from '@/shared/ui/icons';

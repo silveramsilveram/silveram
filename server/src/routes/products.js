@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { PRODUCT_CATEGORIES } from '../catalog.js';
 import { createDocument, getDocument, ID, listDocuments, Query, updateDocument } from '../platform/appwrite.js';
+import { TtlCache } from '../cache.js';
 import { requireAdmin, requireUser } from '../middleware.js';
 import { cloudinaryEnabled, mediaUrl as cloudinaryUrl } from '../storage/cloudinary/client.js';
 import { isProductPublicId } from '../storage/cloudinary/folders.js';
@@ -83,6 +84,14 @@ function mediaAreOwned(config, sku, media) {
   return cloudinaryEnabled(config) && media.every((asset) => isProductPublicId(config, sku, asset.publicId));
 }
 
+/**
+ * The public catalogue is read by every visitor but changes only when an admin edits it, so it is
+ * served from memory for a minute, and the CDN may keep it for a minute too (and serve a stale copy
+ * for five more while it refreshes in the background). Admin writes clear the memory copy at once.
+ */
+const catalogueCache = new TtlCache({ ttlMs: 60 * 1000, maxEntries: 50 });
+const PUBLIC_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300';
+
 export function createProductsRouter(config) {
   const router = Router();
   const productSchema = createProductSchema(config);
@@ -94,10 +103,14 @@ export function createProductsRouter(config) {
         return res.status(400).json({ error: 'Choose a valid product category.' });
       }
       const limit = Math.min(Number.parseInt(req.query.limit, 10) || 24, 100);
-      const queries = [Query.equal('active', true), Query.limit(limit)];
-      if (category) queries.push(Query.equal('category', category));
-      const rows = await listDocuments('products', queries);
-      return res.json({ products: rows.map((row) => serializeProduct(row, config)) });
+      const products = await catalogueCache.getOrLoad(`${category || 'all'}:${limit}`, async () => {
+        const queries = [Query.equal('active', true), Query.limit(limit)];
+        if (category) queries.push(Query.equal('category', category));
+        const rows = await listDocuments('products', queries);
+        return rows.map((row) => serializeProduct(row, config));
+      });
+      res.set('Cache-Control', PUBLIC_CACHE_CONTROL);
+      return res.json({ products });
     } catch (error) {
       next(error);
     }
@@ -125,6 +138,7 @@ export function createProductsRouter(config) {
       const { images, media: _media, ...fields } = parsed.data;
       const product = { ...fields, imagesJson: JSON.stringify(media), createdAt: now, updatedAt: now };
       const created = await createDocument('products', ID.unique(), product);
+      catalogueCache.clear();
       return res.status(201).json({ product: serializeProduct(created, config) });
     } catch (error) {
       if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
@@ -150,6 +164,7 @@ export function createProductsRouter(config) {
         }
       }
       const { images, media: _media, ...fields } = parsed.data;
+      catalogueCache.clear();
       const updated = await updateDocument('products', req.params.id, {
         ...fields,
         ...(media && { imagesJson: JSON.stringify(media) }),
@@ -166,6 +181,7 @@ export function createProductsRouter(config) {
     try {
       const existing = await getDocument('products', req.params.id);
       if (!existing) return res.status(404).json({ error: 'Product not found.' });
+      catalogueCache.clear();
       await updateDocument('products', req.params.id, {
         active: false,
         deletedAt: Date.now(),

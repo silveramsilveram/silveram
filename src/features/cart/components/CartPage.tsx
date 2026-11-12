@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/context/CartContext';
+import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/store/cartStore';
 import { productPath, getProductById } from '@/features/products/data/products';
 import { buttonClasses } from '@/shared/ui/Button';
 import ImageSlot from '@/shared/ui/ImageSlot';

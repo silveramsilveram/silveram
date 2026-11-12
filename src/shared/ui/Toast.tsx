@@ -1,7 +1,8 @@
-import { useCart } from '@/features/cart/context/CartContext';
+import { useCartStore } from '@/features/cart/store/cartStore';
 
 export default function Toast() {
-  const { toastMessage, liveAnnouncement } = useCart();
+  const toastMessage = useCartStore((state) => state.toastMessage);
+  const liveAnnouncement = useCartStore((state) => state.liveAnnouncement);
 
   return (
     <>

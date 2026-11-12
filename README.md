@@ -27,13 +27,13 @@ The browser never receives an Appwrite server API key or connects to the private
 
 | Area | Technology |
 |---|---|
-| Storefront | React 19, TypeScript, Vite, Tailwind CSS 4, GSAP |
+| Storefront | React 19, TypeScript, Vite, Tailwind CSS 4, Zustand (state + caching), GSAP (lazy-loaded) |
 | API | Node.js, Express 5, Zod, Helmet, CORS |
 | Accounts/data | Appwrite Auth, Databases, and SDK; server-only access |
 | Media | Cloudinary signed uploads and CDN delivery |
 | Email | Mailjet SMTP and optional contact-list API |
 | Payments | Cashfree Payments (UPI, UPI QR, debit/credit cards), disabled until configured |
-| Deployment | One Vercel project, Vite output plus Vercel Node.js API function |
+| Deployment | One Vercel project, Vite output plus Vercel Node.js API function pinned to Singapore (`sin1`) next to Appwrite |
 
 ## Features
 
@@ -52,7 +52,8 @@ api/
 src/
   app/                             Storefront assembly and hash routing
   features/
-    cart/                          Cart context, drawer and persistence
+    auth/                          Sign-in/sign-up UI and Zustand auth store (store/authStore.ts)
+    cart/                          Bag UI and Zustand cart store (store/cartStore.ts), persistence
     checkout/                      Disabled-by-default checkout UI
     policies/                      Draft policy text and modal
     products/                      Product cards, galleries, detail pages and static copy
@@ -70,6 +71,8 @@ server/
     app.js                         Express security middleware and route assembly
     config.js                      Validated server-only environment configuration
     catalog.js                     Shared server catalog enums
+    cache.js                       TtlCache: in-memory cache with expiry, size cap and request coalescing
+    sessions.js                    Cached session and user lookups (see Performance)
     platform/
       appwrite.js                  Appwrite SDK client, document and transaction helpers
       appwrite-schema.js            Appwrite collection/attribute/index definitions
@@ -183,14 +186,102 @@ The current customer-facing catalog copy is in `src/features/products/data/produ
 
 The seed script creates products **inactive with zero inventory** and will not activate products or overwrite live inventory/media. Verify each product’s actual material, purity, weight, dimensions, price, image references, and stock before listing it. Do not treat demo data as approved commercial facts.
 
+## Performance: why the site is fast and how to keep it fast
+
+This section explains, in plain language, what was slow, what we changed, and where each change lives. If you only read one thing: **a page feels slow when it waits for a faraway server, repeats work it already did, or downloads code it does not need yet.** Every change below attacks one of those three problems.
+
+### What was slow (the diagnosis)
+
+| Symptom | Real cause |
+|---|---|
+| Every API call took ~0.7 s, even `/api/health` | The Vercel function ran in **Washington, USA** (the default), but the Appwrite database is in **Singapore**. Each database call crossed the planet (~250 ms each way), and one login makes many calls. |
+| Sign-in, payment and sign-up felt "very slow" | Those flows made 5–10 database calls **one after another**, so the delays added up. |
+| Every signed-in click was slow | Each request re-checked the session in the database, even if it had been checked a second earlier. |
+| The shop re-read the same product list for every visitor | Nothing was cached. 1,000 visitors = 1,000 identical database reads. |
+| The first page load downloaded a lot of JavaScript | One 390 kB file held every page, plus an animation library (GSAP) used for a single effect. |
+
+### What we changed
+
+**1. Run the API next to the database** (`vercel.json` → `"regions": ["sin1"]`)
+Same city as Appwrite (Singapore). This alone removes most of the per-call delay. If you ever move Appwrite to another region, change this value to the matching Vercel region (Frankfurt `fra1`, US East `iad1`, ...). Keep them together.
+
+**2. Do independent work at the same time (parallel requests)** (`server/src/routes/*.js`)
+Before: "check IP limit → wait → check email limit → wait → read challenge → wait".
+After: all three start together with `Promise.all`, so the total wait is the *slowest one*, not the *sum*. Applied to: sign-in OTP, OTP verify (profile + session + cleanup run together), cart sync, and checkout (all bag products are read at once and stock is updated at once).
+We only parallelise things that do not depend on each other. Security checks that must come first (for example "is this code correct?") still run first.
+
+**3. Remember recent answers (in-memory caching)** (`server/src/cache.js`, `server/src/sessions.js`)
+A small `TtlCache` (time-to-live cache) remembers a result for a short time:
+
+| What | Remembered for | Cleared when |
+|---|---|---|
+| Session lookup (who owns this cookie?) | 30 s | the user logs out |
+| Appwrite user record for `/auth/me` | 60 s | the user signs in again |
+| Public product list | 60 s | an admin creates, edits or deletes a product |
+| Health check result | 30 s | automatically |
+
+Two safety rules: a *missing* session or user is **never** cached (so a new sign-in works immediately), and identical requests that arrive at the same moment **share one database call** ("request coalescing") instead of each making their own.
+Trade-off to know about: Vercel can run several copies of the API, each with its own memory. After logout, a *different* copy may still accept the old cookie for up to 30 seconds. We accepted that for speed; lower `SESSION_CACHE_MS` in `server/src/sessions.js` if you want it stricter.
+
+**4. Let the CDN cache the product list** (`Cache-Control` header in `server/src/routes/products.js`)
+`public, s-maxage=60, stale-while-revalidate=300` means Vercel's edge servers can answer product requests **without waking the API at all**, and can serve a slightly old copy while fetching a fresh one in the background. Measured locally: product list **435 ms → 3 ms** on a repeat request, health check **110 ms → 2 ms**.
+
+**5. Cache static files for a year** (`vercel.json` headers)
+Files in `/assets/` have a fingerprint in their name (`index-DLyLY6eM.js`), so when the code changes the name changes. They are therefore safe to cache as `immutable` for a year: returning visitors download nothing. Product photos in `/images/` are cached for a day and refreshed quietly after that.
+
+**6. Faster cold starts** (`server/app.js`)
+The first request after a quiet period used to also ping the database before doing anything. That ping was removed (`/api/health` still verifies the database, and real requests report errors if it is down).
+
+**7. Smaller, smarter JavaScript on the first visit** (`src/app/App.tsx`, `vite.config.ts`)
+- **Code splitting ("chunking"):** every page except the home page is its own file, downloaded the first time it is opened. First-load app code went from **390 kB → 58 kB**; React and Zustand sit in a separately cached `vendor` file that rarely changes, so repeat visits re-download only the small app file.
+- **Lazy animation library:** GSAP (27 kB gzipped) now loads *after* the hero photo is already visible. If it is slow, the photo simply shows without the animation.
+- **Prefetching:** when the browser is idle, it quietly downloads the cart, checkout, payment and sign-in pages, and Cashfree's payment script while the customer reads the checkout page. Clicking "Next" or "Pay" then feels instant.
+
+**8. Zustand for client state** (`src/features/cart/store/cartStore.ts`, `src/features/auth/store/authStore.ts`)
+We replaced React Context with [Zustand](https://github.com/pmndrs/zustand) stores.
+- *Why:* with Context, **any** change (even an "Added to bag" toast) re-rendered every component reading the cart. With Zustand, a component re-renders only when the specific value it reads changes. The header re-renders for the item count and nothing else.
+- *Caching:* the signed-in user (name and email only, never the secret session cookie) is remembered in `sessionStorage`, so the header and checkout show you as signed in **instantly** after a refresh, and the server confirms it in the background. A network blip no longer makes the UI forget you.
+- *Cart:* totals are calculated once when the bag changes, not on every render, and the bag stays in sync across browser tabs.
+- The hook names are unchanged (`useCart()`, `useAuth()`), so components did not need rewriting. On hot paths use selectors: `useCartStore((s) => s.itemCount)`.
+
+**9. A smarter API client** (`src/shared/lib/api.ts`)
+Identical GET requests made at the same moment share one network call, and every request has a 25-second timeout so a bad connection shows an error instead of an endless spinner.
+
+### What we deliberately did **not** do
+
+- **List virtualization (windowing).** It renders only the rows on screen, which matters for hundreds or thousands of items. The store has 3 products and a bag capped at 20 lines, so virtualizing would add code and bugs for no gain. If the catalogue grows past ~100 products, add `@tanstack/react-virtual` to `ShopPage` and add paging (`?limit=` already exists on `/api/products`).
+- **Redis / a separate cache server.** In-memory caching is enough at this size and needs no extra service. Move to a shared cache (for example Upstash Redis) only if you need logout to take effect on all servers instantly.
+- **Algorithm (time-complexity) rewrites.** There were no slow algorithms: every list is tiny. The real cost was *network round trips*, so we cut those. (The cache uses a `Map`, so lookups and evictions are O(1).)
+
+### How to check performance yourself
+
+```powershell
+# API latency (run it twice: the second call to /products should be much faster)
+curl.exe -s -o NUL -w "%{time_total}s`n" https://www.silveram.in/api/products
+
+# Bundle sizes after a build: index-*.js should stay small
+npm run build
+```
+
+In Chrome: DevTools → **Network** (check `Cache-Control` and sizes) and **Lighthouse** (Performance). In Vercel: Project → **Logs** and **Speed Insights**. To see which region the function runs in, open a deployment → **Functions**.
+
+### Rules of thumb for future changes
+
+1. New API route that needs several independent database reads? Start them together with `Promise.all`.
+2. Data that many people read and rarely changes? Put it behind `TtlCache` and clear the cache in the code that changes it.
+3. Never cache secrets, private per-user data in the CDN, or "not found" answers.
+4. New page? Add it to the `loaders` object in `src/app/App.tsx` so it is lazy-loaded and can be prefetched.
+5. New heavy library used by one screen? `import()` it inside that screen, not at the top of the file.
+6. Keep Vercel's function region and Appwrite's region in the same part of the world.
+
 ## Security and operational notes
 
 - Store secrets only in local ignored `server/.env` and Vercel’s server environment settings. Never commit `.env`, provider credentials, API keys, or customer data.
 - The Appwrite API key is server-only. Public collection permissions stay empty; Vercel’s API performs authorization. Use a separate temporary setup key to provision schema, then revoke it.
 - User sessions use random opaque tokens in `HttpOnly`, `SameSite=Lax` cookies; only a hash is stored in Appwrite. OTPs are HMAC-digested, short-lived, attempt-limited, and rate-limited.
 - Email, database and Cloudinary failures return explicit API errors; do not enable checkout as a way to test missing integrations.
-- Appwrite database transactions protect stock/order writes. Vercel Cron calls the secret-protected `/api/cron/cleanup` route daily to prune expired sessions, challenges, rate-limit records, webhook records, and stale email claims. A separate `/api/cron/reservations` job runs every five minutes to release expired payment stock holds. `CRON_SECRET` must be a random value of at least 32 bytes.
-- The five-minute reservation schedule requires a Vercel plan that supports that cadence or an authenticated external scheduler. Verify the job is active before enabling Cashfree. E-mail retries run in the long-running local server only.
+- Appwrite database transactions protect stock/order writes. Vercel Cron calls the secret-protected `/api/cron/cleanup` route daily to prune expired sessions, challenges, rate-limit records, webhook records, and stale email claims. A separate `/api/cron/reservations` job runs daily at 03:30 UTC (Vercel Hobby only allows daily crons); expired payment stock holds are also released, at most once a minute, whenever a customer starts checkout. `CRON_SECRET` must be a random value of at least 32 bytes.
+- On a Vercel Pro plan you can change the reservations schedule in `vercel.json` to `*/5 * * * *`. Verify the jobs are active before enabling Cashfree. E-mail retries run in the long-running local server only.
 - Appwrite is configured locally, but the latest schema check found missing Cashfree order attributes/indexes and customer fields. Vercel, Cashfree, Cloudinary, and Mailjet production settings still require verification. A green local build is not proof of production readiness.
 - The privacy/terms/shipping/returns text is marked as a draft and requires business/legal review. The domain, commercial terms, product claims and stock must be confirmed before launch.
 - Previously exposed credentials must be revoked/rotated. Never re-use credentials that were pasted into chat.

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useCart, type CartItem } from '@/features/cart/context/CartContext';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { useCartStore, type CartItem } from '@/features/cart/store/cartStore';
 import { apiRequest, isCheckoutEnabled } from '@/shared/lib/api';
 
 interface SyncInput {
@@ -33,8 +33,8 @@ export function syncCart({ email, name, phone, cart }: SyncInput): Promise<void>
 
 /** Signed-in customers: keep the saved bag in step with the bag on screen. */
 export function useSignedInCartSync() {
-  const { user } = useAuth();
-  const { cart } = useCart();
+  const user = useAuthStore((state) => state.user);
+  const cart = useCartStore((state) => state.cart);
 
   useEffect(() => {
     if (!user || cart.length === 0) return;

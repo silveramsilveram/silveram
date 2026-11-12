@@ -1,5 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
-import gsap from 'gsap';
+import { useEffect, useRef } from 'react';
 import { PRODUCTS, getProductById, productPath } from '@/features/products/data/products';
 import { formatINR } from '@/shared/lib/money';
 import { responsiveSrcSet } from '@/shared/lib/cloudinary';
@@ -16,40 +15,50 @@ export default function HeroSection() {
   const [lineOne, ...rest] = HERO.heading.split(/(?<=\.)\s+/);
   const lineTwo = rest.join(' ');
 
-  // One authored moment: an ivory mask lifts off the photograph. The mask is added by script
-  // after the photograph is already in the page, so the image is never hidden by CSS and
-  // nothing changes for reduced-motion users or when scripts are slow.
-  useLayoutEffect(() => {
+  // One authored moment: an ivory mask lifts off the photograph. gsap is loaded on demand (it is
+  // ~28 kB gzipped and only decorative), so the photograph paints first and the mask is added
+  // only once the animation library is ready: nothing is ever hidden while scripts are slow.
+  useEffect(() => {
     const frame = imageFrameRef.current;
     if (!frame || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const mask = document.createElement('div');
-    mask.setAttribute('aria-hidden', 'true');
-    mask.className = 'absolute inset-0 z-10 bg-surface-primary';
-    frame.appendChild(mask);
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
 
-    const img = frame.querySelector('img');
-    const timeline = gsap
-      .timeline({ paused: true, defaults: { ease: 'expo.out' }, onComplete: () => mask.remove() })
-      .to(mask, { yPercent: -100, duration: 1.2 });
-    if (img) timeline.from(img, { scale: 1.06, duration: 1.4 }, 0);
+    void import('gsap').then(({ default: gsap }) => {
+      if (cancelled) return;
+      const mask = document.createElement('div');
+      mask.setAttribute('aria-hidden', 'true');
+      mask.className = 'absolute inset-0 z-10 bg-surface-primary';
+      frame.appendChild(mask);
 
-    // Start once the photograph has loaded, so the reveal never exposes an empty frame.
-    const play = () => timeline.play();
-    const fallbackTimer = window.setTimeout(play, 2000);
-    if (!img || img.complete) {
-      play();
-    } else {
-      img.addEventListener('load', play, { once: true });
-      img.addEventListener('error', play, { once: true });
-    }
+      const img = frame.querySelector('img');
+      const timeline = gsap
+        .timeline({ paused: true, defaults: { ease: 'expo.out' }, onComplete: () => mask.remove() })
+        .to(mask, { yPercent: -100, duration: 1.2 });
+      if (img) timeline.from(img, { scale: 1.06, duration: 1.4 }, 0);
+
+      const play = () => timeline.play();
+      const fallbackTimer = window.setTimeout(play, 2000);
+      if (!img || img.complete) {
+        play();
+      } else {
+        img.addEventListener('load', play, { once: true });
+        img.addEventListener('error', play, { once: true });
+      }
+
+      cleanup = () => {
+        window.clearTimeout(fallbackTimer);
+        img?.removeEventListener('load', play);
+        img?.removeEventListener('error', play);
+        timeline.kill();
+        mask.remove();
+      };
+    });
 
     return () => {
-      window.clearTimeout(fallbackTimer);
-      img?.removeEventListener('load', play);
-      img?.removeEventListener('error', play);
-      timeline.kill();
-      mask.remove();
+      cancelled = true;
+      cleanup?.();
     };
   }, []);
 

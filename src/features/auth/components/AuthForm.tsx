@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import Button from '@/shared/ui/Button';
 import { ApiError } from '@/shared/lib/api';
 import { setAuthEmail } from '../redirect';
-import { useAuth, type AuthMode, type AuthUser } from '../context/AuthContext';
+import { useAuth, type AuthMode, type AuthUser } from '../store/authStore';
 
 interface AuthFormProps {
   /** "signin" and "signup" are separate pages; each renders this form in its own mode. */

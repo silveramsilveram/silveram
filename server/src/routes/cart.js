@@ -33,21 +33,23 @@ export function createCartRouter(config) {
       const email = req.user ? req.user.email : parsed.data.email;
       if (!email) return res.status(400).json({ error: 'Enter your email address first.' });
 
-      if (
-        !(await consumeRateLimit(req.ip, 'cart-ip', 60, HOUR)) ||
-        !(await consumeRateLimit(email, 'cart-email', 30, HOUR))
-      ) {
+      // Rate limits and product lookups are independent: do them together (one wait, not many).
+      // Price the bag from Appwrite, never from the browser.
+      const [ipAllowed, emailAllowed, products] = await Promise.all([
+        consumeRateLimit(req.ip, 'cart-ip', 60, HOUR),
+        consumeRateLimit(email, 'cart-email', 30, HOUR),
+        Promise.all(items.map(({ id }) => getDocument('products', id))),
+      ]);
+      if (!ipAllowed || !emailAllowed) {
         return res.status(429).json({ error: 'Too many requests. Please try again later.' });
       }
-
-      // Price the bag from Appwrite, never from the browser.
       const lines = [];
-      for (const { id, quantity } of items) {
-        const product = await getDocument('products', id);
+      items.forEach(({ quantity }, index) => {
+        const product = products[index];
         if (product?.active === true && Number.isSafeInteger(product.priceInPaise)) {
           lines.push({ id: product.$id, name: product.name, quantity, unitPriceInPaise: product.priceInPaise });
         }
-      }
+      });
 
       const { shouldEmail, id } = await recordCart(
         { email, name: name || req.user?.name, phone, userId: req.user?.id, source: req.user ? 'account' : 'guest' },

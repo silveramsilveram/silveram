@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { setAfterAuth } from '@/features/auth/redirect';
-import { useAuth } from '@/features/auth/context/AuthContext';
-import { useCart } from '@/features/cart/context/CartContext';
+import { useAuth } from '@/features/auth/store/authStore';
+import { useCart } from '@/features/cart/store/cartStore';
 import { syncCart } from '@/features/cart/lib/syncCart';
 import { isCheckoutEnabled } from '@/shared/lib/api';
 import { setPageMeta } from '@/shared/lib/seo';

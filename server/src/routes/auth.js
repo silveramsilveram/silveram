@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { createDocument, deleteDocument, findDocument, getAppwrite, getDocument, ID, Query, updateDocument } from '../platform/appwrite.js';
 import { getMailer } from '../mail/transport.js';
+import { forgetSession, forgetUser, getCachedUser, lookupSession } from '../sessions.js';
 import { consumeRateLimit, createOpaqueToken, createOtp, hashToken, otpDigest, safeEqualHex } from '../security.js';
 
 const emailSchema = z.string().trim().email().max(254).transform((email) => email.toLowerCase());
@@ -42,14 +43,16 @@ export function createAuthRouter(config) {
       }
 
       const email = parsed.data.email;
-      const ipAllowed = await consumeRateLimit(req.ip, 'otp-ip', 10, 60 * 60 * 1000);
-      const emailAllowed = await consumeRateLimit(email, 'otp-email', 5, 60 * 60 * 1000);
+      // Independent Appwrite calls run together: one network wait instead of three in a row.
+      const id = challengeId(email);
+      const [ipAllowed, emailAllowed, existing] = await Promise.all([
+        consumeRateLimit(req.ip, 'otp-ip', 10, 60 * 60 * 1000),
+        consumeRateLimit(email, 'otp-email', 5, 60 * 60 * 1000),
+        getDocument('authChallenges', id),
+      ]);
       if (!ipAllowed || !emailAllowed) {
         return res.status(429).json({ error: 'Too many verification requests. Please try again later.' });
       }
-
-      const id = challengeId(email);
-      const existing = await getDocument('authChallenges', id);
       if (
         existing?.lastSentAt &&
         Date.now() - existing.lastSentAt < config.otpResendSeconds * 1000
@@ -92,9 +95,6 @@ export function createAuthRouter(config) {
 
   router.post('/verify', async (req, res, next) => {
     try {
-      if (!(await consumeRateLimit(req.ip, 'otp-verify-ip', 30, 60 * 60 * 1000))) {
-        return res.status(429).json({ error: 'Too many verification attempts. Please try again later.' });
-      }
       const parsed = verifySchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Enter your email and the six-digit code.' });
       const { email, code, name, mode } = parsed.data;
@@ -102,7 +102,14 @@ export function createAuthRouter(config) {
         return res.status(400).json({ error: 'Enter your name to create an account.' });
       }
       const id = challengeId(email);
-      const challenge = await getDocument('authChallenges', id);
+      // The IP limit and the challenge lookup do not depend on each other.
+      const [ipAllowed, challenge] = await Promise.all([
+        consumeRateLimit(req.ip, 'otp-verify-ip', 30, 60 * 60 * 1000),
+        getDocument('authChallenges', id),
+      ]);
+      if (!ipAllowed) {
+        return res.status(429).json({ error: 'Too many verification attempts. Please try again later.' });
+      }
       if (!challenge) return res.status(400).json({ error: 'That code has expired. Request a new code.' });
       if (challenge.expiresAt <= Date.now()) {
         await deleteDocument('authChallenges', id);
@@ -148,8 +155,6 @@ export function createAuthRouter(config) {
         }
         throw error;
       }
-      await deleteDocument('authChallenges', id);
-
       const now = new Date();
       let user = matches.users[0];
       if (!user) {
@@ -172,24 +177,32 @@ export function createAuthRouter(config) {
       if (!user.emailVerification) {
         user = await users.updateEmailVerification({ userId: user.$id, emailVerification: true });
       }
-      const profile = await getDocument('profiles', user.$id);
-      const profileData = {
-        email,
-        name: name || user.name || '',
-        createdAt: profile?.createdAt || now.getTime(),
-        lastLoginAt: now.getTime(),
-      };
-      if (profile) await updateDocument('profiles', user.$id, profileData);
-      else await createDocument('profiles', user.$id, profileData);
+      forgetUser(user.$id);
 
       const sessionToken = createOpaqueToken();
-      await createDocument('sessions', ID.unique(), {
-        tokenHash: hashToken(sessionToken),
-        userId: user.$id,
-        email,
-        createdAt: now.getTime(),
-        expiresAt: now.getTime() + sessionDurationMs,
-      });
+      const upsertProfile = async () => {
+        const profile = await getDocument('profiles', user.$id);
+        const profileData = {
+          email,
+          name: name || user.name || '',
+          createdAt: profile?.createdAt || now.getTime(),
+          lastLoginAt: now.getTime(),
+        };
+        if (profile) await updateDocument('profiles', user.$id, profileData);
+        else await createDocument('profiles', user.$id, profileData);
+      };
+      // Removing the used code, the profile bookkeeping and the new session are independent.
+      await Promise.all([
+        deleteDocument('authChallenges', id),
+        upsertProfile(),
+        createDocument('sessions', ID.unique(), {
+          tokenHash: hashToken(sessionToken),
+          userId: user.$id,
+          email,
+          createdAt: now.getTime(),
+          expiresAt: now.getTime() + sessionDurationMs,
+        }),
+      ]);
       setSessionCookie(res, sessionToken, config);
       return res.json({ user: { id: user.$id, email: user.email, name: name || user.name || '' } });
     } catch (error) {
@@ -201,20 +214,17 @@ export function createAuthRouter(config) {
     try {
       const token = req.cookies?.silveram_session;
       if (!token) return res.status(401).json({ error: 'Sign in to continue.' });
-      const session = await findDocument('sessions', 'tokenHash', hashToken(token));
-      if (session?.expiresAt <= Date.now()) {
-        await deleteDocument('sessions', session.$id);
-        return res.status(401).json({ error: 'Your session expired. Verify your email again.' });
-      }
+      const session = await lookupSession(hashToken(token));
       if (!session) return res.status(401).json({ error: 'Your session expired. Verify your email again.' });
       const { users } = getAppwrite();
-      let user;
-      try {
-        user = await users.get({ userId: session.userId });
-      } catch (error) {
-        if (error?.code === 404) return res.status(401).json({ error: 'Your account could not be found.' });
-        throw error;
-      }
+      const user = await getCachedUser(session.userId, async () => {
+        try {
+          return await users.get({ userId: session.userId });
+        } catch (error) {
+          if (error?.code === 404) return undefined; // a missing account is never cached
+          throw error;
+        }
+      });
       if (!user) return res.status(401).json({ error: 'Your account could not be found.' });
       return res.json({ user: { id: user.$id, email: user.email, name: user.name || '' } });
     } catch (error) {
@@ -226,7 +236,9 @@ export function createAuthRouter(config) {
     try {
       const token = req.cookies?.silveram_session;
       if (token) {
-        const session = await findDocument('sessions', 'tokenHash', hashToken(token));
+        const tokenHash = hashToken(token);
+        forgetSession(tokenHash);
+        const session = await findDocument('sessions', 'tokenHash', tokenHash);
         if (session) await deleteDocument('sessions', session.$id);
       }
       res.clearCookie('silveram_session', {
