@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import ProductMedia from '@/features/products/components/ProductMedia';
 import { PRODUCTS, productPath } from '@/features/products/data/products';
 import CarouselControls from '@/shared/ui/CarouselControls';
@@ -36,6 +36,14 @@ export default function CollectionRail() {
     if (rail) rail.scrollBy({ left: direction * rail.clientWidth * 0.8 });
   };
 
+  const onRailKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === 'ArrowLeft') scrollByPage(-1);
+    else if (event.key === 'ArrowRight') scrollByPage(1);
+    else return;
+    event.preventDefault();
+  };
+
   return (
     <section aria-labelledby="rail-heading" className="scene scene-canvas py-16 md:py-24">
       <div className="page-container-wide flex items-end justify-between gap-6">
@@ -59,6 +67,7 @@ export default function CollectionRail() {
       <ul
         ref={railRef}
         onScroll={measure}
+        onKeyDown={onRailKeyDown}
         tabIndex={0}
         role="list"
         aria-label="Photographs from the collection"

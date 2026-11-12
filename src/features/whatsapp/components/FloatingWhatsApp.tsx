@@ -1,10 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WhatsAppIcon } from '@/shared/ui/icons';
 import { buildWhatsAppUrl } from '../url';
 import { buildGeneralMessage } from '../messages';
 
 /** Below this width the hero fills the screen, so the chat shortcut waits until the hero has scrolled away. */
 const COMPACT_QUERY = '(max-width: 1023px)';
+const ACTION_SELECTOR = [
+  'main a[href]',
+  'main button:not([disabled])',
+  'main input:not([disabled])',
+  'main select:not([disabled])',
+  'main summary',
+  'main textarea:not([disabled])',
+  'footer a[href]',
+  'footer button:not([disabled])',
+  'footer input:not([disabled])',
+  'footer select:not([disabled])',
+  'footer summary',
+  'footer textarea:not([disabled])',
+].join(',');
 
 /**
  * Whether the home page hero (`#home`) is on screen on a compact viewport. On those screens the floating button
@@ -39,14 +53,71 @@ function useHiddenOverHero(): boolean {
   return overHero;
 }
 
+function useHiddenWhenOverlappingAction(): boolean {
+  const [overlap, setOverlap] = useState(false);
+  const overlapRef = useRef(false);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const floating = document.querySelector<HTMLElement>('aside[aria-label="WhatsApp contact"] a');
+        if (!floating) return;
+
+        const floatingRect = floating.getBoundingClientRect();
+        const collides = Array.from(document.querySelectorAll<HTMLElement>(ACTION_SELECTOR)).some((target) => {
+          const style = window.getComputedStyle(target);
+          if (style.display === 'none' || style.visibility === 'hidden') return false;
+
+          const rect = target.getBoundingClientRect();
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            rect.left < floatingRect.right &&
+            rect.right > floatingRect.left &&
+            rect.top < floatingRect.bottom &&
+            rect.bottom > floatingRect.top
+          );
+        });
+
+        if (collides === overlapRef.current) return;
+        overlapRef.current = collides;
+        setOverlap(collides);
+      });
+    };
+
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    resizeObserver?.observe(document.body);
+    const mutationObserver = new MutationObserver(update);
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+    update();
+
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      resizeObserver?.disconnect();
+      mutationObserver.disconnect();
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return overlap;
+}
+
 /** Floating chat shortcut. Renders nothing until a WhatsApp number is configured. */
 export default function FloatingWhatsApp() {
   const href = buildWhatsAppUrl(buildGeneralMessage());
-  const hidden = useHiddenOverHero();
+  const overHero = useHiddenOverHero();
+  const overlapsAction = useHiddenWhenOverlappingAction();
+  const hidden = overHero || overlapsAction;
   if (!href) return null;
 
   return (
-    <aside aria-label="WhatsApp contact">
+    <aside aria-label="WhatsApp contact" aria-hidden={hidden || undefined}>
       <a
         href={href}
         target="_blank"
@@ -54,8 +125,13 @@ export default function FloatingWhatsApp() {
         aria-label="Chat with Silveram on WhatsApp (opens in a new tab)"
         aria-hidden={hidden || undefined}
         tabIndex={hidden ? -1 : undefined}
+        style={overlapsAction ? { transitionDuration: '0ms' } : undefined}
         className={`group fixed bottom-5 right-5 z-30 flex items-center gap-2.5 rounded-full border border-accent-silver/50 bg-brand-primary p-3 text-surface-primary shadow-xl transition-[transform,opacity,visibility,background-color,box-shadow] duration-300 hover:scale-105 hover:bg-brand-primary-hover hover:shadow-2xl active:scale-95 md:bottom-7 md:right-7 ${
-          hidden ? 'pointer-events-none invisible translate-y-3 opacity-0' : 'visible translate-y-0 opacity-100'
+          overlapsAction
+            ? 'pointer-events-none invisible translate-y-3 opacity-0'
+            : hidden
+              ? 'pointer-events-none invisible translate-y-3 opacity-0'
+              : 'visible translate-y-0 opacity-100'
         }`}
       >
         <span className="relative flex h-8 w-8 items-center justify-center">
