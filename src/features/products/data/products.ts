@@ -82,12 +82,12 @@ export const PRODUCTS: Product[] = [
     description:
       'A timeless expression of devotion, featuring detailed representations of Goddess Lakshmi and Lord Ganesha. Its decorative artwork and transparent stand make it a thoughtful addition to your home temple. A meaningful gift for festivals, celebrations and auspicious occasions.',
     images: [
-      { src: productImageUrl('SV-001', 'silver-frame-01', 1400, '/images/products/silver-frame-01.webp'), fallbackSrc: '/images/products/silver-frame-01.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a stand, set against royal blue velvet' },
-      { src: productImageUrl('SV-001', 'silver-frame-02', 1400, '/images/products/silver-frame-02.webp'), fallbackSrc: '/images/products/silver-frame-02.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on ivory satin beside orange marigolds' },
-      { src: productImageUrl('SV-001', 'silver-frame-03', 1400, '/images/products/silver-frame-03.webp'), fallbackSrc: '/images/products/silver-frame-03.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame presented in a navy gift box with a gold ribbon' },
-      { src: productImageUrl('SV-001', 'silver-frame-04', 1400, '/images/products/silver-frame-04.webp'), fallbackSrc: '/images/products/silver-frame-04.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame with transparent stand on a plain white background' },
-      { src: productImageUrl('SV-001', 'silver-frame-05', 1400, '/images/products/silver-frame-05.webp'), fallbackSrc: '/images/products/silver-frame-05.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a wooden altar shelf with a lit diya and flowers' },
-      { src: productImageUrl('SV-001', 'silver-frame-06', 1400, '/images/products/silver-frame-06.webp'), fallbackSrc: '/images/products/silver-frame-06.webp', width: 508, height: 508, alt: 'Close-up of the Lakshmi and Ganesha relief with the Shubh Labh inscription' },
+      { src: productImageUrl('SV-001', 'silver-frame-01', 1400, '/images/products/silver-frame-01.webp'), fallbackSrc: '/images/products/silver-frame-01.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on ivory satin beside orange marigolds and rose petals' },
+      { src: productImageUrl('SV-001', 'silver-frame-02', 1400, '/images/products/silver-frame-02.webp'), fallbackSrc: '/images/products/silver-frame-02.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame presented in a navy gift box with a gold ribbon' },
+      { src: productImageUrl('SV-001', 'silver-frame-03', 1400, '/images/products/silver-frame-03.webp'), fallbackSrc: '/images/products/silver-frame-03.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame with transparent stand on a plain white background' },
+      { src: productImageUrl('SV-001', 'silver-frame-04', 1400, '/images/products/silver-frame-04.webp'), fallbackSrc: '/images/products/silver-frame-04.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a wooden altar shelf with a lit diya and flowers' },
+      { src: productImageUrl('SV-001', 'silver-frame-05', 1400, '/images/products/silver-frame-05.webp'), fallbackSrc: '/images/products/silver-frame-05.webp', width: 508, height: 508, alt: 'Close-up of the Lakshmi and Ganesha relief with the Shubh Labh inscription' },
+      { src: productImageUrl('SV-001', 'silver-frame-06', 1400, '/images/products/silver-frame-06.webp'), fallbackSrc: '/images/products/silver-frame-06.webp', width: 508, height: 508, alt: 'Lakshmi and Ganesha frame on a stand, set against royal blue velvet' },
     ],
   },
   {
