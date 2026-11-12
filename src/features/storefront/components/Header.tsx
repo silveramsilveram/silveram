@@ -8,7 +8,7 @@ import { useHash, useLocationKey, useRoute } from '@/shared/routing/router';
 import { MENU_EXTRA_LINKS, NAV_LINKS } from '../data/content';
 
 const WORDMARK =
-  'inline-flex min-h-11 items-center justify-self-start font-display text-[1.75rem] uppercase leading-none tracking-[0.06em] text-brand-primary transition-opacity duration-[250ms] hover:opacity-80';
+  'inline-flex min-h-11 items-center justify-self-start font-display text-[1.75rem] uppercase leading-none tracking-[0.06em] transition-opacity duration-[250ms] hover:opacity-80';
 
 export default function Header({ overlay = false }: { overlay?: boolean }) {
   const itemCount = useCartStore((state) => state.itemCount);
@@ -108,7 +108,11 @@ export default function Header({ overlay = false }: { overlay?: boolean }) {
         } ${shadow}`}
       >
         <div className="page-container-wide flex h-[4.5rem] items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr]">
-          <a href="/" className={`${WORDMARK} header-wordmark`} aria-label="Silveram, home">
+          <a
+            href="/"
+            className={`${WORDMARK} ${transparent ? 'text-surface-primary' : 'text-brand-primary'} header-wordmark`}
+            aria-label="Silveram, home"
+          >
             Silveram
           </a>
 
@@ -160,7 +164,7 @@ export default function Header({ overlay = false }: { overlay?: boolean }) {
           className="menu-in scene scene-canvas fixed inset-0 z-50 flex flex-col overflow-y-auto overscroll-contain focus:outline-none md:hidden"
         >
           <div className="page-container-wide flex h-[4.5rem] shrink-0 items-center justify-between">
-            <a href="/" onClick={closeMenu} className={WORDMARK} aria-label="Silveram, home">
+            <a href="/" onClick={closeMenu} className={`${WORDMARK} text-brand-primary`} aria-label="Silveram, home">
               Silveram
             </a>
             <button type="button" onClick={closeMenu} className="header-chip" aria-label="Close menu">
