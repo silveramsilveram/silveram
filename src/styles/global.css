@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @import "@fontsource-variable/league-spartan";
+/* Self-hosted through the bundle (SIL OFL 1.1). Latin subsets only; font-display: swap is built in. */
+@import "@fontsource/instrument-serif/latin-400.css";
+@import "@fontsource/instrument-serif/latin-400-italic.css";
+@import "@fontsource/courier-prime/latin-400.css";
+@import "@fontsource/courier-prime/latin-700.css";
 @import "./tokens.css";
 @import "./utilities.css";
 
@@ -45,7 +50,8 @@
   }
 
   /* Focus ring on navy surfaces */
-  .on-navy :focus-visible {
+  .on-navy :focus-visible,
+  .scene-deep :focus-visible {
     outline-color: var(--color-surface-primary);
   }
 

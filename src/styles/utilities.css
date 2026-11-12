@@ -78,7 +78,7 @@
     min-height: 2.75rem;
     /* text-muted (#5e6471) keeps the outline above 3:1 on white and ivory; border-strong is only ~2.3:1. */
     border: 1px solid var(--color-text-muted);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-field);
     background: var(--color-surface-white);
     padding: 0.625rem 0.75rem;
     font-size: 1rem;
@@ -145,3 +145,302 @@ details > summary::after {
   color: var(--color-text-muted);
 }
 details[open] > summary::after { content: "\2212"; }
+
+/* =============================================================================
+ * Midnight Editorial system (Milestone 2).
+ * Scenes, editorial type, pill actions, stamps, dashed rules and decorative motion.
+ * New names are prefixed (scene-, ed-, label-, btn-pill, stamp, rule-, marquee) so the
+ * legacy .type-* classes keep working until each page is migrated.
+ * ========================================================================== */
+@layer components {
+  /* ---- Layout containers ------------------------------------------------- */
+  .page-container-wide {
+    width: 100%;
+    max-width: var(--container-wide);
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+  .page-container-editorial {
+    width: 100%;
+    max-width: var(--container-editorial);
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 768px) {
+    .page-container-wide { padding-inline: 1.875rem; } /* 30px editorial gutter */
+    .page-container-editorial { padding-inline: 1.875rem; }
+  }
+
+  /* ---- Scenes: whole bands carry the colour, not individual cards --------- */
+  .scene {
+    background-color: var(--scene-bg);
+    color: var(--scene-fg);
+  }
+  .scene-canvas {
+    --scene-bg: var(--color-surface-primary);
+    --scene-fg: var(--color-brand-primary);
+    --scene-body: var(--color-text-secondary);
+    --scene-line: color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
+  }
+  .scene-mat {
+    --scene-bg: var(--color-surface-secondary);
+    --scene-fg: var(--color-brand-primary);
+    --scene-body: var(--color-text-secondary);
+    --scene-line: color-mix(in srgb, var(--color-brand-primary) 40%, transparent);
+  }
+  .scene-deep {
+    --scene-bg: var(--color-brand-primary);
+    --scene-fg: var(--color-surface-primary);
+    --scene-body: color-mix(in srgb, var(--color-surface-primary) 82%, transparent);
+    --scene-line: color-mix(in srgb, var(--color-accent-silver) 70%, transparent);
+  }
+  .scene-ice {
+    --scene-bg: var(--color-ice);
+    --scene-fg: var(--color-brand-primary);
+    --scene-body: var(--color-text-secondary);
+    --scene-line: color-mix(in srgb, var(--color-brand-primary) 45%, transparent);
+  }
+  .scene-champagne {
+    --scene-bg: var(--color-champagne);
+    --scene-fg: var(--color-brand-primary);
+    --scene-body: var(--color-brand-primary);
+    --scene-line: color-mix(in srgb, var(--color-brand-primary) 50%, transparent);
+  }
+  .scene-body { color: var(--scene-body); }
+
+  /* ---- Editorial type ----------------------------------------------------
+   * Instrument Serif for headlines (display only: never body copy). Sizes are upper bounds taken
+   * from the reference (about 72 / 102 / 120px) and fitted to Silveram copy with clamp(). */
+  .ed-statement,
+  .ed-display,
+  .ed-h1,
+  .ed-h2,
+  .ed-h3,
+  .ed-product {
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-wrap: balance;
+  }
+  .ed-statement { font-size: clamp(2.75rem, 9vw, 7.5rem); line-height: 0.95; letter-spacing: -0.02em; }
+  .ed-display   { font-size: clamp(2.75rem, 7.5vw, 6.375rem); line-height: 0.98; letter-spacing: -0.015em; }
+  .ed-h1        { font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; }
+  .ed-h2        { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.05; letter-spacing: -0.005em; }
+  .ed-h3        { font-size: clamp(1.75rem, 3.2vw, 2.875rem); line-height: 1.08; }
+  .ed-product   { font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.15; }
+  /* Italic is a selective accent, not a default: one phrase per statement at most. */
+  .ed-italic { font-style: italic; }
+
+  /* Courier Prime: labels and metadata only. Sentence case, never below 13px. */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    letter-spacing: 0.01em;
+  }
+  .label-mono-sm {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+  .label-mono-strong { font-weight: 700; }
+
+  /* ---- Media ------------------------------------------------------------- */
+  .media-frame {
+    border-radius: var(--radius-media);
+    overflow: hidden;
+  }
+  .media-zoom img,
+  .media-zoom video {
+    transition: transform var(--dur-media) var(--ease-out);
+  }
+  .group:hover .media-zoom img,
+  .group:hover .media-zoom video {
+    transform: scale(1.03);
+  }
+
+  /* ---- Dashed editorial dividers ----------------------------------------- */
+  .rule-dashed { border-top: 1px dashed var(--scene-line, currentColor); }
+  .rule-dashed-b { border-bottom: 1px dashed var(--scene-line, currentColor); }
+  .frame-dashed {
+    border: 1px dashed var(--scene-line, currentColor);
+    border-radius: var(--radius-media);
+  }
+
+  /* ---- Oval stamp (category, status) ------------------------------------- */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 1rem;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  /* ---- Pill action: fine outline with a checkered underside --------------- */
+  .btn-pill {
+    --btn-bg: var(--color-brand-primary);
+    --btn-fg: var(--color-surface-primary);
+    --btn-edge: var(--color-brand-primary);
+    --btn-hover-bg: var(--color-brand-primary-hover);
+    --btn-hover-fg: var(--color-surface-primary);
+    --btn-hover-edge: var(--color-brand-primary-hover);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 1.5rem;
+    margin-bottom: 5px; /* room for the underside so layout never shifts */
+    border: 1px solid var(--btn-edge);
+    border-radius: var(--radius-pill);
+    background-color: var(--btn-bg);
+    color: var(--btn-fg);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition:
+      background-color var(--dur-state) ease-in-out,
+      color var(--dur-state) ease-in-out,
+      border-color var(--dur-state) ease-in-out,
+      transform 150ms var(--ease-out);
+  }
+  .btn-pill::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: -6px;
+    height: 5px;
+    border-radius: 0 0 var(--radius-pill) var(--radius-pill);
+    background: repeating-conic-gradient(var(--btn-edge) 0 25%, transparent 0 50%) 0 0 / 4px 4px;
+    opacity: 0.6;
+    transform-origin: top;
+    transition: transform var(--dur-state) var(--ease-out), opacity var(--dur-state) ease-in-out;
+  }
+  .btn-pill:hover:not(:disabled):not([aria-disabled="true"]) {
+    background-color: var(--btn-hover-bg);
+    color: var(--btn-hover-fg);
+    border-color: var(--btn-hover-edge);
+    transform: translateY(2px);
+  }
+  .btn-pill:hover:not(:disabled):not([aria-disabled="true"])::after { transform: scaleY(0.4); }
+  .btn-pill:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(4px); }
+  .btn-pill:active:not(:disabled):not([aria-disabled="true"])::after { opacity: 0; }
+  .btn-pill:disabled,
+  .btn-pill[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .btn-pill:disabled::after,
+  .btn-pill[aria-disabled="true"]::after { display: none; }
+  .btn-pill[aria-busy="true"] { cursor: progress; }
+
+  .btn-pill--secondary {
+    --btn-bg: transparent;
+    --btn-fg: var(--color-brand-primary);
+    --btn-hover-bg: var(--color-brand-primary);
+    --btn-hover-fg: var(--color-surface-primary);
+    --btn-hover-edge: var(--color-brand-primary);
+  }
+  .btn-pill--inverse {
+    --btn-bg: var(--color-surface-primary);
+    --btn-fg: var(--color-brand-primary);
+    --btn-edge: var(--color-surface-primary);
+    --btn-hover-bg: var(--color-surface-secondary);
+    --btn-hover-fg: var(--color-brand-primary);
+    --btn-hover-edge: var(--color-surface-secondary);
+  }
+  .btn-pill--outline-inverse {
+    --btn-bg: transparent;
+    --btn-fg: var(--color-surface-primary);
+    --btn-edge: var(--color-accent-silver);
+    --btn-hover-bg: var(--color-surface-primary);
+    --btn-hover-fg: var(--color-brand-primary);
+    --btn-hover-edge: var(--color-surface-primary);
+  }
+  .btn-pill--sm { min-height: 2.5rem; padding: 0 1.125rem; font-size: 0.875rem; }
+  .btn-pill--lg { min-height: 3.25rem; padding: 0 1.875rem; font-size: 1rem; }
+
+  /* Round icon button (carousel arrows, pause control). */
+  .btn-round {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-state) ease-in-out,
+      color var(--dur-state) ease-in-out,
+      transform 150ms var(--ease-out);
+  }
+  .btn-round:hover:not(:disabled) { background-color: var(--scene-fg, var(--color-brand-primary)); color: var(--scene-bg, var(--color-surface-primary)); }
+  .btn-round:active:not(:disabled) { transform: scale(0.96); }
+  .btn-round:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ---- Marquee and decorative loops --------------------------------------- */
+  .marquee { display: flex; overflow: hidden; }
+  .marquee__group {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-around;
+    min-width: 100%;
+    gap: 3rem;
+    padding-right: 3rem;
+    animation: marquee-scroll var(--dur-marquee) linear infinite;
+  }
+
+  /* ---- Word sculpture: scales with its container, so it fits at every width -- */
+  .word-sculpture { container-type: inline-size; line-height: 0.78; }
+  .word-sculpture__text {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 29cqw; /* tuned so the glyph side-bearings stay inside the gutters at 360 to 1440px */
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    text-align: center;
+  }
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes decor-spin { to { transform: rotate(360deg); } }
+@keyframes decor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.anim-spin { animation: decor-spin var(--dur-spin) linear infinite; }
+.anim-blink { animation: decor-blink var(--dur-small) ease-in-out infinite; }
+
+/* One global control pauses every decorative loop (WCAG 2.2.2). */
+html[data-motion="paused"] .marquee__group,
+html[data-motion="paused"] .anim-spin,
+html[data-motion="paused"] .anim-blink {
+  animation-play-state: paused;
+}
+
+/* Reduced motion: decorative loops are removed, not frozen mid-way; the marquee shows one static copy. */
+@media (prefers-reduced-motion: reduce) {
+  .marquee__group { animation: none !important; transform: none !important; }
+  .marquee__group[aria-hidden="true"] { display: none; }
+  .marquee { overflow-x: auto; }
+  .anim-spin, .anim-blink { animation: none !important; }
+  .btn-pill, .btn-pill::after, .btn-round { transition-duration: 0.01ms !important; }
+}

@@ -20,6 +20,34 @@ export function productImageUrl(
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/f_auto,q_auto,c_limit,w_${width}/${publicId}`;
 }
 
+/** Site areas mirror SITE_AREAS in server/src/storage/cloudinary/folders.js (read-only reference). */
+export type SiteMediaArea = 'hero' | 'categories' | 'editorial' | 'avatars';
+
+/** Site photograph: `<root>/<env>/site/<area>/<name>`. Same transforms as product images. */
+export function siteImageUrl(area: SiteMediaArea, name: string, width = 1400, fallbackSrc = ''): string {
+  if (!CLOUD_NAME) return fallbackSrc;
+  const publicId = `${ROOT}/${ENV_FOLDER}/site/${area}/${name}`;
+  return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/f_auto,q_auto,c_limit,w_${width}/${publicId}`;
+}
+
+/**
+ * Product film: `<root>/<env>/products/<sku>/<name>` as a Cloudinary *video* resource.
+ * `f_auto` lets Cloudinary pick WebM or MP4 for the browser; `c_limit` never enlarges the original.
+ * Returns '' when Cloudinary is not configured (there is no bundled fallback film).
+ */
+export function productVideoUrl(sku: string, name: string, width = 1280): string {
+  if (!CLOUD_NAME) return '';
+  const publicId = `${ROOT}/${ENV_FOLDER}/products/${sku.toLowerCase()}/${name}`;
+  return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/f_auto,q_auto,c_limit,w_${width}/${publicId}`;
+}
+
+/** Still frame (first frame) of a product film, for the `poster` attribute and reduced-motion view. */
+export function productVideoPosterUrl(sku: string, name: string, width = 1280): string {
+  if (!CLOUD_NAME) return '';
+  const publicId = `${ROOT}/${ENV_FOLDER}/products/${sku.toLowerCase()}/${name}`;
+  return `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/so_0,f_jpg,q_auto,c_limit,w_${width}/${publicId}.jpg`;
+}
+
 /**
  * `srcset` for an image already built by productImageUrl(). Cloudinary URLs get one entry per
  * width (c_limit means a width above the original photograph returns the original, never an
