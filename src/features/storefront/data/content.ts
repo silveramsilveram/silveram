@@ -121,7 +121,7 @@ export const CRAFTSMANSHIP = {
       title: 'Embossed devotional relief',
       text: 'Silver Frame: Lakshmi, Ganesha and the Shubh Labh inscription.',
       productId: 'product-1',
-      imageIndex: 5,
+      imageIndex: 4,
     },
     {
       id: 'texture',
@@ -150,7 +150,7 @@ export const OCCASIONS = {
   heading: 'Find the right piece for the moment.',
   ticker: ['Festivals', 'Weddings', 'Anniversaries', 'Housewarmings', 'Diwali and Dhanteras'],
   options: [
-    { id: 'temple', label: 'A home temple', productId: 'product-1', quote: 'a thoughtful addition to your home temple', imageIndex: 4 },
+    { id: 'temple', label: 'A home temple', productId: 'product-1', quote: 'a thoughtful addition to your home temple', imageIndex: 3 },
     { id: 'festive', label: 'Festive days', productId: 'product-2', quote: 'suitable for festive occasions', imageIndex: 0 },
     { id: 'everyday', label: 'Everyday styling', productId: 'product-2', quote: 'everyday ethnic styling', imageIndex: 0 },
     { id: 'special', label: 'Special occasions', productId: 'product-3', quote: 'an elegant centrepiece for special occasions', imageIndex: 1 },
@@ -163,7 +163,7 @@ export const GIFTING = {
     'For festivals, weddings, anniversaries and housewarmings. The Silver Frame brings devotional detail to a home-temple shelf. Ask us about gift presentation for the piece you have in mind.',
   /** Photograph per product for the three gift tiles. */
   tiles: [
-    { productId: 'product-1', imageIndex: 2 },
+    { productId: 'product-1', imageIndex: 1 },
     { productId: 'product-2', imageIndex: 0 },
     { productId: 'product-3', imageIndex: 1 },
   ],
