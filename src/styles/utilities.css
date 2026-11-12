@@ -213,6 +213,7 @@ details[open] > summary::after { content: "\2212"; }
    * from the reference (about 72 / 102 / 120px) and fitted to Silveram copy with clamp(). */
   .ed-statement,
   .ed-display,
+  .ed-hero,
   .ed-h1,
   .ed-h2,
   .ed-h3,
@@ -223,6 +224,8 @@ details[open] > summary::after { content: "\2212"; }
   }
   .ed-statement { font-size: clamp(2.75rem, 9vw, 7.5rem); line-height: 0.95; letter-spacing: -0.02em; }
   .ed-display   { font-size: clamp(2.75rem, 7.5vw, 6.375rem); line-height: 0.98; letter-spacing: -0.015em; }
+  /* Hero headline: sized so each of its two lines fits the half-width column from 1024px up. */
+  .ed-hero      { font-size: clamp(2.75rem, 5.6vw, 5.25rem); line-height: 0.98; letter-spacing: -0.015em; }
   .ed-h1        { font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; }
   .ed-h2        { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.05; letter-spacing: -0.005em; }
   .ed-h3        { font-size: clamp(1.75rem, 3.2vw, 2.875rem); line-height: 1.08; }
