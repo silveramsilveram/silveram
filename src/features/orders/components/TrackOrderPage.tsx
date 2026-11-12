@@ -16,7 +16,7 @@ export default function TrackOrderPage() {
           <h1 className="type-h1">Track your order</h1>
           <p className="type-body mb-8 mt-3 text-text-secondary">
             Enter the order reference from your confirmation email and the email address you used at checkout.
-            If you have an account, <a href="#/signin" className="underline underline-offset-4">sign in</a> to see all your orders.
+            If you have an account, <a href="/signin" className="underline underline-offset-4">sign in</a> to see all your orders.
           </p>
           <OrderLookupForm />
         </div>

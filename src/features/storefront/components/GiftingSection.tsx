@@ -32,7 +32,7 @@ export default function GiftingSection() {
           </p>
 
           <div className="mt-8">
-            <a href="#collection" className={buttonClasses('primary', 'lg')}>
+            <a href="/#collection" className={buttonClasses('primary', 'lg')}>
               Explore gifting pieces
             </a>
           </div>

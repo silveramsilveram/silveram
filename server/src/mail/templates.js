@@ -28,7 +28,7 @@ export function orderConfirmationEmail(config, order) {
     ? `TEST ORDER - simulated ${order.paymentChannel === 'upi' ? 'UPI' : order.paymentChannel === 'card' ? 'card' : ''} payment, no money was charged.`.replace('  ', ' ')
     : `Paid online${order.paymentChannel === 'upi' ? ' by UPI' : order.paymentChannel === 'card' ? ' by card' : ''}${order.cashfreePaymentId ? ` (transaction ${order.cashfreePaymentId})` : ''}.`;
   const help = config.supportEmail ? ` Questions? Reply to this email or write to ${config.supportEmail}.` : ' Questions? Just reply to this email.';
-  const ordersUrl = config.storeUrl ? `${config.storeUrl}/#/order/${reference}` : '';
+  const ordersUrl = config.storeUrl ? `${config.storeUrl}/order/${reference}` : '';
 
   const subject = `${storeName} order confirmed - #${reference}`;
 
@@ -93,7 +93,7 @@ export function cartSavedEmail(config, { name, lines }) {
   const { storeName } = config;
   const greeting = name ? `Hi ${oneLine(name)},` : 'Hi,';
   const total = lines.reduce((sum, line) => sum + line.unitPriceInPaise * line.quantity, 0);
-  const link = config.storeUrl ? `${config.storeUrl}/#/cart` : '';
+  const link = config.storeUrl ? `${config.storeUrl}/cart` : '';
   const subject = `Your ${storeName} bag is saved`;
 
   const text = [

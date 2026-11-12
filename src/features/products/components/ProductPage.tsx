@@ -5,10 +5,12 @@ import ProductCard from './ProductCard';
 import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/store/cartStore';
 import { WhatsAppButton, buildProductMessage } from '@/features/whatsapp';
 import { SITE } from '@/shared/config/site';
-import { setPageMeta, setStructuredData } from '@/shared/lib/seo';
-import { PRODUCTS, getProductBySlug, productPath, type Product } from '../data/products';
+import { applyPageSeo } from '@/shared/lib/seo';
+import { productSeo } from '@/shared/seo/pages';
+import { PRODUCTS, getProductBySlug, type Product } from '../data/products';
 import ProductGallery from './ProductGallery';
 import PriceLabel from './PriceLabel';
+import { navigate } from '@/shared/routing/router';
 
 interface ProductPageProps {
   slug: string;
@@ -25,28 +27,6 @@ function specRows(product: Product): Array<[string, string]> {
   return rows.filter((row): row is [string, string] => Boolean(row[1]));
 }
 
-/** Product schema is emitted only for real (non-placeholder) products with a price. */
-function productJsonLd(product: Product) {
-  if (product.isPlaceholder || product.price === null) return null;
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    ...(product.description && { description: product.description }),
-    ...(product.images.length > 0 && {
-      image: product.images.map((image) => new URL(image.src, SITE.url).toString()),
-    }),
-    ...(product.material && { material: product.material }),
-    brand: { '@type': 'Brand', name: SITE.name },
-    offers: {
-      '@type': 'Offer',
-      price: product.price,
-      priceCurrency: 'INR',
-      url: `${SITE.url}/${productPath(product)}`,
-    },
-  };
-}
-
 export default function ProductPage({ slug }: ProductPageProps) {
   const product = getProductBySlug(slug);
   const { addToCart } = useCart();
@@ -57,28 +37,18 @@ export default function ProductPage({ slug }: ProductPageProps) {
   }, [slug]);
 
   useEffect(() => {
-    if (!product) {
-      setPageMeta({ title: `Piece not found | ${SITE.name}`, description: 'This piece could not be found.' });
-      return;
-    }
-    setPageMeta({
-      title: `${product.name} | ${SITE.name}`,
-      description:
-        product.shortDescription ??
-        product.description?.slice(0, 155) ??
-        `${product.name} from the ${SITE.name} silver collection.`,
-      path: productPath(product),
-      image: product.images[0]?.fallbackSrc ?? product.images[0]?.src,
-    });
-    setStructuredData(productJsonLd(product));
-    return () => setStructuredData(null);
+    applyPageSeo(
+      product
+        ? productSeo(product)
+        : { title: `Piece not found | ${SITE.name}`, description: 'This piece could not be found.', noindex: true, jsonLd: [] },
+    );
   }, [product]);
 
   if (!product) {
     return (
       <main id="main-content" tabIndex={-1} className="page-container section-pad focus:outline-none">
         <h1 className="type-h1">We couldn’t find that piece.</h1>
-        <a href="#/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
+        <a href="/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
           View the collection
         </a>
       </main>
@@ -94,9 +64,9 @@ export default function ProductPage({ slug }: ProductPageProps) {
       <div className="page-container pb-16 pt-6 md:pb-24 md:pt-10">
         <nav aria-label="Breadcrumb" className="type-caption mb-6 text-text-secondary">
           <ol className="flex flex-wrap items-center gap-x-2">
-            <li><a href="#home" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Home</a></li>
+            <li><a href="/" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Home</a></li>
             <li aria-hidden="true">/</li>
-            <li><a href="#/shop" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Shop</a></li>
+            <li><a href="/shop" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Shop</a></li>
             <li aria-hidden="true">/</li>
             <li aria-current="page" className="font-medium text-text-primary">{product.name}</li>
           </ol>
@@ -169,7 +139,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 disabled={!canBuy}
                 onClick={() => {
                   addToCart(product, false, quantity);
-                  window.location.hash = '#/checkout';
+                  navigate('/checkout');
                 }}
               >
                 Buy Now
@@ -212,7 +182,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 <p className="type-body mt-3 text-text-secondary">
                   {product.deliveryInfo ??
                     'Delivery timelines and charges are shown before you pay.'}{' '}
-                  <a href="#/policy/shipping" className="underline underline-offset-4">
+                  <a href="/policy/shipping" className="underline underline-offset-4">
                     Shipping policy
                   </a>
                 </p>
@@ -221,7 +191,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 <summary className="type-body cursor-pointer list-none font-medium">Returns &amp; exchanges</summary>
                 <p className="type-body mt-3 text-text-secondary">
                   {product.returnInfo ?? 'See our return and exchange policy before you order.'}{' '}
-                  <a href="#/policy/returns" className="underline underline-offset-4">
+                  <a href="/policy/returns" className="underline underline-offset-4">
                     Return policy
                   </a>
                 </p>

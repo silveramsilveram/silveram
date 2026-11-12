@@ -4,7 +4,8 @@
  */
 const KEY = 'silveram_after_auth';
 const EMAIL_KEY = 'silveram_auth_email';
-const SAFE = /^#\/[a-z0-9/_-]*$/i;
+/** Same-site paths only (never `//host` or a full URL), so the redirect cannot be abused. */
+const SAFE = /^\/(?!\/)[a-z0-9/_-]*$/i;
 
 export function setAfterAuth(hash: string) {
   try {
@@ -18,9 +19,9 @@ export function takeAfterAuth(): string {
   try {
     const value = sessionStorage.getItem(KEY);
     sessionStorage.removeItem(KEY);
-    return value && SAFE.test(value) ? value : '#/account';
+    return value && SAFE.test(value) ? value : '/account';
   } catch {
-    return '#/account';
+    return '/account';
   }
 }
 

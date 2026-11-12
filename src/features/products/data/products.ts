@@ -121,4 +121,4 @@ export const getProductBySlug = (slug: string): Product | undefined =>
 export const getProductById = (id: string): Product | undefined =>
   PRODUCTS.find((product) => product.id === id);
 
-export const productPath = (product: Pick<Product, 'slug'>): string => `#/product/${product.slug}`;
+export const productPath = (product: Pick<Product, 'slug'>): string => `/product/${product.slug}`;

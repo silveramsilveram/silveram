@@ -1,0 +1,29 @@
+name: CI
+
+# Runs on every push and pull request: type-check, build (including the SEO prerender step) and the
+# API test suite. A red check here means the Vercel deployment would be broken too.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+      - run: npm ci --include=dev && npm --prefix server ci
+      - run: npm run validate
+      - name: Dependency audit (production dependencies)
+        run: npm audit --omit=dev --audit-level=high && npm --prefix server audit --omit=dev --audit-level=high

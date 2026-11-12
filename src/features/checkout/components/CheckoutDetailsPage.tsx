@@ -10,6 +10,7 @@ import { useCheckout } from '../context/CheckoutContext';
 import { INDIAN_STATES } from '../data/states';
 import { EMAIL_PATTERN, normalizePhone, PINCODE_PATTERN } from '../lib/validation';
 import { CheckoutFrame } from './CheckoutLayout';
+import { navigate } from '@/shared/routing/router';
 
 type FieldName = 'email' | 'fullName' | 'phone' | 'altPhone' | 'address' | 'city' | 'state' | 'postalCode';
 type Errors = Partial<Record<FieldName, string>>;
@@ -115,7 +116,7 @@ export default function CheckoutDetailsPage() {
       state,
       postalCode,
     });
-    window.location.hash = '#/checkout/payment';
+    navigate('/checkout/payment');
   };
 
   const inputProps = (name: FieldName) => ({
@@ -131,7 +132,7 @@ export default function CheckoutDetailsPage() {
         <p className="type-body-lg mt-4 max-w-xl text-text-secondary">
           Checkout is opening soon. Please check back shortly, or contact us if you have a question.
         </p>
-        <a href="#/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
+        <a href="/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
           Continue browsing
         </a>
       </main>
@@ -143,7 +144,7 @@ export default function CheckoutDetailsPage() {
       <main id="main-content" tabIndex={-1} className="page-container pb-24 pt-12 focus:outline-none">
         <h1 className="type-h1">Checkout</h1>
         <p className="type-body-lg mt-4 text-text-secondary">Your bag is empty. Add a piece to begin.</p>
-        <a href="#/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
+        <a href="/shop" className={buttonClasses('primary', 'lg', 'mt-8')}>
           Shop the collection
         </a>
       </main>
@@ -179,7 +180,7 @@ export default function CheckoutDetailsPage() {
                 {authStatus !== 'loading' && (
                   <span className="text-text-secondary">
                     Already have an account?{' '}
-                    <a href="#/signin" onClick={() => setAfterAuth('#/checkout')} className="underline underline-offset-4 hover:text-text-primary">
+                    <a href="/signin" onClick={() => setAfterAuth('/checkout')} className="underline underline-offset-4 hover:text-text-primary">
                       Sign in
                     </a>
                   </span>
@@ -285,7 +286,7 @@ export default function CheckoutDetailsPage() {
           <Button type="submit" size="lg" className="w-full sm:w-auto sm:min-w-64">
             Continue to payment
           </Button>
-          <a href="#/cart" className="min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary sm:text-left">
+          <a href="/cart" className="min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary sm:text-left">
             ← Back to bag
           </a>
         </div>

@@ -39,7 +39,7 @@ export async function createCashfreeOrder(config, order, identity) {
       customer_phone: shipping.phone,
     },
     order_meta: {
-      ...(config.storeUrl && { return_url: `${config.storeUrl}/#/order/${order._id}` }),
+      ...(config.storeUrl && { return_url: `${config.storeUrl}/order/${order._id}` }),
       ...(config.storeUrl.startsWith('https://') && { notify_url: `${config.storeUrl}/api/webhooks/cashfree` }),
     },
     order_expiry_time: new Date(order.reservationExpiresAt).toISOString(),

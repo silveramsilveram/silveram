@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchMyOrders } from '@/features/orders/api';
 import { saveLastOrder } from '@/features/orders/storage';
 import { STATUS_LABEL, type Order } from '@/features/orders/types';
-import { orderPath } from '@/shared/hooks/useHashRoute';
+import { orderPath } from '@/shared/routing/router';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import Button, { buttonClasses } from '@/shared/ui/Button';
@@ -44,15 +44,15 @@ export default function AccountPage() {
               Sign in to see your orders and check out faster.
             </p>
             <div className="flex flex-col gap-3">
-              <a href="#/signin" className={buttonClasses('primary', 'lg')}>
+              <a href="/signin" className={buttonClasses('primary', 'lg')}>
                 Sign in
               </a>
-              <a href="#/signup" className={buttonClasses('secondary', 'lg')}>
+              <a href="/signup" className={buttonClasses('secondary', 'lg')}>
                 Create an account
               </a>
             </div>
             <p className="type-body mt-8 text-text-secondary">
-              Ordered as a guest? <a href="#/track" className="underline underline-offset-4">Track your order</a>.
+              Ordered as a guest? <a href="/track" className="underline underline-offset-4">Track your order</a>.
             </p>
           </div>
         )}
@@ -78,7 +78,7 @@ export default function AccountPage() {
             {!error && orders === null && <p className="type-body mt-4 text-text-secondary">Loading your orders…</p>}
             {orders?.length === 0 && (
               <p className="type-body mt-4 text-text-secondary">
-                You have not placed an order yet. <a href="#collection" className="underline underline-offset-4">Browse the collection</a>.
+                You have not placed an order yet. <a href="/#collection" className="underline underline-offset-4">Browse the collection</a>.
               </p>
             )}
             {orders && orders.length > 0 && (

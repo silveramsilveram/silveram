@@ -177,7 +177,7 @@ function OrderDetails({ order }: { order: Order }) {
           </ol>
           <p className="mt-4 text-xs text-text-muted">
             Save your order reference <span className="font-mono">{order.id}</span> and your email to track this order any time.{' '}
-            <a href="#/track" className="underline underline-offset-4">Track order</a>
+            <a href="/track" className="underline underline-offset-4">Track order</a>
           </p>
         </section>
       )}
@@ -243,7 +243,7 @@ function OrderDetails({ order }: { order: Order }) {
       </div>
 
       <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-        <a href="#/shop" className={buttonClasses('primary', 'lg')}>
+        <a href="/shop" className={buttonClasses('primary', 'lg')}>
           Continue shopping
         </a>
         <WhatsAppButton

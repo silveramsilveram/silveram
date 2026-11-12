@@ -49,19 +49,25 @@ The browser never receives an Appwrite server API key or connects to the private
 ```text
 api/
   index.js                         Vercel API function entry (vercel.json rewrites /api/* here)
+scripts/
+  prerender.mjs                    Build step: static HTML per page, sitemap.xml, robots.txt
+.github/workflows/ci.yml            CI: type-check, build, tests, dependency audit
 src/
-  app/                             Storefront assembly and hash routing
+  app/                             Storefront assembly: route switch, lazy loading, prefetching
   features/
     auth/                          Sign-in/sign-up UI and Zustand auth store (store/authStore.ts)
     cart/                          Bag UI and Zustand cart store (store/cartStore.ts), persistence
     checkout/                      Disabled-by-default checkout UI
-    policies/                      Draft policy text and modal
+    notfound/                      "Page not found" screen (noindex)
+    policies/                      Draft policy text and pages
     products/                      Product cards, galleries, detail pages and static copy
     storefront/                    Homepage content and sections
     whatsapp/                      Contact settings and message builders
   shared/
     config/                        Public site configuration
     hooks/                         Shared UI hooks
+    routing/                       router.ts: History-API router, navigate(), link interception
+    seo/                           pages.ts: title/description/JSON-LD for every page (single source of truth)
     lib/                           API client, Cloudinary URLs, SEO and formatting
     ui/                            Shared accessible UI
   styles/                          Theme tokens and global styles
@@ -85,8 +91,12 @@ server/
   test/                             Node test suite
 docs/
   APPWRITE_SETUP.md                 Appwrite setup, schema, security and deployment guide
+  CASHFREE_SETUP.md                 Cashfree go-live checklist
 public/images/products/             Optimized WebP fallback images
-vercel.json                         Vercel build and API function configuration
+vercel.json                         Region, rewrites, cron jobs, cache + security headers (CSP), noindex rules
+CONTRIBUTING.md                     Developer guide: where things live, conventions, checks
+SECURITY.md                         Security policy and how to report a vulnerability
+.nvmrc, .editorconfig               Node version and formatting defaults
 ```
 
 ## Local development
@@ -129,21 +139,21 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 
 **Cash on delivery (COD) is the primary payment method. UPI and debit/credit cards (Cashfree) show as "Coming soon" until the gateway is approved and enabled. There is no ordering through WhatsApp: WhatsApp (+91 77669 11777) is for questions only.**
 
-Every step is its own page (hash routes, no server rewrites needed):
+Every step is its own page with a real URL (see [SEO](#seo-how-search-engines-and-link-previews-see-the-site)):
 
 | Page | Route | Purpose |
 |---|---|---|
-| Home | `#/` | Landing page |
-| Shop | `#/shop` | All products |
-| Product | `#/product/<slug>` | Details, Add to Cart, Buy Now |
-| Bag | `#/cart` | Review items and quantities |
-| Details | `#/checkout` | Contact (guest e-mail or signed-in account) and delivery address |
-| Payment | `#/checkout/payment` | Cash on delivery (UPI / card: coming soon) |
-| Confirmation | `#/order/<id>` | Receipt and status |
-| Sign in / Create account | `#/signin`, `#/signup` | Passwordless: e-mail + 6-digit code |
-| Account | `#/account` | Order history, sign out |
-| Track order | `#/track` | Guests: order reference + e-mail |
-| Policies | `#/policy/<shipping|returns|privacy|terms>` | Store policies |
+| Home | `/` | Landing page |
+| Shop | `/shop` | All products |
+| Product | `/product/<slug>` | Details, Add to Cart, Buy Now |
+| Bag | `/cart` | Review items and quantities |
+| Details | `/checkout` | Contact (guest e-mail or signed-in account) and delivery address |
+| Payment | `/checkout/payment` | Cash on delivery (UPI / card: coming soon) |
+| Confirmation | `/order/<id>` | Receipt and status |
+| Sign in / Create account | `/signin`, `/signup` | Passwordless: e-mail + 6-digit code |
+| Account | `/account` | Order history, sign out |
+| Track order | `/track` | Guests: order reference + e-mail |
+| Policies | `/policy/<shipping\|returns\|privacy\|terms>` | Store policies |
 
 Customers can shop three ways, all stored in Appwrite:
 
@@ -185,6 +195,77 @@ The Vercel project was previously configured with the `server` directory and Exp
 The current customer-facing catalog copy is in `src/features/products/data/products.ts`. The API catalog is in Appwrite and is seeded by `server/src/scripts/seed-catalog.js`. Keep product document IDs (`product-1`, `product-2`, `product-3`) and prices synchronized. The server uses Appwrite product records—not browser-provided prices—to calculate checkout totals.
 
 The seed script creates products **inactive with zero inventory** and will not activate products or overwrite live inventory/media. Verify each product’s actual material, purity, weight, dimensions, price, image references, and stock before listing it. Do not treat demo data as approved commercial facts.
+
+## SEO: how search engines and link previews see the site
+
+A React app normally ships one empty HTML page, so Google, Bing, WhatsApp, Facebook and X would see the same title and no content for every URL. This project avoids that in four layers. Each layer is described below with where to change it.
+
+### 1. Real URLs instead of `/#/...`
+
+Old: `https://silveram.in/#/product/silver-frame`. Search engines ignore everything after `#`, so every page looked like the home page and **products could never be indexed**.
+New: `https://www.silveram.in/product/silver-frame`. Each page has its own address that can be crawled, bookmarked and shared.
+
+| URL | Page | In search results? |
+|---|---|---|
+| `/` | Home | Yes |
+| `/shop` | All products | Yes |
+| `/product/<slug>` | Product | Yes |
+| `/policy/<id>` | Policies | **No, until the draft text is approved** (see below) |
+| `/cart`, `/checkout`, `/checkout/payment`, `/order/<id>`, `/account`, `/signin`, `/signup`, `/track` | Private / transactional | No (`noindex`) |
+| anything else | "Page not found" | No |
+
+- The router is `src/shared/routing/router.ts` (History API, no dependency). Normal `<a href="/shop">` links work; clicks are converted to in-app navigation, so pages do not reload.
+- **Old links keep working.** A visit to `/#/cart` (old e-mails, old shares) is rewritten to `/cart` before the app renders.
+- `vercel.json` sends unknown paths to `app-shell.html` so React can show the page or the 404 screen.
+
+### 2. A static HTML file per public page (build-time prerender)
+
+`npm run build` now ends with `scripts/prerender.mjs`. For `/`, `/shop`, every product and every policy it writes a real HTML file (`dist/product/silver-frame/index.html`, ...) that already contains the page's:
+
+- `<title>` and meta description
+- canonical URL (always the `www` host)
+- Open Graph + Twitter tags (what WhatsApp/Facebook/X show in link previews)
+- JSON-LD structured data (see below)
+- readable fallback content inside `<noscript>` (name, description, price, links)
+
+When the visitor's browser loads the page, React takes over exactly as before, and `src/shared/lib/seo.ts` keeps the tab title and canonical correct while navigating.
+
+**One source of truth:** page titles, descriptions, images and structured data are defined once in `src/shared/seo/pages.ts`. The app and the prerender script both read it, so what Google reads can never disagree with what customers see. Change SEO text there, not in `index.html`.
+
+### 3. Structured data (schema.org JSON-LD)
+
+| Page | Types emitted |
+|---|---|
+| Home | `JewelryStore` (name, address, phone, e-mail, Instagram, map) and `WebSite` |
+| Shop | `BreadcrumbList`, `ItemList` |
+| Product | `Product` (name, SKU, images, price in INR, seller) and `BreadcrumbList` |
+
+Only facts that exist in the catalogue are emitted: **no invented ratings, reviews, stock or discounts** (Google penalises fake markup). A product without a price, or marked `isPlaceholder`, gets no `Product` markup. Validate with Google's [Rich Results Test](https://search.google.com/test/rich-results) after deploying.
+
+### 4. Crawl control
+
+- `sitemap.xml` (generated at build) lists only indexable pages, with product images. Submit `https://www.silveram.in/sitemap.xml` in [Google Search Console](https://search.google.com/search-console) and Bing Webmaster Tools.
+- `robots.txt` (generated at build) allows everything except `/api/` and points to the sitemap.
+- Private pages are kept out of search with an `X-Robots-Tag: noindex` **HTTP header** (`vercel.json`) plus a `noindex` meta tag. They are deliberately *not* blocked in `robots.txt`: a crawler that cannot fetch a page can never see its noindex instruction.
+- `www.silveram.in` is the canonical host; the apex redirects to it. If you change the domain, set `VITE_SITE_URL`.
+
+### SEO to-do for the owner (cannot be done in code)
+
+1. Add and verify the site in Google Search Console and Bing Webmaster Tools; submit the sitemap.
+2. Create / claim the Google Business Profile for "Ranjan Jewer Mahal, Motihari" (the `JewelryStore` markup mirrors it, so keep name, address and phone identical everywhere).
+3. **Finish and approve the policy pages** (shipping, returns, privacy, terms). They are `noindex` while `draft: true` in `src/features/policies/data/policies.ts`; set `draft: false` once approved and they join the sitemap.
+4. Keep product names and descriptions unique and specific; add material, purity and weight to `products.ts` only once verified (they appear in structured data and help rankings).
+5. Use real Cloudinary-hosted, compressed photographs with accurate `alt` text (already in `products.ts`).
+
+### Checking SEO yourself
+
+```powershell
+npm run build                              # then open dist/product/silver-frame/index.html
+curl.exe -s https://www.silveram.in/product/silver-frame | findstr /i "canonical og:title ld+json"
+curl.exe -sI https://www.silveram.in/cart | findstr /i "x-robots-tag"
+```
+
+Also run Lighthouse (Chrome DevTools) and the Rich Results Test on a product URL.
 
 ## Performance: why the site is fast and how to keep it fast
 
@@ -276,6 +357,10 @@ In Chrome: DevTools → **Network** (check `Cache-Control` and sizes) and **Ligh
 
 ## Security and operational notes
 
+- **Browser hardening** (in `vercel.json`): a strict Content-Security-Policy (scripts only from this site and Cashfree's SDK; images from this site and Cloudinary; no inline scripts, no plugins, no framing by other sites), HSTS, `nosniff`, `Referrer-Policy`, `Permissions-Policy`. If you add a new external script, image host or iframe, add its origin to the CSP or the browser will block it. After enabling Cashfree, run one sandbox payment with the browser console open and check for "Refused to ..." CSP messages.
+- Behind Vercel the API trusts one proxy hop (`TRUST_PROXY_HOPS` defaults to 1 in production) so rate limits see the real visitor IP. Do not set it to `0` in production.
+- Redirect targets after sign-in are restricted to same-site paths (`src/features/auth/redirect.ts`) so the redirect cannot be abused for phishing.
+- `npm audit` currently reports no known vulnerabilities in production dependencies, and CI re-checks on every push. A `/.well-known/security.txt` and [SECURITY.md](./SECURITY.md) say how to report problems.
 - Store secrets only in local ignored `server/.env` and Vercel’s server environment settings. Never commit `.env`, provider credentials, API keys, or customer data.
 - The Appwrite API key is server-only. Public collection permissions stay empty; Vercel’s API performs authorization. Use a separate temporary setup key to provision schema, then revoke it.
 - User sessions use random opaque tokens in `HttpOnly`, `SameSite=Lax` cookies; only a hash is stored in Appwrite. OTPs are HMAC-digested, short-lived, attempt-limited, and rate-limited.
@@ -289,10 +374,8 @@ In Chrome: DevTools → **Network** (check `Cache-Control` and sizes) and **Ligh
 ## Validation before launch
 
 ```powershell
-npm run build
-npm --prefix server test
-npm --prefix server run check
-npm --prefix server run appwrite:check
+npm run validate                      # type-check, build + SEO prerender, API syntax check, API tests
+npm --prefix server run appwrite:check # the live database has every attribute/index the code needs
 ```
 
 Then stage-test account creation, email OTP rate limits, session/logout, product reads, private admin access, signed Cloudinary uploads, order creation/cancellation and order email. Enable payment methods only after payment-provider webhook testing and required scheduled cleanup are verified.

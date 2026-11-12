@@ -71,7 +71,7 @@ export default function HeroSection() {
             {lineTwo && <span className="block">{lineTwo}</span>}
           </h1>
           <p className="type-body-lg mt-6 max-w-md text-text-secondary">{HERO.description}</p>
-          <a href="#collection" className={`${buttonClasses('primary', 'lg')} mt-8 text-sm! normal-case! tracking-normal!`}>
+          <a href="/#collection" className={`${buttonClasses('primary', 'lg')} mt-8 text-sm! normal-case! tracking-normal!`}>
             Shop the collection
           </a>
         </div>

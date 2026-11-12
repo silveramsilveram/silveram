@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
 import { buttonClasses } from '@/shared/ui/Button';
-import { setPageMeta } from '@/shared/lib/seo';
+import { applyPageSeo } from '@/shared/lib/seo';
+import { policySeo } from '@/shared/seo/pages';
 import { POLICIES, type PolicyId } from '../data/policies';
 
-/** Each store policy is its own page (#/policy/<id>). */
+/** Each store policy is its own page (/policy/<id>). */
 export default function PolicyPage({ id }: { id: PolicyId }) {
   const policy = POLICIES[id];
 
   useEffect(() => {
-    setPageMeta({ title: `${policy.title} | Silveram`, description: `${policy.title} for Silveram.`, path: `#/policy/${id}` });
+    applyPageSeo(policySeo(policy));
     window.scrollTo(0, 0);
-  }, [id, policy.title]);
+  }, [policy]);
 
   return (
     <main id="main-content" tabIndex={-1} className="focus:outline-none">
@@ -31,12 +32,12 @@ export default function PolicyPage({ id }: { id: PolicyId }) {
             {(Object.keys(POLICIES) as PolicyId[])
               .filter((other) => other !== id)
               .map((other) => (
-                <a key={other} href={`#/policy/${other}`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-text-primary">
+                <a key={other} href={`/policy/${other}`} className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-text-primary">
                   {POLICIES[other].title}
                 </a>
               ))}
           </nav>
-          <a href="#/shop" className={buttonClasses('secondary', 'md', 'mt-4')}>
+          <a href="/shop" className={buttonClasses('secondary', 'md', 'mt-4')}>
             Back to shop
           </a>
         </div>

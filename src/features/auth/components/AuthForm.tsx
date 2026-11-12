@@ -141,7 +141,7 @@ export default function AuthForm({ mode, initialEmail = '', onSuccess }: AuthFor
           </Button>
           {noAccount && (
             <a
-              href="#/signup"
+              href="/signup"
               onClick={() => setAuthEmail(email)}
               className="block min-h-11 border border-brand-primary text-center text-xs font-semibold uppercase leading-[2.75rem] tracking-[0.12em] text-brand-primary hover:bg-brand-primary hover:text-surface-primary"
             >

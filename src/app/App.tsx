@@ -20,10 +20,10 @@ import HeroSection from '@/features/storefront/components/HeroSection';
 import StorySection from '@/features/storefront/components/StorySection';
 import TrustSection from '@/features/storefront/components/TrustSection';
 import { FloatingWhatsApp } from '@/features/whatsapp';
-import { useHashRoute } from '@/shared/hooks/useHashRoute';
+import { useLinkInterception, useRoute } from '@/shared/routing/router';
 import { useReveal } from '@/shared/hooks/useReveal';
-import { SITE } from '@/shared/config/site';
-import { setPageMeta, setStructuredData } from '@/shared/lib/seo';
+import { applyPageSeo } from '@/shared/lib/seo';
+import { homeSeo } from '@/shared/seo/pages';
 import Toast from '@/shared/ui/Toast';
 
 /**
@@ -52,6 +52,7 @@ const AccountPage = lazy(loaders.account);
 const TrackOrderPage = lazy(loaders.track);
 const OrderPage = lazy(loaders.order);
 const PolicyPage = lazy(loaders.policy);
+const NotFoundPage = lazy(() => import('@/features/notfound/NotFoundPage'));
 const CheckoutDetailsPage = lazy(loaders.checkout);
 const CheckoutPaymentPage = lazy(loaders.payment);
 
@@ -70,37 +71,14 @@ function prefetchLikelyRoutes() {
   else setTimeout(run, 2000);
 }
 
-const HOME_META = {
-  title: `${SITE.name} | Silver jewellery & gifting`,
-  description:
-    'Silveram: devotional silver-finish frames, patterned silver kada and a peacock statement ring, chosen for gifting and celebration. Cash on delivery across India; UPI and card payments coming soon.',
-};
-
 function HomePage() {
   const rootRef = useRef<HTMLElement>(null);
   useReveal(rootRef);
 
   useEffect(() => {
-    setPageMeta(HOME_META);
-    setStructuredData({
-      '@context': 'https://schema.org',
-      '@type': 'JewelryStore',
-      name: SITE.legalName,
-      url: SITE.url,
-      telephone: '+917766911777',
-      sameAs: [SITE.instagramUrl],
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: SITE.address.lines.join(', '),
-        addressLocality: SITE.address.locality,
-        addressRegion: SITE.address.region,
-        postalCode: SITE.address.postalCode,
-        addressCountry: SITE.address.country,
-      },
-      hasMap: SITE.directionsUrl,
-    });
-    // Arriving from a product page via "#collection" etc.: the browser tried to
-    // scroll before this page existed, so scroll to the section now.
+    applyPageSeo(homeSeo());
+    // Arriving from another page via "/#collection" etc.: the browser tried to scroll before this
+    // page existed, so scroll to the section now.
     const id = window.location.hash.slice(1);
     const target = id ? document.getElementById(id) : null;
     if (target) target.scrollIntoView();
@@ -121,7 +99,8 @@ function HomePage() {
 }
 
 function Storefront() {
-  const route = useHashRoute();
+  const route = useRoute();
+  useLinkInterception();
   useSignedInCartSync();
 
   useEffect(() => {
@@ -167,6 +146,7 @@ function Storefront() {
           {route.name === 'order' && <OrderPage key={route.id} orderId={route.id} />}
           {route.name === 'checkout' && <CheckoutDetailsPage />}
           {route.name === 'payment' && <CheckoutPaymentPage />}
+          {route.name === 'notfound' && <NotFoundPage />}
         </Suspense>
       )}
 
