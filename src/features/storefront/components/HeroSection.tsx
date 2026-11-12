@@ -70,7 +70,7 @@ export default function HeroSection({ variant = 'contained' }: { variant?: HeroV
 
   const copy = (
     <div className={bleed ? 'relative z-10 max-w-2xl' : ''}>
-      <h1 id="hero-heading" className="ed-display">
+      <h1 id="hero-heading" className="ed-hero">
         <span className="line-reveal" style={step(0)}>
           <span>{lineOne}</span>
         </span>

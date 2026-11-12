@@ -213,6 +213,7 @@ details[open] > summary::after { content: "\2212"; }
    * from the reference (about 72 / 102 / 120px) and fitted to Silveram copy with clamp(). */
   .ed-statement,
   .ed-display,
+  .ed-hero,
   .ed-h1,
   .ed-h2,
   .ed-h3,
@@ -223,6 +224,8 @@ details[open] > summary::after { content: "\2212"; }
   }
   .ed-statement { font-size: clamp(2.75rem, 9vw, 7.5rem); line-height: 0.95; letter-spacing: -0.02em; }
   .ed-display   { font-size: clamp(2.75rem, 7.5vw, 6.375rem); line-height: 0.98; letter-spacing: -0.015em; }
+  /* Hero headline: sized so each of its two lines fits the half-width column from 1024px up. */
+  .ed-hero      { font-size: clamp(2.75rem, 5.6vw, 5.25rem); line-height: 0.98; letter-spacing: -0.015em; }
   .ed-h1        { font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1; letter-spacing: -0.01em; }
   .ed-h2        { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.05; letter-spacing: -0.005em; }
   .ed-h3        { font-size: clamp(1.75rem, 3.2vw, 2.875rem); line-height: 1.08; }
@@ -538,4 +541,98 @@ html[data-motion="paused"] .anim-blink {
   .menu-in,
   .menu-link-in { animation: none !important; }
   .nav-link::after { transition: none; }
+}
+
+/* =============================================================================
+ * Milestone 4: homepage storytelling scenes.
+ * ========================================================================== */
+@layer components {
+  /* Dashed outline drawn 10px outside a media block. */
+  .media-dashed {
+    border-radius: var(--radius-media);
+    outline: 1px dashed var(--scene-line, currentColor);
+    outline-offset: 10px;
+  }
+
+  /* Scroll-triggered line reveal (editorial statement). With no JS or reduced motion nothing is hidden:
+   * the hidden state only exists once the hook has armed the block. */
+  .reveal-lines .line-reveal > span { animation: none; }
+  .reveal-lines.is-armed .line-reveal > span { transform: translateY(105%); }
+  .reveal-lines.is-armed.is-seen .line-reveal > span {
+    transform: none;
+    transition: transform 850ms var(--ease-out);
+    transition-delay: calc(var(--i, 0) * 120ms);
+  }
+
+  /* Carousel slide change. */
+  .slide-in { animation: slide-in 450ms var(--ease-out) both; }
+
+  /* "Silveram is always": organic blob and outlined ovals. */
+  .blob { border-radius: 58% 42% 52% 48% / 46% 54% 46% 54%; }
+  .oval-note {
+    border: 1px solid currentColor;
+    border-radius: 2.5rem 3rem 2.75rem 3.25rem / 2.75rem 2.5rem 3.25rem 2.75rem;
+  }
+  @media (min-width: 768px) {
+    .oval-note { border-radius: 50%; }
+  }
+
+  /* Horizontal photograph rail with snap points. */
+  .rail {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    padding-inline: 1.25rem;
+    scroll-padding-inline: 1.25rem;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail > * { flex: none; scroll-snap-align: start; }
+  @media (min-width: 768px) {
+    .rail { padding-inline: 1.875rem; scroll-padding-inline: 1.875rem; }
+  }
+
+  /* Choice chip (occasion selector, FAQ categories). */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding: 0 1.125rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--dur-state) ease-in-out, color var(--dur-state) ease-in-out, transform 150ms var(--ease-out);
+  }
+  .chip:hover { background-color: color-mix(in srgb, var(--scene-fg, currentColor) 12%, transparent); }
+  .chip[aria-checked="true"],
+  .chip[aria-selected="true"],
+  .chip[aria-pressed="true"] { background-color: var(--scene-fg); color: var(--scene-bg); }
+  .chip:active { transform: scale(0.97); }
+
+  /* Round +/- indicator for accordions. */
+  .toggle-dot {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    transition: background-color var(--dur-state) ease-in-out, color var(--dur-state) ease-in-out;
+  }
+  [aria-expanded="true"] > .toggle-dot { background-color: var(--scene-fg); color: var(--scene-bg); }
+}
+
+@keyframes slide-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-in { animation: none !important; }
+  .rail { scroll-behavior: auto; }
+  .reveal-lines.is-armed .line-reveal > span { transition: none; }
 }

@@ -59,3 +59,8 @@ export function responsiveSrcSet(src: string | undefined, widths: readonly numbe
   if (!src || !src.includes('res.cloudinary.com') || !widthParam.test(src)) return undefined;
   return widths.map((width) => `${src.replace(widthParam, `w_${width}`)} ${width}w`).join(', ');
 }
+
+/** Responsive widths that never exceed the photograph's own pixel width, so nothing is upscaled. */
+export function nativeWidths(native: number, steps: readonly number[] = [320, 480, 720, 922]): number[] {
+  return [...steps.filter((width) => width < native), native];
+}
