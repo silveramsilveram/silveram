@@ -10,7 +10,7 @@ import { MENU_EXTRA_LINKS, NAV_LINKS } from '../data/content';
 const WORDMARK =
   'inline-flex min-h-11 items-center justify-self-start font-display text-[1.75rem] uppercase leading-none tracking-[0.06em] text-brand-primary transition-opacity duration-[250ms] hover:opacity-80';
 
-export default function Header() {
+export default function Header({ overlay = false }: { overlay?: boolean }) {
   const itemCount = useCartStore((state) => state.itemCount);
   const user = useAuthStore((state) => state.user);
   const route = useRoute();
@@ -19,11 +19,39 @@ export default function Header() {
   const { scrolled, hidden } = useScrollHeader();
   const [menuOpen, setMenuOpen] = useState(false);
   const [focusInside, setFocusInside] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = () => setMenuOpen(false);
   // Esc to close, focus trap, scroll lock, and focus returns to the menu button.
   useDialog(menuOpen, closeMenu, panelRef);
+
+  useEffect(() => {
+    if (!overlay) return;
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const hero = document.getElementById('home');
+      const next = hero
+        ? hero.getBoundingClientRect().bottom <= (headerRef.current?.offsetHeight ?? 0)
+        : false;
+      setPastHero((current) => (current === next ? current : next));
+    };
+    const scheduleUpdate = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [overlay]);
 
   // The panel is for small screens only: close it if the window grows to the desktop layout,
   // and whenever the page changes.
@@ -61,20 +89,26 @@ export default function Header() {
 
   // Never hide the header while the menu is open or keyboard focus is inside it.
   const slideAway = hidden && !menuOpen && !focusInside;
+  const transparent = overlay && !pastHero;
+  const position = overlay ? `fixed inset-x-0 ${scrolled ? 'top-0' : 'top-10'}` : 'sticky top-0';
+  const shadow = scrolled && (!overlay || pastHero) ? 'shadow-[0_1px_0_0_var(--color-border)]' : '';
 
   return (
     <>
       <header
+        ref={headerRef}
         onFocusCapture={() => setFocusInside(true)}
         onBlurCapture={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusInside(false);
         }}
-        className={`sticky top-0 z-40 bg-surface-primary transition-[transform,box-shadow] duration-[400ms] ease-in-out ${
+        className={`${position} z-40 ${
+          transparent ? 'header-home-overlay bg-transparent' : 'bg-surface-primary'
+        } transition-[top,transform,box-shadow,background-color] duration-[400ms] ease-in-out ${
           slideAway ? '-translate-y-full' : ''
-        } ${scrolled ? 'shadow-[0_1px_0_0_var(--color-border)]' : ''}`}
+        } ${shadow}`}
       >
         <div className="page-container-wide flex h-[4.5rem] items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr]">
-          <a href="/" className={WORDMARK} aria-label="Silveram, home">
+          <a href="/" className={`${WORDMARK} header-wordmark`} aria-label="Silveram, home">
             Silveram
           </a>
 

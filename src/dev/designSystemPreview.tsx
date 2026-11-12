@@ -148,8 +148,8 @@ function Preview() {
         <WordSculpture />
       </Section>
 
-      <Section title="Hero: full-bleed variant (for a future film; photo shown here is only 920px wide, so it is stretched and would be replaced)">
-        <HeroSection variant="bleed" />
+      <Section title="Hero: full-bleed homepage">
+        <HeroSection />
       </Section>
     </>
   );

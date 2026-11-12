@@ -504,6 +504,24 @@ html[data-motion="paused"] .anim-blink {
   .header-chip[aria-current="page"] { background-color: var(--color-brand-primary); color: var(--color-surface-primary); }
   .header-chip:active { transform: scale(0.97); }
 
+  .header-home-overlay .header-wordmark,
+  .header-home-overlay .nav-link,
+  .header-home-overlay .header-chip { color: var(--color-surface-primary); }
+  .header-home-overlay .header-chip { border-color: currentColor; background-color: transparent; }
+  .header-home-overlay .header-chip:hover,
+  .header-home-overlay .header-chip[aria-current="page"] {
+    border-color: var(--color-surface-primary);
+    background-color: var(--color-surface-primary);
+    color: var(--color-brand-primary);
+  }
+  .header-home-overlay :focus-visible { outline-color: var(--color-surface-primary); }
+
+  .hero-image-scrim {
+    background:
+      linear-gradient(to bottom, rgb(24 45 73 / 0.76) 0%, rgb(24 45 73 / 0.3) 15%, transparent 32%),
+      linear-gradient(to top, rgb(24 45 73 / 0.98) 0%, rgb(24 45 73 / 0.92) 34%, rgb(24 45 73 / 0.72) 58%, transparent 100%);
+  }
+
   /* Hero: each headline line rises from behind a mask. Text is always painted (no opacity fade), so it
    * never delays first paint; the mask just reveals it. */
   .line-reveal {

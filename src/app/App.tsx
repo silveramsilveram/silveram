@@ -86,19 +86,23 @@ function HomePage() {
   }, []);
 
   return (
-    <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <HeroSection />
-      <FeaturedCampaign />
-      <EditorialPromise />
-      <ProductLineup />
-      <PromisesSection />
-      <LookCloselySection />
-      <OccasionsSection />
-      <GiftingSection />
-      <CollectionRail />
-      <VisitSection />
-      <FaqSection />
-    </main>
+    <div className="relative">
+      <AnnouncementBar overlay />
+      <Header overlay />
+      <main id="main-content" tabIndex={-1} className="focus:outline-none">
+        <HeroSection />
+        <FeaturedCampaign />
+        <EditorialPromise />
+        <ProductLineup />
+        <PromisesSection />
+        <LookCloselySection />
+        <OccasionsSection />
+        <GiftingSection />
+        <CollectionRail />
+        <VisitSection />
+        <FaqSection />
+      </main>
+    </div>
   );
 }
 
@@ -127,31 +131,33 @@ function Storefront() {
         Skip to main content
       </a>
 
-      <AnnouncementBar />
-      <Header />
-
-      {route.name === 'home' && <HomePage />}
-      {route.name !== 'home' && (
-        <Suspense
-          fallback={
-            <p className="page-container py-16 text-sm text-text-secondary" role="status">
-              Loading…
-            </p>
-          }
-        >
-          {route.name === 'shop' && <ShopPage />}
-          {route.name === 'product' && <ProductPage key={route.slug} slug={route.slug} />}
-          {route.name === 'cart' && <CartPage />}
-          {route.name === 'signin' && <AuthPage mode="signin" />}
-          {route.name === 'signup' && <AuthPage mode="signup" />}
-          {route.name === 'account' && <AccountPage />}
-          {route.name === 'track' && <TrackOrderPage />}
-          {route.name === 'policy' && <PolicyPage key={route.id} id={route.id} />}
-          {route.name === 'order' && <OrderPage key={route.id} orderId={route.id} />}
-          {route.name === 'checkout' && <CheckoutDetailsPage />}
-          {route.name === 'payment' && <CheckoutPaymentPage />}
-          {route.name === 'notfound' && <NotFoundPage />}
-        </Suspense>
+      {route.name === 'home' ? (
+        <HomePage />
+      ) : (
+        <>
+          <AnnouncementBar />
+          <Header />
+          <Suspense
+            fallback={
+              <p className="page-container py-16 text-sm text-text-secondary" role="status">
+                Loading…
+              </p>
+            }
+          >
+            {route.name === 'shop' && <ShopPage />}
+            {route.name === 'product' && <ProductPage key={route.slug} slug={route.slug} />}
+            {route.name === 'cart' && <CartPage />}
+            {route.name === 'signin' && <AuthPage mode="signin" />}
+            {route.name === 'signup' && <AuthPage mode="signup" />}
+            {route.name === 'account' && <AccountPage />}
+            {route.name === 'track' && <TrackOrderPage />}
+            {route.name === 'policy' && <PolicyPage key={route.id} id={route.id} />}
+            {route.name === 'order' && <OrderPage key={route.id} orderId={route.id} />}
+            {route.name === 'checkout' && <CheckoutDetailsPage />}
+            {route.name === 'payment' && <CheckoutPaymentPage />}
+            {route.name === 'notfound' && <NotFoundPage />}
+          </Suspense>
+        </>
       )}
 
       <FooterSection />

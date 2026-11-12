@@ -29,28 +29,17 @@ export const ANNOUNCEMENT_ITEMS = [
   'Questions about a piece? Message us on WhatsApp',
 ] as const;
 
-/** A hero film uploaded to Cloudinary: `<root>/<env>/products/<sku>/<name>` as a video resource. */
-export interface HeroFilm {
-  sku: string;
-  /** File name (public ID tail) of the film in the product's Cloudinary folder. */
-  name: string;
-  alt: string;
-  /** Native pixel size of the original film; sets the aspect ratio and is never exceeded. */
-  width: number;
-  height: number;
-}
-
 export const HERO = {
   heading: 'Small keepsakes. Lasting meaning.',
   description:
     'A devotional frame, patterned bangles and a peacock-inspired ring, thoughtfully chosen for meaningful occasions.',
-  /** The hero photograph is the first Peacock Ring image in products.ts. */
-  productId: 'product-3',
-  /**
-   * Film-ready slot. Upload a film to Cloudinary under the product's folder, describe it here, and the hero plays it
-   * silently while visible (first frame as poster, the photograph as fallback if it cannot load). `null` = photograph only.
-   */
-  film: null as HeroFilm | null,
+  image: {
+    name: 'silveram-fullbleed-hero',
+    alt: 'Two silver rings arranged on a dark blue surface.',
+    width: 5760,
+    height: 3840,
+    focal: { x: 50, y: 50 },
+  },
 };
 
 /* ----------------------------------------------------------------------------------------------
