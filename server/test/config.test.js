@@ -27,6 +27,7 @@ const configNames = [
   'CASHFREE_ENV',
   'CASHFREE_APP_ID',
   'CASHFREE_SECRET_KEY',
+  'CRON_SECRET',
   'STORE_URL',
   'MAILJET_API_KEY',
   'MAILJET_SECRET_KEY',
@@ -81,9 +82,25 @@ test('Cashfree needs live checkout, credentials and a store URL before it can be
   const base = { NODE_ENV: 'production', FRONTEND_ORIGINS: 'https://silveram.example', CASHFREE_ENABLED: 'true' };
   configure(t, base);
   assert.throws(() => loadConfig(), /Enable Cashfree only after checkout is enabled/);
-  configure(t, { ...base, STORE_LIVE_CHECKOUT: 'true', CASHFREE_APP_ID: 'id', CASHFREE_SECRET_KEY: 'secret' });
+  configure(t, {
+    ...base,
+    STORE_LIVE_CHECKOUT: 'true',
+    CASHFREE_APP_ID: 'id',
+    CASHFREE_SECRET_KEY: 'secret',
+    CRON_SECRET: 'c'.repeat(32),
+  });
   assert.throws(() => loadConfig(), /STORE_URL/);
-  configure(t, { ...base, STORE_LIVE_CHECKOUT: 'true', CASHFREE_APP_ID: 'id', CASHFREE_SECRET_KEY: 'secret', STORE_URL: 'https://silveram.example', CASHFREE_ENV: 'production' });
+  const gateway = {
+    ...base,
+    STORE_LIVE_CHECKOUT: 'true',
+    CASHFREE_APP_ID: 'id',
+    CASHFREE_SECRET_KEY: 'secret',
+    STORE_URL: 'https://silveram.example',
+    CASHFREE_ENV: 'production',
+  };
+  configure(t, gateway);
+  assert.throws(() => loadConfig(), /CRON_SECRET/);
+  configure(t, { ...gateway, CRON_SECRET: 'c'.repeat(32) });
   const config = loadConfig();
   assert.equal(config.cashfreeEnabled, true);
   assert.equal(config.cashfreeEnv, 'production');

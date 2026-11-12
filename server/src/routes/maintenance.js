@@ -36,19 +36,37 @@ function matchesCronSecret(provided, expected) {
   return timingSafeEqual(providedDigest, expectedDigest);
 }
 
+function authorizeCron(req, res, config) {
+  if (!config.cronSecret) {
+    res.status(503).json({ error: 'Scheduled maintenance is not configured.' });
+    return false;
+  }
+  const authorization = req.get('authorization') || '';
+  const token = authorization.replace(/^Bearer\s+/i, '');
+  if (!token || !matchesCronSecret(token, config.cronSecret)) {
+    res.status(401).json({ error: 'Unauthorized.' });
+    return false;
+  }
+  return true;
+}
+
 export function createMaintenanceRouter(config) {
   const router = Router();
 
+  router.get('/reservations', async (req, res, next) => {
+    try {
+      if (!authorizeCron(req, res, config)) return;
+      await releaseExpiredReservations();
+      return res.json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get('/cleanup', async (req, res, next) => {
     try {
-      if (!config.cronSecret) return res.status(503).json({ error: 'Scheduled maintenance is not configured.' });
-      const authorization = req.get('authorization') || '';
-      const token = authorization.replace(/^Bearer\s+/i, '');
-      if (!token || !matchesCronSecret(token, config.cronSecret)) {
-        return res.status(401).json({ error: 'Unauthorized.' });
-      }
+      if (!authorizeCron(req, res, config)) return;
 
-      await releaseExpiredReservations();
       const now = Date.now();
       const removed = {
         sessions: await deleteBefore('sessions', 'expiresAt', now),

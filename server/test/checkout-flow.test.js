@@ -85,6 +85,7 @@ const config = {
   storeUrl: 'https://silveram.example',
   supportEmail: '',
   smtpFrom: 'Silveram <orders@silveram.example>',
+  cronSecret: 'c'.repeat(32),
 };
 
 before(async () => {
@@ -94,11 +95,13 @@ before(async () => {
   });
   const { createOrdersRouter } = await import('../src/routes/orders.js');
   const { createCartRouter } = await import('../src/routes/cart.js');
+  const { createMaintenanceRouter } = await import('../src/routes/maintenance.js');
   const app = express();
   app.use(cookieParser());
   app.use(express.json());
   app.use('/api/orders', createOrdersRouter(config));
   app.use('/api/cart', createCartRouter(config));
+  app.use('/api/cron', createMaintenanceRouter(config));
   app.use((error, _req, res, _next) => res.status(error?.status || 500).json({ error: error.message }));
   await new Promise((resolve) => { server = app.listen(0, '127.0.0.1', resolve); });
   base = `http://127.0.0.1:${server.address().port}/api`;
@@ -311,4 +314,16 @@ test('saved bag: a guest must give an e-mail address', async () => {
   seed();
   const res = await call('/cart/sync', { items: [{ id: 'product-1', quantity: 1 }] });
   assert.equal(res.status, 400);
+});
+
+test('reservation expiry endpoint requires the configured cron secret', async () => {
+  seed();
+  const unauthorized = await call('/cron/reservations');
+  assert.equal(unauthorized.status, 401);
+
+  const authorized = await call('/cron/reservations', undefined, {
+    Authorization: `Bearer ${config.cronSecret}`,
+  });
+  assert.equal(authorized.status, 200);
+  assert.deepEqual(await authorized.json(), { success: true });
 });
