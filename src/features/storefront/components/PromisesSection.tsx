@@ -31,7 +31,7 @@ export default function PromisesSection() {
     <section aria-labelledby="promises-heading" className="scene scene-canvas overflow-hidden py-16 md:py-24">
       <div className="page-container-wide">
         <div className="grid items-center gap-6 md:grid-cols-[1fr_1.15fr_1fr] md:grid-rows-2 md:gap-x-2 md:gap-y-6">
-          <div className="scene-deep blob order-first flex min-h-[15rem] flex-col items-center justify-center px-8 py-12 text-center md:col-start-2 md:row-span-2 md:row-start-1 md:min-h-[22rem]">
+          <div className="scene scene-deep blob order-first flex min-h-[15rem] flex-col items-center justify-center px-8 py-12 text-center md:col-start-2 md:row-span-2 md:row-start-1 md:min-h-[22rem]">
             <h2 id="promises-heading" className="ed-h1">
               {lead}
               <br />

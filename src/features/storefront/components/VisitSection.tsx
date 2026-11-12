@@ -1,4 +1,4 @@
-import { WhatsAppButton, WHATSAPP_DISPLAY, buildGeneralMessage } from '@/features/whatsapp';
+import { WhatsAppButton, buildGeneralMessage } from '@/features/whatsapp';
 import { SITE } from '@/shared/config/site';
 import { buttonClasses } from '@/shared/ui/Button';
 import Media from '@/shared/ui/Media';
@@ -31,7 +31,7 @@ export default function VisitSection() {
           </div>
         )}
 
-        <div className={image ? 'lg:col-span-7' : 'lg:col-span-7'}>
+        <div className="lg:col-span-7">
           <h2 id="visit-heading" className="ed-display">
             {VISIT.statement}
           </h2>
@@ -80,7 +80,7 @@ export default function VisitSection() {
             </ul>
             <div className="mt-5">
               <WhatsAppButton message={buildGeneralMessage()} variant="secondary" size="md">
-                Message us on WhatsApp{WHATSAPP_DISPLAY ? '' : ''}
+                Message us on WhatsApp
               </WhatsAppButton>
             </div>
           </div>
