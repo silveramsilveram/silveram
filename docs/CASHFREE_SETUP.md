@@ -27,9 +27,10 @@
    Then run `npm --prefix server run appwrite:check`; it must report 0 failures. Skipping this makes every
    online-payment checkout fail with "The server could not complete this request." (Appwrite rejects the
    unknown `cashfreeOrderId` attribute). Remove the setup key afterwards.
-6. Confirm the Vercel deployment has an active `/api/cron/reservations` job every five minutes and
-   `/api/cron/cleanup` daily at 03:00 UTC. The five-minute schedule requires a Vercel plan that
-   supports that cadence; otherwise configure an authenticated external scheduler before enabling Cashfree.
-   Verify that an expired test reservation is released before accepting live payments.
+6. Vercel Hobby only allows daily crons, so `/api/cron/cleanup` runs at 03:00 UTC and
+   `/api/cron/reservations` at 03:30 UTC. Expired reservations are additionally released (throttled to once
+   a minute) whenever a customer starts checkout. On a Pro plan, change the reservations schedule in
+   `vercel.json` to `*/5 * * * *`. Verify that an expired test reservation is released before accepting
+   live payments.
 7. Test first with sandbox keys (`CASHFREE_ENV=sandbox`) on a preview deployment, then place one real
    low-value order in production and refund it from the Cashfree dashboard.

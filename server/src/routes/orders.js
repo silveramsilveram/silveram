@@ -217,6 +217,19 @@ async function reserveOrder(config, input, identity) {
   return order;
 }
 
+let lastSweepAt = 0;
+/** Best-effort, throttled to once a minute per instance; never blocks or fails a checkout. */
+async function sweepExpiredReservations() {
+  const now = Date.now();
+  if (now - lastSweepAt < 60 * 1000) return;
+  lastSweepAt = now;
+  try {
+    await releaseExpiredReservations();
+  } catch (error) {
+    console.error('Releasing expired reservations failed:', error?.code ?? '', error?.message || error);
+  }
+}
+
 export async function releaseExpiredReservations() {
   const expired = await listDocuments('orders', [
     Query.equal('status', 'pending_payment'),
@@ -368,6 +381,8 @@ export function createOrdersRouter(config) {
         return res.status(429).json({ error: 'Too many order attempts. Please try again later.' });
       }
 
+      // Hobby-plan crons run once a day, so also free expired reservations as customers check out.
+      await sweepExpiredReservations();
       const order = await reserveOrder(config, input, identity);
       // Keep the contact (e-mail + phone) in Appwrite for guests and members alike. Best effort:
       // a bookkeeping failure must never undo an order that has already been placed.
