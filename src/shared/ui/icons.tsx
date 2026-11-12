@@ -100,3 +100,15 @@ export const WhatsAppIcon = (props: IconProps) => (
     <path d="M9 8.5c0 3 2.5 5.5 5.5 5.5l1-1.2-1.8-1-.8.7a3.6 3.6 0 0 1-1.6-1.6l.7-.8-1-1.8L9 8.5Z" />
   </Icon>
 );
+
+export const PauseIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M9 5v14M15 5v14" />
+  </Icon>
+);
+
+export const PlayIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M8 5.5v13l10-6.5-10-6.5Z" />
+  </Icon>
+);

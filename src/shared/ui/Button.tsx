@@ -3,34 +3,34 @@ import React from 'react';
 export type ButtonVariant = 'primary' | 'secondary' | 'inverse' | 'outline-inverse' | 'text';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-const base =
-  'inline-flex items-center justify-center gap-2 rounded-[2px] border font-semibold uppercase tracking-[0.12em] ' +
-  'transition-all duration-150 cursor-pointer select-none text-center active:scale-[0.98] ' +
-  'disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 aria-disabled:cursor-not-allowed aria-disabled:opacity-50';
-
-const variants: Record<ButtonVariant, string> = {
-  primary:
-    'bg-brand-primary border-brand-primary text-surface-primary hover:bg-brand-primary-hover active:bg-brand-primary-active shadow-sm hover:shadow',
-  secondary:
-    'bg-transparent border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-surface-primary',
-  inverse:
-    'bg-surface-primary border-surface-primary text-brand-primary hover:bg-surface-secondary hover:border-surface-secondary shadow-sm hover:shadow',
-  'outline-inverse':
-    'bg-transparent border-accent-silver text-surface-primary hover:bg-surface-primary hover:text-brand-primary hover:border-surface-primary',
-  text:
-    'border-transparent bg-transparent text-brand-primary underline underline-offset-4 decoration-accent-silver hover:decoration-brand-primary px-0',
+/**
+ * Pill actions (see `.btn-pill` in utilities.css): fine outline, checkered underside that
+ * compresses on hover and press. League Spartan, sentence case. States: default, hover,
+ * focus-visible (global ring), pressed, disabled, busy (`aria-busy`).
+ */
+const variants: Record<Exclude<ButtonVariant, 'text'>, string> = {
+  primary: '',
+  secondary: 'btn-pill--secondary',
+  inverse: 'btn-pill--inverse',
+  'outline-inverse': 'btn-pill--outline-inverse',
 };
 
 const sizes: Record<ButtonSize, string> = {
-  sm: 'min-h-10 px-4 text-xs',
-  md: 'min-h-11 px-5 text-xs',
-  lg: 'min-h-12 px-7 text-[0.8125rem]',
+  sm: 'btn-pill--sm',
+  md: '',
+  lg: 'btn-pill--lg',
 };
+
+const textLink =
+  'inline-flex min-h-11 items-center justify-center gap-2 border-0 bg-transparent px-0 text-[0.9375rem] font-semibold ' +
+  'text-brand-primary underline underline-offset-4 decoration-accent-silver cursor-pointer ' +
+  'transition-colors duration-[250ms] ease-in-out hover:decoration-brand-primary ' +
+  'disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50';
 
 /** Class string shared by <Button> and anchors styled as buttons. */
 export function buttonClasses(variant: ButtonVariant = 'primary', size: ButtonSize = 'md', className = ''): string {
-  const sizeClass = variant === 'text' ? 'min-h-11 text-xs' : sizes[size];
-  return `${base} ${variants[variant]} ${sizeClass} ${className}`.trim();
+  if (variant === 'text') return `${textLink} ${className}`.trim();
+  return `btn-pill ${variants[variant]} ${sizes[size]} ${className}`.replace(/\s+/g, ' ').trim();
 }
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

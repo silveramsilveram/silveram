@@ -21,6 +21,10 @@ interface ImageSlotProps {
   placeholderLabel?: string;
   /** Visual tone of the placeholder panel. */
   tone?: 'light' | 'dark';
+  /** Focal point as percentages (0 to 100) used as `object-position` when the photograph is cropped. */
+  focal?: { x: number; y: number };
+  /** `media` applies the 20px editorial radius; `none` (default) keeps square edges. */
+  radius?: 'none' | 'media';
 }
 
 /**
@@ -43,6 +47,8 @@ export default function ImageSlot({
   imgClassName = '',
   placeholderLabel = 'Photograph coming soon',
   tone = 'light',
+  focal,
+  radius = 'none',
 }: ImageSlotProps) {
   const [sourceFailed, setSourceFailed] = useState(false);
   const [fallbackFailed, setFallbackFailed] = useState(false);
@@ -57,7 +63,7 @@ export default function ImageSlot({
 
   return (
     <div
-      className={`relative overflow-hidden ${dark ? 'bg-brand-primary' : 'bg-surface-secondary'} ${className}`}
+      className={`relative overflow-hidden ${radius === 'media' ? 'media-frame' : ''} ${dark ? 'bg-brand-primary' : 'bg-surface-secondary'} ${className}`}
       style={{ aspectRatio: ratio ?? `${width} / ${height}` }}
     >
       {showImage ? (
@@ -78,6 +84,7 @@ export default function ImageSlot({
               setFallbackFailed(true);
             }
           }}
+          style={focal ? { objectPosition: `${focal.x}% ${focal.y}%` } : undefined}
           className={`absolute inset-0 h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} ${imgClassName}`}
         />
       ) : (

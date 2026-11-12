@@ -1,19 +1,25 @@
 /*
- * Silveram — Midnight Silver design tokens.
- * Single source of truth for colour, type and layout. Tailwind turns every
- * --color-* / --font-* entry into utilities (bg-brand-primary, text-text-secondary …)
- * and also exposes it as a CSS variable for plain CSS.
+ * Silveram — Midnight Editorial design tokens.
+ * Single source of truth for colour, type, shape and motion. Tailwind turns every
+ * --color-* / --font-* / --radius-* entry into utilities (bg-brand-primary, font-display,
+ * rounded-media …) and also exposes it as a CSS variable for plain CSS.
+ * Measured contrast for every role pair is recorded in DESIGN.md.
  */
 @theme {
-  /* Brand */
+  /* Brand — midnight navy family. #182d49 is the anchor and never changes. */
   --color-brand-primary: #182d49; /* Midnight Navy */
-  --color-brand-primary-hover: #243f63;
-  --color-brand-primary-active: #101f34;
+  --color-brand-primary-hover: #243f63; /* Soft Midnight */
+  --color-brand-primary-active: #101f34; /* Deep Midnight */
+  --color-steel-navy: #385575; /* Supporting tint: ivory text 7.2:1 */
 
   /* Surfaces */
   --color-surface-primary: #f8f7f4; /* Ivory */
   --color-surface-secondary: #eeece7; /* Soft Stone */
   --color-surface-white: #ffffff;
+
+  /* Scene accents (whole bands only, never per-card decoration) */
+  --color-ice: #dce6f0; /* Ice Blue: promotional scene */
+  --color-champagne: #d9c5a3; /* Champagne: small gifting accent */
 
   /* Text */
   --color-text-primary: #20232b;
@@ -21,17 +27,38 @@
   --color-text-muted: #5e6471;
 
   /* Accent + lines */
-  --color-accent-silver: #a7adb5;
+  --color-accent-silver: #a7adb5; /* decorative on light, text-safe on navy (6.2:1) */
   --color-border: #d9dadc;
   --color-border-strong: #a7adb5;
 
   /* Feedback (errors only; no decorative colour) */
   --color-danger: #9b2c2c;
 
-  /* Typography — League Spartan everywhere */
+  /* Typography. League Spartan (UI, prices, forms, body) keeps its original stack. */
   --font-family-base: "League Spartan Variable", "League Spartan", sans-serif;
   --font-sans: var(--font-family-base);
+  /* Instrument Serif: display headlines, editorial statements, product names. */
+  --font-display: "Instrument Serif", "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+  /* Courier Prime: small labels, metadata, captions only. */
+  --font-mono: "Courier Prime", "Courier New", Courier, ui-monospace, monospace;
 
-  --radius-sm: 2px;
-  --container-page: 80rem;
+  /* Shape */
+  --radius-sm: 2px; /* legacy: commerce pages until they are migrated */
+  --radius-field: 8px;
+  --radius-media: 20px;
+  --radius-pill: 9999px;
+
+  /* Layout */
+  --container-page: 80rem; /* legacy container, unchanged */
+  --container-wide: 90rem; /* 1440px: editorial scenes */
+  --container-editorial: 69rem; /* 1104px: inner column for storytelling */
+
+  /* Motion: durations and easing referenced by utilities.css and components. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-state: 250ms; /* colour, border, fill */
+  --dur-header: 400ms; /* header transform and opacity */
+  --dur-media: 600ms; /* image scale on hover */
+  --dur-marquee: 20s;
+  --dur-spin: 3s;
+  --dur-small: 2s;
 }
