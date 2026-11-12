@@ -37,6 +37,9 @@ export default function OccasionsSection() {
     <section aria-labelledby="occasions-heading" className="scene scene-champagne py-14 md:py-20">
       <div className="page-container-wide">
         <Marquee items={OCCASIONS.ticker} label="Occasions for giving" />
+        <p className="sr-only" role="status" aria-live="polite">
+          {`${option.label}: ${product.name}`}
+        </p>
 
         <div className="rule-dashed mt-10 grid items-start gap-10 pt-10 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-6">
@@ -63,7 +66,7 @@ export default function OccasionsSection() {
             </div>
           </div>
 
-          <div key={option.id} className="slide-in lg:col-span-6" role="status" aria-live="polite">
+          <div key={option.id} className="slide-in lg:col-span-6">
             <div className="grid items-center gap-6 sm:grid-cols-[minmax(0,15rem)_1fr]">
               <div style={{ maxWidth: Math.min(image?.width ?? 480, 480) }}>
                 <ProductMedia

@@ -39,7 +39,7 @@ export default function PromisesSection() {
             </h2>
           </div>
 
-          <ul className="contents">
+          <ul role="list" className="contents">
             {note(0, 'md:col-start-1 md:row-start-1')}
             {note(1, 'md:col-start-3 md:row-start-1')}
             {note(2, 'md:col-start-1 md:row-start-2')}
