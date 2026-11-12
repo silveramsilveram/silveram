@@ -89,6 +89,7 @@ function useHiddenWhenOverlappingAction(): boolean {
     };
 
     window.addEventListener('scroll', update, { passive: true });
+    document.addEventListener('scroll', update, { passive: true, capture: true });
     window.addEventListener('resize', update);
     const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
     resizeObserver?.observe(document.body);
@@ -98,6 +99,7 @@ function useHiddenWhenOverlappingAction(): boolean {
 
     return () => {
       window.removeEventListener('scroll', update);
+      document.removeEventListener('scroll', update, true);
       window.removeEventListener('resize', update);
       resizeObserver?.disconnect();
       mutationObserver.disconnect();
@@ -125,7 +127,7 @@ export default function FloatingWhatsApp() {
         aria-label="Chat with Silveram on WhatsApp (opens in a new tab)"
         aria-hidden={hidden || undefined}
         tabIndex={hidden ? -1 : undefined}
-        style={overlapsAction ? { transitionDuration: '0ms' } : undefined}
+        style={overlapsAction ? { transition: 'none' } : undefined}
         className={`group fixed bottom-5 right-5 z-30 flex items-center gap-2.5 rounded-full border border-accent-silver/50 bg-brand-primary p-3 text-surface-primary shadow-xl transition-[transform,opacity,visibility,background-color,box-shadow] duration-300 hover:scale-105 hover:bg-brand-primary-hover hover:shadow-2xl active:scale-95 md:bottom-7 md:right-7 ${
           hidden ? 'pointer-events-none invisible translate-y-3 opacity-0' : 'visible translate-y-0 opacity-100'
         }`}
