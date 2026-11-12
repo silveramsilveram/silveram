@@ -27,6 +27,16 @@ export interface ProductImage {
   alt: string;
 }
 
+/** An optional product film, uploaded to Cloudinary as a video under `<root>/<env>/products/<sku>/<name>`. */
+export interface ProductFilm {
+  /** File name (public ID tail) of the film. */
+  name: string;
+  alt: string;
+  /** Native pixel size of the original film; it is never shown larger than this. */
+  width: number;
+  height: number;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -42,6 +52,8 @@ export interface Product {
   shortDescription?: string;
   description?: string;
   images: ProductImage[];
+  /** Optional film. When set (and Cloudinary is configured) sections that show this product can play it. */
+  film?: ProductFilm;
   material?: string;
   /** e.g. the purity marking you have verified. */
   purity?: string;
