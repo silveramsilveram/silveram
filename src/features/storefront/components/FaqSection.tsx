@@ -23,8 +23,8 @@ export default function FaqSection() {
 
   return (
     <section id="faq" aria-labelledby="faq-heading" className="scene scene-mat py-16 md:py-24">
-      <div className="page-container-wide grid gap-10 lg:grid-cols-[minmax(0,20rem)_1fr] lg:gap-20">
-        <div>
+      <div className="page-container-wide grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:gap-20">
+        <div className="min-w-0">
           <h2 id="faq-heading" className="ed-h1">
             What’s on your mind?
           </h2>
@@ -61,7 +61,7 @@ export default function FaqSection() {
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p className="label-mono-sm scene-body" role="status" aria-live="polite">
             {visible.length} {visible.length === 1 ? 'question' : 'questions'}
             {filter === 'All' ? '' : ` about ${filter.toLowerCase()}`}
