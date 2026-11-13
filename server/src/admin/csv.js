@@ -13,7 +13,7 @@ export function csvCell(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : '';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   // Validated plain decimal (e.g. rupees()): safe to write as-is, so a refund of -5.00 stays numeric.
-  if (typeof value === 'object' && typeof value.raw === 'string') return /^-?d+(.d+)?$/.test(value.raw) ? value.raw : '';
+  if (typeof value === 'object' && typeof value.raw === 'string') return /^-?\d+(\.\d+)?$/.test(value.raw) ? value.raw : '';
   let text = String(value).replace(CONTROL_CHARS, '');
   if (DANGEROUS_START.test(text)) text = `'${text}`;
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;

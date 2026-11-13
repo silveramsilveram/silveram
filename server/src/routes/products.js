@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { PRODUCT_CATEGORIES } from '../catalog.js';
 import { createDocument, getDocument, ID, listDocuments, Query, runTransaction, updateDocument } from '../platform/appwrite.js';
-import { actorOf } from '../admin/common.js';
+import { actorOf, requireTrustedOrigin } from '../admin/common.js';
 import { recordInventoryMovement, recordPriceChange } from '../admin/ledger.js';
 import { TtlCache } from '../cache.js';
 import { requireAdmin, requireUser } from '../middleware.js';
@@ -119,7 +119,7 @@ export function createProductsRouter(config) {
     }
   });
 
-  const admin = [requireUser, requireAdmin(config)];
+  const admin = [requireUser, requireAdmin(config), requireTrustedOrigin(config)];
   router.get('/admin', ...admin, async (_req, res, next) => {
     try {
       const rows = await listDocuments('products', [Query.limit(500)]);

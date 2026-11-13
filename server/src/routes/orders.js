@@ -5,6 +5,7 @@ import { optionalUser, requireUser } from '../middleware.js';
 import { sendOrderConfirmationBestEffort } from '../mail/orderConfirmation.js';
 import { consumeRateLimit } from '../security.js';
 import { recordCustomerOrder } from '../customers.js';
+import { bestEffort, paymentLedgerEntry, recordCheckoutBookkeeping, recordReleaseMovements, recordTransaction } from '../admin/ledger.js';
 import {
   channelFor,
   createCashfreeOrder,
@@ -208,6 +209,9 @@ async function reserveOrder(config, input, identity) {
     }
   }
 
+  // A brand-new order: log the stock reservation and make name/phone searchable (best effort).
+  if (!existing) await recordCheckoutBookkeeping(order);
+
   if (order.paymentMethod === 'cod' || order.paymentMethod === 'test') return order;
   if (order.paymentMethod === 'cashfree') {
     if (order.cashfreeOrderId) return order;
@@ -243,10 +247,10 @@ export async function releaseExpiredReservations() {
   ]);
   for (const candidate of expired) {
     try {
-      await runTransaction(async (transactionId) => {
+      const released = await runTransaction(async (transactionId) => {
         const { databases, databaseId, collections } = getAppwrite();
         const current = await getDocument('orders', candidate.$id);
-        if (!current || current.status !== 'pending_payment' || current.reservationExpiresAt > Date.now()) return;
+        if (!current || current.status !== 'pending_payment' || current.reservationExpiresAt > Date.now()) return false;
         const { items } = orderData(current);
         for (const item of items) {
           const product = await getDocument('products', item.productId);
@@ -266,7 +270,9 @@ export async function releaseExpiredReservations() {
           data: { status: 'expired', updatedAt: Date.now() },
           transactionId,
         });
+        return true;
       });
+      if (released) await recordReleaseMovements(candidate);
     } catch (error) {
       if (error?.code !== 409) throw error;
     }
@@ -298,6 +304,14 @@ async function markPaid(config, order, patch) {
   const latest = await getDocument('orders', order.$id);
   if (latest?.status === 'pending_payment') {
     await updateDocument('orders', order.$id, { status: 'paid', ...patch, updatedAt: Date.now() });
+    // Ledger row for the confirmed payment (idempotent; shares its key with the webhook's row).
+    await bestEffort('Recording payment ledger entry', () => recordTransaction(paymentLedgerEntry(order, {
+      provider: order.paymentMethod === 'test' ? 'test' : 'cashfree',
+      providerPaymentId: patch.cashfreePaymentId,
+      channel: patch.paymentChannel,
+      occurredAt: Date.now(),
+      source: 'verify',
+    })));
   } else if (latest?.status !== 'paid') {
     return false;
   }

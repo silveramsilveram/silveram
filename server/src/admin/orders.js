@@ -69,7 +69,7 @@ export function serializeOrder(order, { detail = false, now = Date.now() } = {})
   };
 }
 
-const listSchema = pageQuerySchema.extend({
+export const listSchema = pageQuerySchema.extend({
   search: z.string().optional(),
   status: z.string().optional(),
   paymentMethod: z.enum(['cod', 'cashfree', 'test']).optional(),
@@ -85,7 +85,7 @@ const listSchema = pageQuerySchema.extend({
 
 const orderIdLooksValid = (text) => /^[A-Za-z0-9][A-Za-z0-9._-]{5,35}$/.test(text);
 
-function listQueries(input, now) {
+export function listQueries(input, now) {
   const queries = [];
   const statuses = input.status ? input.status.split(',').filter((status) => ORDER_STATUSES.includes(status)) : [];
   if (input.status && statuses.length === 0) throw httpError(400, 'Choose a valid order status.');
@@ -99,7 +99,7 @@ function listQueries(input, now) {
   if (input.overdue === 'true') {
     queries.push(Query.lessThan('estimatedDeliveryAt', now));
     queries.push(Query.notEqual('shippingStatus', 'delivered'));
-    if (!statuses.length) queries.push(Query.equal('status', ['placed_cod', 'paid']));
+    if (!statuses.length) queries.push(Query.equal('status', ['placed_cod', 'paid', 'fulfilled']));
   }
   return queries;
 }

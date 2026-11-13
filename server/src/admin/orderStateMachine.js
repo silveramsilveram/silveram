@@ -53,11 +53,12 @@ export function shippingTransitionError(order, to) {
 }
 
 /**
- * The commerce `status` an order takes when its shipping status changes. Delivering a paid or
- * accepted COD order marks it `fulfilled` (the same terminal state the previous admin used).
+ * The commerce `status` an order takes when its shipping status changes. The storefront already
+ * tells customers that `fulfilled` means "this order has been dispatched", so dispatching (or any
+ * later step) moves an accepted COD or paid order to `fulfilled`. Earlier steps change nothing.
  */
 export function statusAfterShipping(order, to) {
-  if (to === 'delivered' && ['placed_cod', 'paid'].includes(order.status)) return 'fulfilled';
+  if (SHIPPING_RANK[to] >= SHIPPING_RANK.dispatched && ['placed_cod', 'paid'].includes(order.status)) return 'fulfilled';
   return order.status;
 }
 
@@ -83,7 +84,7 @@ export function isOverdue(order, now = Date.now()) {
     order.estimatedDeliveryAt &&
     order.estimatedDeliveryAt < now &&
     shippingStatusOf(order) !== 'delivered' &&
-    ['placed_cod', 'paid'].includes(order.status),
+    ['placed_cod', 'paid', 'fulfilled'].includes(order.status),
   );
 }
 

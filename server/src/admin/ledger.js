@@ -1,4 +1,4 @@
-import { createDocument } from '../platform/appwrite.js';
+import { createDocument, updateDocument } from '../platform/appwrite.js';
 import { clip, deterministicId } from './common.js';
 
 /**
@@ -129,4 +129,44 @@ export function paymentLedgerEntry(order, { provider, providerPaymentId, channel
     meta: test ? { note: 'Simulated test payment' } : undefined,
     test,
   };
+}
+
+/**
+ * After a new order is stored: record the stock reservation in the movement history and copy the
+ * customer's name/phone onto searchable order fields. Runs after checkout has committed and is
+ * best-effort and idempotent, so a missing admin schema can never fail or double a checkout.
+ */
+export async function recordCheckoutBookkeeping(order) {
+  let items = [];
+  let shipping = {};
+  try {
+    items = JSON.parse(order.itemsJson);
+    shipping = JSON.parse(order.shippingJson);
+  } catch {
+    return;
+  }
+  await bestEffort('Recording stock reservation', () => Promise.all(items.map((item) => recordInventoryMovement({
+    productId: item.productId, sku: item.sku, productName: item.name, type: 'order_reservation', delta: -item.quantity,
+    orderId: order.$id, reason: 'Order placed', actor: 'system:checkout', idKey: `reserve:${order.$id}`, now: order.createdAt,
+  }))));
+  if (!order.customerPhone && shipping.phone) {
+    await bestEffort('Saving searchable customer fields', () => updateDocument('orders', order.$id, {
+      customerName: String(shipping.name || '').slice(0, 100),
+      customerPhone: String(shipping.phone).slice(0, 10),
+    }));
+  }
+}
+
+/** After expired reservations were released: record the stock that came back. */
+export async function recordReleaseMovements(order) {
+  let items = [];
+  try {
+    items = JSON.parse(order.itemsJson);
+  } catch {
+    return;
+  }
+  await bestEffort('Recording reservation release', () => Promise.all(items.map((item) => recordInventoryMovement({
+    productId: item.productId, sku: item.sku, productName: item.name, type: 'reservation_release', delta: item.quantity,
+    orderId: order.$id, reason: 'Payment window expired', actor: 'system:reservation-expiry', idKey: `release:${order.$id}`,
+  }))));
 }

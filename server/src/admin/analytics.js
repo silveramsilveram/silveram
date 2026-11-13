@@ -93,11 +93,11 @@ export function registerAnalyticsRoutes(router, config) {
       ]),
       listDocumentsPage('orders', [
         Query.lessThan('estimatedDeliveryAt', now), Query.notEqual('shippingStatus', 'delivered'),
-        Query.equal('status', ['placed_cod', 'paid']), Query.orderAsc('estimatedDeliveryAt'), Query.limit(8),
+        Query.equal('status', ['placed_cod', 'paid', 'fulfilled']), Query.orderAsc('estimatedDeliveryAt'), Query.limit(8),
       ]),
       listDocumentsPage('orders', [
         Query.greaterThanEqual('estimatedDeliveryAt', now), Query.lessThan('estimatedDeliveryAt', now + 7 * DAY_MS),
-        Query.notEqual('shippingStatus', 'delivered'), Query.equal('status', ['placed_cod', 'paid']),
+        Query.notEqual('shippingStatus', 'delivered'), Query.equal('status', ['placed_cod', 'paid', 'fulfilled']),
         Query.orderAsc('estimatedDeliveryAt'), Query.limit(8),
       ]),
     ]);
