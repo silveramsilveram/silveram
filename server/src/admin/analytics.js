@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { listDocumentsPage, Query } from '../platform/appwrite.js';
 import { listAllDocuments } from '../platform/paging.js';
 import { TtlCache } from '../cache.js';
-import { DAY_MS, IST_OFFSET_MS, parse, rangeQuerySchema, resolveRange, route, STORE_TIMEZONE } from './common.js';
+import { DAY_MS, parse, rangeQuerySchema, resolveRange, route, STORE_TIMEZONE } from './common.js';
 import {
   customerStats, fulfilmentStats, METRIC_DEFINITIONS, paymentMix, productPerformance, salesSeries, shippingBreakdown,
   statusBreakdown, summarizeOrders,
@@ -194,4 +194,8 @@ export function registerAnalyticsRoutes(router, config) {
   }));
 }
 
-export { IST_OFFSET_MS };
+/** Tests only: drop memoised range scans so each test sees its own data. */
+export function resetAnalyticsCaches() {
+  rangeCache.clear();
+  coverageCache.clear();
+}

@@ -311,7 +311,10 @@ export function registerOrderRoutes(router) {
     for (const key of ['carrier', 'trackingNumber', 'trackingUrl']) {
       if (input[key] !== undefined) patch[key] = clip(input[key], 300) ?? null;
     }
-    if (Object.keys(patch).length === 0) throw httpError(400, 'Nothing to update.');
+    if (Object.keys(patch).length === 0) {
+      if (input.shippingStatus) throw httpError(409, `This order is already marked ${current.replace(/_/g, ' ')}.`);
+      throw httpError(400, 'Nothing to update.');
+    }
 
     const merged = { ...order, ...patch };
     const dateProblem = validateShippingDates(order, {

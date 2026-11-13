@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { getDocument, listDocuments, listDocumentsPage, Query } from '../platform/appwrite.js';
 import { listAllDocuments } from '../platform/paging.js';
-import { customerId } from '../customers.js';
 import { cleanSearch, httpError, idSchema, pageQuerySchema, parse, route } from './common.js';
 import { isConfirmed } from './metrics.js';
 import { serializeOrder } from './orders.js';
@@ -125,4 +124,3 @@ export function registerCustomerRoutes(router) {
   }));
 }
 
-export { customerId };

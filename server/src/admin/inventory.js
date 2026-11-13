@@ -5,7 +5,7 @@ import {
 import { listAllDocuments } from '../platform/paging.js';
 import { TtlCache } from '../cache.js';
 import {
-  actorOf, cleanSearch, DAY_MS, deterministicId, httpError, idSchema, pageQuerySchema, parse, route, startOfDayIst, ymdSchema,
+  actorOf, cleanSearch, DAY_MS, httpError, idSchema, pageQuerySchema, parse, route, startOfDayIst, ymdSchema,
 } from './common.js';
 import { recordInventoryMovement } from './ledger.js';
 
@@ -192,4 +192,7 @@ export function registerInventoryRoutes(router, config, { clearCatalogueCache })
   }));
 }
 
-export { deterministicId };
+/** Tests only. */
+export function resetInventoryCaches() {
+  reservedCache.clear();
+}

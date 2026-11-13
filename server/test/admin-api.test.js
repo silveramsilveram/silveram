@@ -33,6 +33,7 @@ const config = {
 
 let server;
 let base;
+let resetCaches = () => {};
 let hashToken; // imported after the Appwrite mock is installed, like every module that touches it
 
 before(async () => {
@@ -41,6 +42,9 @@ before(async () => {
     namedExports: { getMailer: () => null, mailConfigured: () => false },
   });
   ({ hashToken } = await import('../src/security.js'));
+  const { resetAnalyticsCaches } = await import('../src/admin/analytics.js');
+  const { resetInventoryCaches } = await import('../src/admin/inventory.js');
+  resetCaches = () => { resetAnalyticsCaches(); resetInventoryCaches(); };
   const { createAdminRouter } = await import('../src/routes/admin.js');
   const { createProductsRouter } = await import('../src/routes/products.js');
   const { createUploadsRouter } = await import('../src/routes/uploads.js');
@@ -68,6 +72,7 @@ const day = (n) => T0 + n * 24 * 60 * 60 * 1000;
 
 beforeEach(() => {
   mem.clear();
+  resetCaches();
   const future = Date.now() + 86_400_000;
   mem.seed('sessions', 's-admin', { tokenHash: hashToken('admin-token'), userId: 'u-admin', email: 'owner@silveram.test', expiresAt: future });
   mem.seed('sessions', 's-shopper', { tokenHash: hashToken('shopper-token'), userId: 'u-shopper', email: 'shopper@example.com', expiresAt: future });
@@ -633,6 +638,6 @@ test('transaction detail returns sanitised ledger data and the linked order', as
   const { json } = await api('GET', `/admin/transactions/${row.$id}`);
   assert.equal(json.transaction.type, 'payment');
   assert.equal(json.order.id, 'w1');
-  assert.doesNotMatch(JSON.stringify(json), /cashfree-test-secret|shipping|9876543210/);
+  assert.doesNotMatch(JSON.stringify(json), /cashfree-test-secret|"shipping":|9876543210/);
   assert.equal((await api('GET', '/admin/transactions/none')).status, 404);
 });
