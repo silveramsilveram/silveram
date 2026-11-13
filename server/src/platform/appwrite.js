@@ -147,4 +147,6 @@ export async function checkDatabase() {
   await databases.get({ databaseId: config.appwriteDatabaseId });
 }
 
-export async function closeDatab
+export async function closeDatabase() {}
+
+export { ID, Query };
