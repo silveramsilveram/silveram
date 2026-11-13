@@ -37,25 +37,39 @@ function createProductSchema(config) {
     alt: z.string().trim().max(200).default(''),
   }).strict();
 
-  return z.object({
+  const shape = {
     sku: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1).max(160),
     description: z.string().trim().max(4000),
     category: z.enum(PRODUCT_CATEGORIES),
     priceInPaise: z.number().int().positive().max(2147483647),
-    currency: z.literal('INR').default('INR'),
     stockQuantity: z.number().int().min(0).max(2147483647),
     imageUrl: imageUrl.optional(),
     images: z.array(mediaSchema.omit({ resourceType: true, duration: true, format: true })).max(10).optional(),
     media: z.array(mediaSchema).max(10).optional(),
-    active: z.boolean().default(false),
-  }).strict().refine((value) => !(value.images && value.media), {
+  };
+  const mediaRules = (schema) => schema.refine((value) => !(value.images && value.media), {
     message: 'Send either images or media, not both.',
   }).refine((value) => !value.media || value.media.every((item) =>
     item.resourceType !== 'video' || item.duration !== undefined,
   ), {
     message: 'Video metadata must include its duration.',
   });
+
+  // Creating applies defaults (INR, inactive). An edit must NOT: .partial() on a schema with
+  // defaults would silently reset `active` and `currency` on every PATCH, and zod 4 refuses
+  // .partial() on refined objects, so the patch schema is built separately from the plain shape.
+  const create = mediaRules(z.object({
+    ...shape,
+    currency: z.literal('INR').default('INR'),
+    active: z.boolean().default(false),
+  }).strict());
+  const patch = mediaRules(z.object({
+    ...Object.fromEntries(Object.entries(shape).map(([key, value]) => [key, value.optional()])),
+    currency: z.literal('INR').optional(),
+    active: z.boolean().optional(),
+  }).strict());
+  return { create, patch };
 }
 
 export function serializeProduct(product, config) {
@@ -97,7 +111,7 @@ const PUBLIC_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revali
 
 export function createProductsRouter(config) {
   const router = Router();
-  const productSchema = createProductSchema(config);
+  const productSchemas = createProductSchema(config);
 
   router.get('/', async (req, res, next) => {
     try {
@@ -131,7 +145,7 @@ export function createProductsRouter(config) {
 
   router.post('/admin', ...admin, async (req, res, next) => {
     try {
-      const parsed = productSchema.safeParse(req.body);
+      const parsed = productSchemas.create.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Check the product fields and try again.' });
       const media = parsed.data.media || parsed.data.images || [];
       if (!mediaAreOwned(config, parsed.data.sku, media)) {
@@ -168,7 +182,7 @@ export function createProductsRouter(config) {
     try {
       const { priceChangeReason, ...productFields } = req.body ?? {};
       const reasonCheck = z.string().trim().max(200).optional().safeParse(priceChangeReason);
-      const parsed = productSchema.partial().strict().safeParse(productFields);
+      const parsed = productSchemas.patch.safeParse(productFields);
       if (!reasonCheck.success || !parsed.success || Object.keys(parsed.data || {}).length === 0) {
         return res.status(400).json({ error: 'Provide valid product fields to update.' });
       }
