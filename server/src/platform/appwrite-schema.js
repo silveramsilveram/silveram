@@ -72,6 +72,9 @@ export const APPWRITE_SCHEMA = {
     indexes: [
       ['sku_unique', 'unique', ['sku']],
       ['active_category_idx', 'key', ['active', 'category']],
+      ['name_search', 'fulltext', ['name']],
+      ['updated_idx', 'key', ['updatedAt']],
+      ['stock_idx', 'key', ['stockQuantity']],
     ],
   },
   orders: {
@@ -94,12 +97,34 @@ export const APPWRITE_SCHEMA = {
       ['cashfreeOrderId', 'string', false, 100],
       ['cashfreePaymentId', 'string', false, 100],
       ['cancellationRecordedAt', 'integer', false],
+      // --- Admin dashboard additions (all optional, additive; see docs/ADMIN_DEPLOYMENT.md) ---
+      // Searchable copies of values that otherwise live only inside shippingJson. Backfilled by
+      // `npm --prefix server run admin:backfill`; new orders get them at checkout.
+      ['customerName', 'string', false, 100],
+      ['customerPhone', 'string', false, 10],
+      // Shipping is its own dimension, separate from `status` (see admin/orderStateMachine.js).
+      ['shippingStatus', 'string', false, 24],
+      ['expectedDispatchAt', 'integer', false],
+      ['dispatchedAt', 'integer', false],
+      ['estimatedDeliveryAt', 'integer', false],
+      ['deliveredAt', 'integer', false],
+      ['carrier', 'string', false, 60],
+      ['trackingNumber', 'string', false, 80],
+      ['trackingUrl', 'string', false, 300],
+      // Operator-recorded COD cash: projections of the immutable ledger rows in `transactions`.
+      ['codCollectedInPaise', 'integer', false],
+      ['codRemittedInPaise', 'integer', false],
     ],
     indexes: [
       ['user_created_idx', 'key', ['userId', 'createdAt']],
       ['status_reservation_idx', 'key', ['status', 'reservationExpiresAt']],
       ['cashfree_order_idx', 'key', ['cashfreeOrderId']],
       ['created_status_idx', 'key', ['createdAt', 'status']],
+      ['email_created_idx', 'key', ['email', 'createdAt']],
+      ['phone_idx', 'key', ['customerPhone']],
+      ['payment_created_idx', 'key', ['paymentMethod', 'createdAt']],
+      ['shipping_estimate_idx', 'key', ['shippingStatus', 'estimatedDeliveryAt']],
+      ['customer_name_search', 'fulltext', ['customerName']],
     ],
   },
   webhookEvents: {
@@ -131,7 +156,13 @@ export const APPWRITE_SCHEMA = {
       ['createdAt', 'integer', true],
       ['updatedAt', 'integer', true],
     ],
-    indexes: [['email_unique', 'unique', ['email']]],
+    indexes: [
+      ['email_unique', 'unique', ['email']],
+      ['name_search', 'fulltext', ['name']],
+      ['phone_idx', 'key', ['phone']],
+      ['created_idx', 'key', ['createdAt']],
+      ['last_order_idx', 'key', ['lastOrderAt']],
+    ],
   },
   emailClaims: {
     name: 'Order email delivery claims',
@@ -145,4 +176,99 @@ export const APPWRITE_SCHEMA = {
       ['sent_at_idx', 'key', ['sentAt']],
     ],
   },
+  // ----- Admin dashboard: immutable audit/ledger collections (additive; rows are never updated) -----
+  productPriceHistory: {
+    name: 'Product price history (immutable)',
+    attributes: [
+      ['productId', 'string', true, 36],
+      ['sku', 'string', true, 64],
+      ['productName', 'string', true, 160],
+      ['previousPriceInPaise', 'integer', false],
+      ['newPriceInPaise', 'integer', true],
+      ['currency', 'string', true, 3],
+      ['changedAt', 'integer', true],
+      ['changedBy', 'string', true, 254],
+      ['reason', 'string', false, 200],
+    ],
+    indexes: [
+      ['product_changed_idx', 'key', ['productId', 'changedAt']],
+      ['changed_at_idx', 'key', ['changedAt']],
+    ],
+  },
+  inventoryMovements: {
+    name: 'Inventory stock movements (immutable)',
+    attributes: [
+      ['productId', 'string', true, 36],
+      ['sku', 'string', true, 64],
+      ['productName', 'string', true, 160],
+      ['type', 'string', true, 32],
+      ['delta', 'integer', true],
+      ['quantityBefore', 'integer', false],
+      ['quantityAfter', 'integer', false],
+      ['orderId', 'string', false, 36],
+      ['reason', 'string', false, 200],
+      ['actor', 'string', true, 254],
+      ['createdAt', 'integer', true],
+    ],
+    indexes: [
+      ['product_created_idx', 'key', ['productId', 'createdAt']],
+      ['created_idx', 'key', ['createdAt']],
+      ['order_idx', 'key', ['orderId']],
+      ['type_created_idx', 'key', ['type', 'createdAt']],
+    ],
+  },
+  orderEvents: {
+    name: 'Order timeline and audit events (immutable)',
+    attributes: [
+      ['orderId', 'string', true, 36],
+      ['type', 'string', true, 40],
+      ['fromStatus', 'string', false, 32],
+      ['toStatus', 'string', false, 32],
+      ['actor', 'string', true, 254],
+      ['actorType', 'string', true, 16],
+      ['note', 'string', false, 300],
+      ['detailJson', 'string', false, 1000],
+      ['createdAt', 'integer', true],
+    ],
+    indexes: [
+      ['order_created_idx', 'key', ['orderId', 'createdAt']],
+      ['created_idx', 'key', ['createdAt']],
+    ],
+  },
+  transactions: {
+    name: 'Payment and cash ledger (immutable)',
+    attributes: [
+      ['eventKey', 'string', true, 120],
+      ['orderId', 'string', true, 36],
+      ['provider', 'string', true, 16],
+      ['type', 'string', true, 24],
+      ['status', 'string', true, 24],
+      ['amountInPaise', 'integer', true],
+      ['currency', 'string', true, 3],
+      ['channel', 'string', false, 16],
+      ['providerOrderId', 'string', false, 100],
+      ['providerPaymentId', 'string', false, 100],
+      ['providerRefundId', 'string', false, 100],
+      ['occurredAt', 'integer', true],
+      ['recordedAt', 'integer', true],
+      ['source', 'string', true, 24],
+      ['actor', 'string', true, 254],
+      ['reconciliation', 'string', true, 24],
+      ['reference', 'string', false, 120],
+      ['note', 'string', false, 300],
+      ['metaJson', 'string', false, 1000],
+      ['test', 'boolean', true],
+    ],
+    indexes: [
+      ['event_key_unique', 'unique', ['eventKey']],
+      ['order_occurred_idx', 'key', ['orderId', 'occurredAt']],
+      ['occurred_idx', 'key', ['occurredAt']],
+      ['type_occurred_idx', 'key', ['type', 'occurredAt']],
+      ['status_occurred_idx', 'key', ['status', 'occurredAt']],
+      ['provider_occurred_idx', 'key', ['provider', 'occurredAt']],
+    ],
+  },
 };
+
+/** Collections added for the admin dashboard; /api/admin/me reports whether they are provisioned. */
+export const ADMIN_COLLECTION_KEYS = ['productPriceHistory', 'inventoryMovements', 'orderEvents', 'transactions'];

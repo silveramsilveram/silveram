@@ -147,6 +147,10 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     webhookEvents: process.env.APPWRITE_WEBHOOK_EVENTS_COLLECTION_ID?.trim() || 'webhook_events',
     emailClaims: process.env.APPWRITE_EMAIL_CLAIMS_COLLECTION_ID?.trim() || 'email_claims',
     customers: process.env.APPWRITE_CUSTOMERS_COLLECTION_ID?.trim() || 'customers',
+    productPriceHistory: process.env.APPWRITE_PRODUCT_PRICE_HISTORY_COLLECTION_ID?.trim() || 'product_price_history',
+    inventoryMovements: process.env.APPWRITE_INVENTORY_MOVEMENTS_COLLECTION_ID?.trim() || 'inventory_movements',
+    orderEvents: process.env.APPWRITE_ORDER_EVENTS_COLLECTION_ID?.trim() || 'order_events',
+    transactions: process.env.APPWRITE_TRANSACTIONS_COLLECTION_ID?.trim() || 'transactions',
   };
   for (const [name, id] of Object.entries(appwriteCollections)) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(id)) {
@@ -185,6 +189,7 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     cloudinaryApiKey: process.env.CLOUDINARY_API_KEY?.trim() || '',
     cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
     cloudinaryRootFolder: process.env.CLOUDINARY_ROOT_FOLDER?.trim() || 'silveram',
+    lowStockThreshold: positiveInteger('LOW_STOCK_THRESHOLD', 3),
     liveCheckout,
     // Cash on delivery is on whenever checkout is live, unless explicitly switched off.
     codEnabled: process.env.COD_ENABLED !== 'false',

@@ -89,6 +89,32 @@ export async function listDocuments(collectionId, queries = []) {
   return result.documents;
 }
 
+/** Like listDocuments, but keeps Appwrite's `total` so callers can paginate. */
+export async function listDocumentsPage(collectionId, queries = []) {
+  assertConfigured();
+  const result = await databases.listDocuments({
+    databaseId: config.appwriteDatabaseId,
+    collectionId: config.appwriteCollections[collectionId],
+    queries,
+  });
+  return { documents: result.documents, total: result.total };
+}
+
+/** Atomically add `delta` to a numeric attribute (staged when a transactionId is given). */
+export async function incrementAttribute(collectionId, documentId, attribute, delta, transactionId, { min } = {}) {
+  assertConfigured();
+  const params = {
+    databaseId: config.appwriteDatabaseId,
+    collectionId: config.appwriteCollections[collectionId],
+    documentId,
+    attribute,
+    ...(transactionId && { transactionId }),
+  };
+  return delta >= 0
+    ? databases.incrementDocumentAttribute({ ...params, value: delta })
+    : databases.decrementDocumentAttribute({ ...params, value: -delta, ...(min !== undefined && { min }) });
+}
+
 export async function findDocument(collectionId, field, value) {
   const [document] = await listDocuments(collectionId, [Query.equal(field, value), Query.limit(1)]);
   return document || null;
@@ -121,6 +147,4 @@ export async function checkDatabase() {
   await databases.get({ databaseId: config.appwriteDatabaseId });
 }
 
-export async function closeDatabase() {}
-
-export { ID, Query };
+export async function closeDatab
