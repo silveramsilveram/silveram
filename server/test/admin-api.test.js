@@ -474,7 +474,7 @@ test('analytics: pending/cancelled/expired/test orders are never revenue; unavai
   addOrder('pending', { createdAt: day(3), paymentMethod: 'cashfree', status: 'pending_payment', amountInPaise: 999999 });
   addOrder('cancelled', { createdAt: day(4), status: 'cancelled' });
   addOrder('fake', { createdAt: day(5), paymentMethod: 'test', status: 'paid', amountInPaise: 777777 });
-  const { json, status } = await api('GET', `/admin/dashboard/summary?from=2026-04-01&to=2026-06-30`);
+  const { json, status } = await api('GET', `/admin/dashboard/summary?from=2026-03-01&to=2026-06-30`);
   assert.equal(status, 200);
   const k = json.kpis;
   assert.equal(k.onlineCollections, 250000);
@@ -484,7 +484,8 @@ test('analytics: pending/cancelled/expired/test orders are never revenue; unavai
   assert.equal(k.testOrdersExcluded, 1);
   assert.equal(k.refunds, 0);
   assert.equal(json.groupBy, 'month');
-  const [april, may, june] = json.series;
+  const [, april, may, june] = json.series;
+  assert.equal(json.series.length, 4);
   assert.deepEqual([april.available, may.available], [false, false], 'before the first order: unavailable');
   assert.equal(april.grossOrderValue, null);
   assert.equal(june.grossOrderValue, 350000);

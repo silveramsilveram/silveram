@@ -6,6 +6,7 @@ import { consumeRateLimit } from '../security.js';
 import { TtlCache } from '../cache.js';
 import { mailConfigured } from '../mail/transport.js';
 import { clearCatalogueCache } from './products.js';
+import { invalidateAdminCaches } from '../admin/caches.js';
 import { actorOf, IST_OFFSET_MS, requireTrustedOrigin, route, STORE_TIMEZONE } from '../admin/common.js';
 import { registerOrderRoutes } from '../admin/orders.js';
 import { registerTransactionRoutes } from '../admin/transactions.js';
@@ -68,6 +69,10 @@ export function createAdminRouter(config) {
   router.use(requireUser, requireAdmin(config), requireTrustedOrigin(config));
   router.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
+    // Any successful write may change totals shown on the dashboard, so drop the cached scans.
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      res.on('finish', () => { if (res.statusCode < 400) invalidateAdminCaches(); });
+    }
     // Reads are not throttled in the database (that would add an Appwrite call to every page load);
     // they are already limited to allow-listed admins.
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();

@@ -5,6 +5,7 @@ import { queueOrderConfirmation } from '../mail/orderConfirmation.js';
 import { verifyCashfreeWebhookSignature } from '../payments/cashfree/signatures.js';
 import { channelFor, toPaise } from '../payments/cashfree/client.js';
 import { bestEffort, paymentLedgerEntry, recordTransaction } from '../admin/ledger.js';
+import { invalidateAdminCaches } from '../admin/caches.js';
 
 const providerTime = (value) => {
   const parsed = Date.parse(value);
@@ -105,6 +106,7 @@ export function createWebhookRouter(config) {
         throw error;
       }
       for (const entry of ledgerEntries) await bestEffort('Recording webhook ledger entry', () => recordTransaction(entry));
+      invalidateAdminCaches();
       if (confirmationOrderId) queueOrderConfirmation(config, confirmationOrderId);
       return res.status(200).json({ received: true });
     } catch (error) {

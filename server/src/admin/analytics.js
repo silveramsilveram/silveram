@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { listDocumentsPage, Query } from '../platform/appwrite.js';
 import { listAllDocuments } from '../platform/paging.js';
 import { TtlCache } from '../cache.js';
+import { invalidateAdminCaches, registerCache } from './caches.js';
 import { DAY_MS, parse, rangeQuerySchema, resolveRange, route, STORE_TIMEZONE } from './common.js';
 import {
   customerStats, fulfilmentStats, METRIC_DEFINITIONS, paymentMix, productPerformance, salesSeries, shippingBreakdown,
@@ -10,8 +11,8 @@ import {
 import { serializeOrder } from './orders.js';
 
 const MAX_ORDERS_SCANNED = 10_000;
-const rangeCache = new TtlCache({ ttlMs: 45 * 1000, maxEntries: 40 });
-const coverageCache = new TtlCache({ ttlMs: 5 * 60 * 1000, maxEntries: 4 });
+const rangeCache = registerCache(new TtlCache({ ttlMs: 45 * 1000, maxEntries: 40 }));
+const coverageCache = registerCache(new TtlCache({ ttlMs: 5 * 60 * 1000, maxEntries: 4 }));
 
 /** Earliest stored order / ledger row, i.e. "Data available from …". */
 async function coverage() {
@@ -195,7 +196,4 @@ export function registerAnalyticsRoutes(router, config) {
 }
 
 /** Tests only: drop memoised range scans so each test sees its own data. */
-export function resetAnalyticsCaches() {
-  rangeCache.clear();
-  coverageCache.clear();
-}
+export const resetAnalyticsCaches = invalidateAdminCaches;

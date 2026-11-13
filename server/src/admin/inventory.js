@@ -4,6 +4,7 @@ import {
 } from '../platform/appwrite.js';
 import { listAllDocuments } from '../platform/paging.js';
 import { TtlCache } from '../cache.js';
+import { invalidateAdminCaches, registerCache } from './caches.js';
 import {
   actorOf, cleanSearch, DAY_MS, httpError, idSchema, pageQuerySchema, parse, route, startOfDayIst, ymdSchema,
 } from './common.js';
@@ -13,7 +14,7 @@ export const MOVEMENT_TYPES = [
   'initial_stock', 'restock', 'manual_adjustment', 'correction', 'order_reservation', 'reservation_release', 'cancellation_restore',
 ];
 
-const reservedCache = new TtlCache({ ttlMs: 30 * 1000, maxEntries: 2 });
+const reservedCache = registerCache(new TtlCache({ ttlMs: 30 * 1000, maxEntries: 2 }));
 
 /** Units held by unexpired pending-payment orders. Their stock is already deducted from stockQuantity. */
 async function reservedByProduct() {
@@ -193,6 +194,4 @@ export function registerInventoryRoutes(router, config, { clearCatalogueCache })
 }
 
 /** Tests only. */
-export function resetInventoryCaches() {
-  reservedCache.clear();
-}
+export const resetInventoryCaches = invalidateAdminCaches;
