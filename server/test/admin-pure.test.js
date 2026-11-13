@@ -59,7 +59,7 @@ test('CSV cells cannot start a spreadsheet formula', () => {
   assert.equal(csvCell('a,"b"'), '"a,""b"""');
   assert.equal(csvCell('bell\u0007'), 'bell');
   const csv = toCsv([{ header: 'Name', value: (r) => r.n }], [{ n: '=HYPERLINK("x")' }]);
-  assert.match(csv, /\r\n'=HYPERLINK/);
+  assert.match(csv, /\r\n"'=HYPERLINK/); // neutralised, then quoted because it contains quotes
 });
 
 test('shipping can only move forward, and only for shippable orders', () => {
