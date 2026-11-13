@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { PRODUCT_CATEGORIES } from '../catalog.js';
-import { createDocument, getDocument, ID, listDocuments, Query, updateDocument } from '../platform/appwrite.js';
+import { createDocument, getDocument, ID, listDocuments, Query, runTransaction, updateDocument } from '../platform/appwrite.js';
+import { actorOf } from '../admin/common.js';
+import { recordInventoryMovement, recordPriceChange } from '../admin/ledger.js';
 import { TtlCache } from '../cache.js';
 import { requireAdmin, requireUser } from '../middleware.js';
 import { cloudinaryEnabled, mediaUrl as cloudinaryUrl } from '../storage/cloudinary/client.js';
@@ -56,7 +58,7 @@ function createProductSchema(config) {
   });
 }
 
-function serializeProduct(product, config) {
+export function serializeProduct(product, config) {
   const { $id, imagesJson, ...fields } = product;
   let media = [];
   try {
@@ -90,6 +92,7 @@ function mediaAreOwned(config, sku, media) {
  * for five more while it refreshes in the background). Admin writes clear the memory copy at once.
  */
 const catalogueCache = new TtlCache({ ttlMs: 60 * 1000, maxEntries: 50 });
+export const clearCatalogueCache = () => catalogueCache.clear();
 const PUBLIC_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300';
 
 export function createProductsRouter(config) {
@@ -137,9 +140,24 @@ export function createProductsRouter(config) {
       const now = Date.now();
       const { images, media: _media, ...fields } = parsed.data;
       const product = { ...fields, imagesJson: JSON.stringify(media), createdAt: now, updatedAt: now };
-      const created = await createDocument('products', ID.unique(), product);
+      const actor = actorOf(req);
+      // The product and its first price / stock audit rows commit together or not at all.
+      const created = await runTransaction(async (transactionId) => {
+        const id = ID.unique();
+        await createDocument('products', id, product, transactionId);
+        await recordPriceChange({
+          productId: id, sku: product.sku, productName: product.name, newPriceInPaise: product.priceInPaise, actor, reason: 'Product created', now,
+        }, transactionId);
+        if (product.stockQuantity > 0) {
+          await recordInventoryMovement({
+            productId: id, sku: product.sku, productName: product.name, type: 'initial_stock', delta: product.stockQuantity,
+            quantityBefore: 0, quantityAfter: product.stockQuantity, reason: 'Product created', actor, idKey: 'initial', now,
+          }, transactionId);
+        }
+        return id;
+      });
       catalogueCache.clear();
-      return res.status(201).json({ product: serializeProduct(created, config) });
+      return res.status(201).json({ product: serializeProduct(await getDocument('products', created), config) });
     } catch (error) {
       if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
       next(error);
@@ -148,12 +166,17 @@ export function createProductsRouter(config) {
 
   router.patch('/admin/:id', ...admin, async (req, res, next) => {
     try {
-      const parsed = productSchema.partial().strict().safeParse(req.body);
-      if (!parsed.success || Object.keys(parsed.data || {}).length === 0) {
+      const { priceChangeReason, ...productFields } = req.body ?? {};
+      const reasonCheck = z.string().trim().max(200).optional().safeParse(priceChangeReason);
+      const parsed = productSchema.partial().strict().safeParse(productFields);
+      if (!reasonCheck.success || !parsed.success || Object.keys(parsed.data || {}).length === 0) {
         return res.status(400).json({ error: 'Provide valid product fields to update.' });
       }
       const existing = await getDocument('products', req.params.id);
       if (!existing) return res.status(404).json({ error: 'Product not found.' });
+      if (parsed.data.stockQuantity !== undefined && parsed.data.stockQuantity !== existing.stockQuantity) {
+        return res.status(400).json({ error: 'Change stock from Inventory so the reason and movement are recorded.' });
+      }
       const media = parsed.data.media || parsed.data.images;
       if (media) {
         if (parsed.data.sku && parsed.data.sku !== existing.sku) {
@@ -163,14 +186,28 @@ export function createProductsRouter(config) {
           return res.status(400).json({ error: 'Upload product media through the Cloudinary uploader.' });
         }
       }
-      const { images, media: _media, ...fields } = parsed.data;
-      catalogueCache.clear();
-      const updated = await updateDocument('products', req.params.id, {
+      const { images, media: _media, stockQuantity: _stock, ...fields } = parsed.data;
+      const now = Date.now();
+      const priceChanged = fields.priceInPaise !== undefined && fields.priceInPaise !== existing.priceInPaise;
+      const data = {
         ...fields,
         ...(media && { imagesJson: JSON.stringify(media) }),
-        updatedAt: Date.now(),
+        // Re-activating a product that was soft-deleted also clears the deactivation stamp.
+        ...(fields.active === true && existing.deletedAt && { deletedAt: null }),
+        updatedAt: now,
+      };
+      await runTransaction(async (transactionId) => {
+        await updateDocument('products', req.params.id, data, transactionId);
+        if (priceChanged) {
+          await recordPriceChange({
+            productId: existing.$id, sku: fields.sku || existing.sku, productName: fields.name || existing.name,
+            previousPriceInPaise: existing.priceInPaise, newPriceInPaise: fields.priceInPaise,
+            actor: actorOf(req), reason: reasonCheck.data, now,
+          }, transactionId);
+        }
       });
-      return res.json({ product: serializeProduct(updated, config) });
+      catalogueCache.clear();
+      return res.json({ product: serializeProduct(await getDocument('products', req.params.id), config) });
     } catch (error) {
       if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
       next(error);

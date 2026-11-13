@@ -209,14 +209,13 @@ export function registerOrderRoutes(router) {
     if (!['placed_cod', 'paid'].includes(existing.status)) {
       throw httpError(409, 'Only placed or paid orders can be marked fulfilled.');
     }
-    const updated = await runTransaction(async (transactionId) => {
-      const result = await updateDocument('orders', existing.$id, { status, updatedAt: Date.now() }, transactionId);
+    await runTransaction(async (transactionId) => {
+      await updateDocument('orders', existing.$id, { status, updatedAt: Date.now() }, transactionId);
       await recordOrderEvent({
         orderId: existing.$id, type: 'status_changed', fromStatus: existing.status, toStatus: status, actor: actorOf(req), idKey: `status:${existing.status}:${status}`,
       }, transactionId);
-      return result;
     });
-    return res.json({ order: serializeOrder(updated, { detail: true }) });
+    return res.json({ order: serializeOrder(await getDocument('orders', existing.$id), { detail: true }) });
   }));
 
   // COD cancellation: restores stock exactly once. The deterministic "claim" event is created first
@@ -324,8 +323,8 @@ export function registerOrderRoutes(router) {
     if (dateProblem) throw httpError(400, dateProblem);
 
     const actor = actorOf(req);
-    const updated = await runTransaction(async (transactionId) => {
-      const result = await updateDocument('orders', order.$id, { ...patch, updatedAt: now }, transactionId);
+    await runTransaction(async (transactionId) => {
+      await updateDocument('orders', order.$id, { ...patch, updatedAt: now }, transactionId);
       if (target) {
         await recordOrderEvent({
           orderId: order.$id, type: 'shipping_status_changed', fromStatus: current, toStatus: target, actor, note: input.note,
@@ -339,9 +338,8 @@ export function registerOrderRoutes(router) {
           detail: Object.fromEntries(changedPlan.map((key) => [key, patch[key]])), idKey: `plan:${now}`,
         }, transactionId);
       }
-      return result;
     });
-    return res.json({ order: serializeOrder(updated, { detail: true }) });
+    return res.json({ order: serializeOrder(await getDocument('orders', order.$id), { detail: true }) });
   }));
 
   router.post('/orders/:id/shipping-events', route(async (req, res) => {
