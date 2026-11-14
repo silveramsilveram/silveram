@@ -10,13 +10,14 @@ const RESEND_SECONDS = 60;
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ minHeight: '100%', display: 'grid', placeItems: 'center', padding: 16, background: 'var(--navy)' }}>
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))', background: 'var(--navy)' }} className="sv-login">
       <div style={{ width: '100%', maxWidth: 440 }}>
         <div style={{ textAlign: 'center', color: 'var(--ivory)', marginBottom: 20 }}>
           <div className="display" style={{ fontSize: 52, lineHeight: 1 }}>Silveram</div>
           <div className="mono" style={{ letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--champagne)', fontSize: 13 }}>Admin</div>
         </div>
         <div className="sv-surface" style={{ padding: 28 }}>{children}</div>
+        <p style={{ color: 'var(--ice)', textAlign: 'center', fontSize: 13, margin: '16px 8px 0' }}>Owner access only. There is no public sign-up: only the administrator e-mail configured for Silveram can sign in.</p>
       </div>
     </div>
   );

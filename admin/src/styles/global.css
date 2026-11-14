@@ -215,3 +215,4 @@ img, video, svg { max-width: 100%; }
   .sv-content { padding: 0; max-width: none; }
   body { background: #fff; }
 }
+.sv-login { min-height: 100vh; min-height: 100dvh !important; }
