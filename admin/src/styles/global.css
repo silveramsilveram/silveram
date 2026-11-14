@@ -132,3 +132,86 @@ body {
 
 .sv-grid.sv-split { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 @media (max-width: 1000px) { .sv-grid.sv-split { grid-template-columns: minmax(0, 1fr); } }
+
+/* ------------------------------------------------------------------------------------------
+ * Responsive and cross-device hardening
+ * ---------------------------------------------------------------------------------------- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-wrap: break-word; }
+body { overscroll-behavior-y: none; }
+#root { min-height: 100vh; min-height: 100dvh; }
+/* A flex/grid child may not grow wider than the screen because of a wide table or long word. */
+.ant-layout, .ant-layout-content, .sv-content, .sv-surface, .sv-kpi, .ant-card, section { min-width: 0; }
+.sv-content { overflow-x: clip; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+.sv-header { padding-top: env(safe-area-inset-top); height: calc(64px + env(safe-area-inset-top)); }
+.sv-sider { height: 100vh; height: 100dvh; }
+img, video, svg { max-width: 100%; }
+.ant-table-wrapper .ant-table-container { overscroll-behavior-x: contain; }
+
+/* Phone-sized tables become cards (see DataTable.tsx) */
+.sv-cards { list-style: none; margin: 0; padding: 12px; display: grid; gap: 12px; }
+.sv-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: var(--white); }
+.sv-card-head { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px dashed var(--border); overflow-wrap: anywhere; }
+.sv-card-thumb { flex: none; width: 56px; height: 56px; }
+.sv-card-body { margin: 0; display: grid; gap: 8px; }
+.sv-card-row { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); gap: 8px; align-items: start; }
+.sv-card-row dt { color: var(--muted); font-size: 13px; padding-top: 2px; }
+.sv-card-row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.sv-card-actions { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 10px; margin-top: 10px; border-top: 1px dashed var(--border); }
+
+.ant-segmented { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.ant-segmented::-webkit-scrollbar { display: none; }
+
+@media (max-width: 1099px) {
+  .sv-sider-expanded-only { display: none; }
+}
+
+@media (max-width: 767px) {
+  .sv-content { padding-top: 16px; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+  .sv-header .sv-header-email { display: none; }
+  .sv-page-head { align-items: stretch; }
+  .sv-page-head > div:last-child { width: 100%; }
+  .sv-page-head > div:last-child > * { flex: 1 1 100%; }
+  .sv-page-head > div:last-child .ant-btn { width: 100%; }
+  .sv-filters { gap: 10px; }
+  .sv-filters > *, .sv-filters .ant-select, .sv-filters .ant-picker, .sv-filters .ant-input-affix-wrapper { width: 100% !important; min-width: 0 !important; }
+  .sv-surface { padding: 14px; border-radius: 10px; }
+  .sv-grid.kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .sv-kpi { padding: 12px; min-height: 96px; }
+  .sv-kpi .value { font-size: 20px; overflow-wrap: anywhere; }
+  .sv-kpi .label { font-size: 12px; }
+  .sv-hbar { grid-template-columns: minmax(0, 1fr) auto; row-gap: 4px; }
+  .sv-hbar .track { grid-column: 1 / -1; order: 3; }
+  .sv-page-head h1 { font-size: 30px; }
+  .ant-modal { max-width: calc(100vw - 24px) !important; margin-inline: auto; }
+  .ant-drawer-content-wrapper { max-width: 88vw; }
+  .ant-picker-panels { flex-direction: column; }
+  .ant-picker-dropdown { max-width: calc(100vw - 16px); }
+  .ant-pagination-simple { font-size: 16px; }
+}
+
+/* iOS Safari zooms the page when a focused field is under 16px. Keep fields at 16px on touch devices. */
+@media (pointer: coarse), (max-width: 767px) {
+  input, select, textarea, .ant-input, .ant-input-number-input, .ant-select-selection-search-input, .ant-picker-input > input { font-size: 16px !important; }
+  /* Comfortable touch targets (44px) */
+  .ant-btn:not(.ant-btn-sm):not(.ant-btn-icon-only), .ant-input-affix-wrapper, .ant-input:not(textarea), .ant-select-selector, .ant-picker, .ant-input-number { min-height: 44px; }
+  .ant-btn-icon-only { min-width: 44px; min-height: 44px; }
+  .ant-btn-sm { min-height: 36px; padding-inline: 12px; }
+  .ant-switch { min-width: 48px; height: 28px; }
+  .ant-menu-dark.ant-menu-inline .ant-menu-item, .ant-menu-dark .ant-menu-submenu-title { height: 48px; line-height: 48px; }
+  .ant-pagination-simple .ant-pagination-prev, .ant-pagination-simple .ant-pagination-next { min-width: 44px; height: 44px; line-height: 44px; }
+}
+
+/* Large screens: keep line lengths and cards comfortable */
+@media (min-width: 1700px) { .sv-content { max-width: 1600px; } }
+
+/* High-contrast / forced-colours users keep visible borders and focus */
+@media (forced-colors: active) {
+  .sv-surface, .sv-kpi, .sv-card { border: 1px solid CanvasText; }
+  :focus-visible { outline: 2px solid Highlight; }
+}
+
+@media print {
+  .sv-sider, .sv-header, .skip-link, .sv-filters, .ant-btn { display: none !important; }
+  .sv-content { padding: 0; max-width: none; }
+  body { background: #fff; }
+}

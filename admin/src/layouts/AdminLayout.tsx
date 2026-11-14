@@ -109,7 +109,7 @@ export function AdminLayout() {
           {mobile ? <Button type="text" icon={<MenuOutlined />} aria-label="Open navigation" onClick={() => setDrawer(true)} /> : null}
           <AppstoreOutlined aria-hidden style={{ color: 'var(--muted)' }} />
           <span className="muted" style={{ flex: 1 }}>Store admin</span>
-          {me.data ? <Tag style={{ margin: 0 }} title="Signed in as">{me.data.user.email}</Tag> : null}
+          {me.data ? <Tag className="sv-header-email" style={{ margin: 0 }} title="Signed in as">{me.data.user.email}</Tag> : null}
           <Button icon={<LogoutOutlined />} loading={isPending} onClick={() => logout()}>{mobile ? '' : 'Sign out'}</Button>
         </Header>
         <Content>
