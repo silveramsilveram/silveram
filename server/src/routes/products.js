@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { PRODUCT_CATEGORIES } from '../catalog.js';
-import { createDocument, getDocument, ID, listDocuments, Query, updateDocument } from '../platform/appwrite.js';
+import { createDocument, getDocument, ID, listDocuments, Query, runTransaction, updateDocument } from '../platform/appwrite.js';
+import { actorOf, requireTrustedOrigin } from '../admin/common.js';
+import { recordInventoryMovement, recordPriceChange } from '../admin/ledger.js';
 import { TtlCache } from '../cache.js';
 import { requireAdmin, requireUser } from '../middleware.js';
 import { cloudinaryEnabled, mediaUrl as cloudinaryUrl } from '../storage/cloudinary/client.js';
@@ -35,28 +37,42 @@ function createProductSchema(config) {
     alt: z.string().trim().max(200).default(''),
   }).strict();
 
-  return z.object({
+  const shape = {
     sku: z.string().trim().min(1).max(64),
     name: z.string().trim().min(1).max(160),
     description: z.string().trim().max(4000),
     category: z.enum(PRODUCT_CATEGORIES),
     priceInPaise: z.number().int().positive().max(2147483647),
-    currency: z.literal('INR').default('INR'),
     stockQuantity: z.number().int().min(0).max(2147483647),
     imageUrl: imageUrl.optional(),
     images: z.array(mediaSchema.omit({ resourceType: true, duration: true, format: true })).max(10).optional(),
     media: z.array(mediaSchema).max(10).optional(),
-    active: z.boolean().default(false),
-  }).strict().refine((value) => !(value.images && value.media), {
+  };
+  const mediaRules = (schema) => schema.refine((value) => !(value.images && value.media), {
     message: 'Send either images or media, not both.',
   }).refine((value) => !value.media || value.media.every((item) =>
     item.resourceType !== 'video' || item.duration !== undefined,
   ), {
     message: 'Video metadata must include its duration.',
   });
+
+  // Creating applies defaults (INR, inactive). An edit must NOT: .partial() on a schema with
+  // defaults would silently reset `active` and `currency` on every PATCH, and zod 4 refuses
+  // .partial() on refined objects, so the patch schema is built separately from the plain shape.
+  const create = mediaRules(z.object({
+    ...shape,
+    currency: z.literal('INR').default('INR'),
+    active: z.boolean().default(false),
+  }).strict());
+  const patch = mediaRules(z.object({
+    ...Object.fromEntries(Object.entries(shape).map(([key, value]) => [key, value.optional()])),
+    currency: z.literal('INR').optional(),
+    active: z.boolean().optional(),
+  }).strict());
+  return { create, patch };
 }
 
-function serializeProduct(product, config) {
+export function serializeProduct(product, config) {
   const { $id, imagesJson, ...fields } = product;
   let media = [];
   try {
@@ -90,11 +106,12 @@ function mediaAreOwned(config, sku, media) {
  * for five more while it refreshes in the background). Admin writes clear the memory copy at once.
  */
 const catalogueCache = new TtlCache({ ttlMs: 60 * 1000, maxEntries: 50 });
+export const clearCatalogueCache = () => catalogueCache.clear();
 const PUBLIC_CACHE_CONTROL = 'public, max-age=0, s-maxage=60, stale-while-revalidate=300';
 
 export function createProductsRouter(config) {
   const router = Router();
-  const productSchema = createProductSchema(config);
+  const productSchemas = createProductSchema(config);
 
   router.get('/', async (req, res, next) => {
     try {
@@ -116,7 +133,7 @@ export function createProductsRouter(config) {
     }
   });
 
-  const admin = [requireUser, requireAdmin(config)];
+  const admin = [requireUser, requireAdmin(config), requireTrustedOrigin(config)];
   router.get('/admin', ...admin, async (_req, res, next) => {
     try {
       const rows = await listDocuments('products', [Query.limit(500)]);
@@ -128,7 +145,7 @@ export function createProductsRouter(config) {
 
   router.post('/admin', ...admin, async (req, res, next) => {
     try {
-      const parsed = productSchema.safeParse(req.body);
+      const parsed = productSchemas.create.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Check the product fields and try again.' });
       const media = parsed.data.media || parsed.data.images || [];
       if (!mediaAreOwned(config, parsed.data.sku, media)) {
@@ -137,9 +154,24 @@ export function createProductsRouter(config) {
       const now = Date.now();
       const { images, media: _media, ...fields } = parsed.data;
       const product = { ...fields, imagesJson: JSON.stringify(media), createdAt: now, updatedAt: now };
-      const created = await createDocument('products', ID.unique(), product);
+      const actor = actorOf(req);
+      // The product and its first price / stock audit rows commit together or not at all.
+      const created = await runTransaction(async (transactionId) => {
+        const id = ID.unique();
+        await createDocument('products', id, product, transactionId);
+        await recordPriceChange({
+          productId: id, sku: product.sku, productName: product.name, newPriceInPaise: product.priceInPaise, actor, reason: 'Product created', now,
+        }, transactionId);
+        if (product.stockQuantity > 0) {
+          await recordInventoryMovement({
+            productId: id, sku: product.sku, productName: product.name, type: 'initial_stock', delta: product.stockQuantity,
+            quantityBefore: 0, quantityAfter: product.stockQuantity, reason: 'Product created', actor, idKey: 'initial', now,
+          }, transactionId);
+        }
+        return id;
+      });
       catalogueCache.clear();
-      return res.status(201).json({ product: serializeProduct(created, config) });
+      return res.status(201).json({ product: serializeProduct(await getDocument('products', created), config) });
     } catch (error) {
       if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
       next(error);
@@ -148,12 +180,17 @@ export function createProductsRouter(config) {
 
   router.patch('/admin/:id', ...admin, async (req, res, next) => {
     try {
-      const parsed = productSchema.partial().strict().safeParse(req.body);
-      if (!parsed.success || Object.keys(parsed.data || {}).length === 0) {
+      const { priceChangeReason, ...productFields } = req.body ?? {};
+      const reasonCheck = z.string().trim().max(200).optional().safeParse(priceChangeReason);
+      const parsed = productSchemas.patch.safeParse(productFields);
+      if (!reasonCheck.success || !parsed.success || Object.keys(parsed.data || {}).length === 0) {
         return res.status(400).json({ error: 'Provide valid product fields to update.' });
       }
       const existing = await getDocument('products', req.params.id);
       if (!existing) return res.status(404).json({ error: 'Product not found.' });
+      if (parsed.data.stockQuantity !== undefined && parsed.data.stockQuantity !== existing.stockQuantity) {
+        return res.status(400).json({ error: 'Change stock from Inventory so the reason and movement are recorded.' });
+      }
       const media = parsed.data.media || parsed.data.images;
       if (media) {
         if (parsed.data.sku && parsed.data.sku !== existing.sku) {
@@ -163,14 +200,28 @@ export function createProductsRouter(config) {
           return res.status(400).json({ error: 'Upload product media through the Cloudinary uploader.' });
         }
       }
-      const { images, media: _media, ...fields } = parsed.data;
-      catalogueCache.clear();
-      const updated = await updateDocument('products', req.params.id, {
+      const { images, media: _media, stockQuantity: _stock, ...fields } = parsed.data;
+      const now = Date.now();
+      const priceChanged = fields.priceInPaise !== undefined && fields.priceInPaise !== existing.priceInPaise;
+      const data = {
         ...fields,
         ...(media && { imagesJson: JSON.stringify(media) }),
-        updatedAt: Date.now(),
+        // Re-activating a product that was soft-deleted also clears the deactivation stamp.
+        ...(fields.active === true && existing.deletedAt && { deletedAt: null }),
+        updatedAt: now,
+      };
+      await runTransaction(async (transactionId) => {
+        await updateDocument('products', req.params.id, data, transactionId);
+        if (priceChanged) {
+          await recordPriceChange({
+            productId: existing.$id, sku: fields.sku || existing.sku, productName: fields.name || existing.name,
+            previousPriceInPaise: existing.priceInPaise, newPriceInPaise: fields.priceInPaise,
+            actor: actorOf(req), reason: reasonCheck.data, now,
+          }, transactionId);
+        }
       });
-      return res.json({ product: serializeProduct(updated, config) });
+      catalogueCache.clear();
+      return res.json({ product: serializeProduct(await getDocument('products', req.params.id), config) });
     } catch (error) {
       if (error?.code === 409) return res.status(409).json({ error: 'That SKU is already in use.' });
       next(error);

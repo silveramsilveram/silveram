@@ -10,6 +10,10 @@ Silveram is an Indian silver gifting and jewellery storefront. The repository co
 Customer browser
   ├─ Static React 19 + Vite storefront ─────────────── Vercel
   └─ Same-origin /api/* requests ── Express function ─ Vercel
+
+Store owner's browser (one person)
+  └─ admin.silveram.in: Refine + Ant Design dashboard ─ separate Vercel project
+        └─ its own /api/* is proxied to the same Express function above (same API, same database)
                                       ├─ Appwrite Auth: customer accounts
                                       ├─ Appwrite Database: profiles, sessions, catalog,
                                       │  orders, verification state, rate limits
@@ -47,6 +51,14 @@ The browser never receives an Appwrite server API key or connects to the private
 ## Repository structure
 
 ```text
+admin/                              Admin dashboard (separate Vite app, own package.json and Vercel project)
+  src/features/                    One folder per screen: dashboard, orders, products, transactions,
+                                   inventory, customers, analytics, reports, settings, auth
+  src/providers/                   Refine auth provider (e-mail OTP) and data provider (talks to /api)
+  src/services/                    Typed API client, cached queries, URL-synced table state
+  src/components/                  Shared UI: tables/cards, filters, charts, status tags, date range
+  src/styles/                      Silveram theme tokens and responsive CSS
+  vercel.json                      Proxies /api to the storefront API; strict security headers
 api/
   index.js                         Vercel API function entry (vercel.json rewrites /api/* here)
 scripts/
@@ -83,6 +95,8 @@ server/
       appwrite.js                  Appwrite SDK client, document and transaction helpers
       appwrite-schema.js            Appwrite collection/attribute/index definitions
     routes/                        Auth, products, orders, admin, upload, email/webhook APIs
+    admin/                         Admin-only logic: orders, shipping rules, COD cash, transactions ledger,
+                                   inventory, customers, analytics, CSV reports (all behind requireAdmin)
     security.js                    OTP hashing, opaque sessions and persisted rate limits
     mail/                          Mailjet transport and transactional email templates
     payments/cashfree/             Order creation, payment verification, webhook signature (gated)
@@ -92,6 +106,7 @@ server/
 docs/
   APPWRITE_SETUP.md                 Appwrite setup, schema, security and deployment guide
   CASHFREE_SETUP.md                 Cashfree go-live checklist
+  ADMIN_DEPLOYMENT.md               Admin dashboard: rollout order, deployment, security, rollback
 public/images/products/             Optimized WebP fallback images
 vercel.json                         Region, rewrites, cron jobs, cache + security headers (CSP), noindex rules
 CONTRIBUTING.md                     Developer guide: where things live, conventions, checks
@@ -132,6 +147,8 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 | `npm --prefix server run check` | Syntax-check backend modules/scripts |
 | `npm --prefix server run appwrite:setup` | Provision required Appwrite database, private collections, attributes and indexes |
 | `npm --prefix server run appwrite:check` | Verify configured Appwrite collections/indexes |
+| `npm --prefix server run admin:backfill` | Dry run: make old orders searchable by name/phone for the admin (add `-- --apply` to write) |
+| `npm --prefix admin install` / `run dev` / `run build` / `test` | Install, run (port 3100), build and test the admin dashboard |
 | `npm --prefix server run seed:catalog` | Add or refresh inactive starter products with zero stock |
 | `npm --prefix server run upload:catalog-images -- --environment=production` | Sync catalog images/videos from `public/images/products` to Cloudinary and save references in Appwrite |
 
@@ -381,3 +398,122 @@ npm --prefix server run appwrite:check # the live database has every attribute/i
 Then stage-test account creation, email OTP rate limits, session/logout, product reads, private admin access, signed Cloudinary uploads, order creation/cancellation and order email. Enable payment methods only after payment-provider webhook testing and required scheduled cleanup are verified.
 
 For design and product notes, see [DESIGN.md](./DESIGN.md) and [PRODUCT.md](./PRODUCT.md).
+
+## Admin dashboard (for the store owner)
+
+The admin dashboard is where the owner runs the shop: add products, change prices, see and process orders, track cash on delivery, watch stock, and read sales reports. It is made for **one person** (the owner) and works on phones, tablets, laptops and desktops.
+
+It lives in [admin/](admin/) as a **separate website** (`admin.silveram.in`), but it uses the **same API and the same Appwrite database** as the shop. There is no second backend and no second database. Deeper technical notes: [docs/ADMIN_DEPLOYMENT.md](docs/ADMIN_DEPLOYMENT.md).
+
+### What you can do in it
+
+| Screen | What it is for |
+|---|---|
+| **Overview** | The big picture for any period (7/30/90 days, 6 months, year to date, custom): orders, money, sales chart, what needs attention (overdue deliveries, low stock, payments to review). Hover the **?** icons for exact definitions. |
+| **Products** | Search and filter the catalogue, add or edit products, upload photos/films, switch a product on or off sale. Every price change is saved in **Price history** with who changed it and why. |
+| **Orders** | Every order with its customer, items (at the price they were bought), payment, shipping and timeline. Set dispatch and delivery dates, courier and tracking, move the shipment forward, cancel an unshipped COD order (stock goes back automatically, exactly once). |
+| **Transactions** | The money ledger: confirmed online payments, failed attempts, COD cash collected and handed over, and refunds that Cashfree confirmed. **COD cash & reconciliation** lists cash still to collect and cash not yet handed over. |
+| **Inventory** | Stock on hand, low and out-of-stock items, units held by unpaid orders. Stock is changed only here, always with a reason, and every change is kept in **Stock movements**. |
+| **Customers** | Who bought, how often and for how much. Phone numbers are masked in the list; open a customer to see full details. |
+| **Analytics** | Sales, orders, products (best and slow sellers), customers (new vs repeat) and delivery speed. |
+| **Reports** | Download CSV files (orders, product sales, transactions, COD, inventory, stock movements). They never include names, e-mails, phones or street addresses. |
+| **Settings** | Your session and a read-only view of what is switched on (database, image storage, e-mail, Cashfree, checkout). Secrets are never shown. |
+
+### Signing in (single owner)
+
+There is **no password and no public sign-up**. Only the e-mail addresses listed in `ADMIN_EMAILS` (a server setting) can use the admin.
+
+1. Open `admin.silveram.in`, type your e-mail, press **Send code**.
+2. Type the 6-digit code from the e-mail. The first time, your account is created automatically because your e-mail is on the allow-list. Everyone else is refused.
+3. You are in. The session is an HTTP-only cookie (14 days); signing out ends it immediately.
+
+Anyone signed in to the shop who is **not** on the list sees "Administrator access is required" and no data is loaded. The server checks this on **every** request, not just in the browser.
+
+### Setting it up (one time)
+
+Do these in order. Nothing here deletes or renames existing data.
+
+```powershell
+# 1. Add the new (optional) database tables/fields. Safe to repeat.
+npm --prefix server run appwrite:setup
+npm --prefix server run appwrite:check
+
+# 2. Make old orders searchable by name/phone. Look first, then apply.
+npm --prefix server run admin:backfill
+npm --prefix server run admin:backfill -- --apply
+```
+
+Then, on the API's Vercel project, set (server-only, never in the browser):
+
+| Variable | Value |
+|---|---|
+| `ADMIN_EMAILS` | The owner's e-mail (comma-separate if you ever need more than one) |
+| `FRONTEND_ORIGINS` | Existing origins **plus** `https://admin.silveram.in` (exact, no `*`) |
+| `LOW_STOCK_THRESHOLD` | Optional. Stock at or below this counts as "low" (default `3`) |
+
+Finally create a **second Vercel project** from this same repository: Root Directory `admin`, domain `admin.silveram.in`. The settings are already in `admin/vercel.json`. See [docs/ADMIN_DEPLOYMENT.md](docs/ADMIN_DEPLOYMENT.md) for the full checklist and how to roll back.
+
+### Running it on your computer
+
+```powershell
+npm --prefix server run dev        # the API (needs server\.env); add http://localhost:3100 to FRONTEND_ORIGINS
+npm --prefix admin install
+npm --prefix admin run dev         # the admin at http://localhost:3100
+```
+
+No credentials yet and just want to look around? Start the **demo mode** (made-up data, signs you in automatically, development only):
+
+```powershell
+node --experimental-test-module-mocks server/scripts/dev-fixture-server.mjs
+$env:ADMIN_DEV_API_TARGET = "http://localhost:4010"; npm --prefix admin run dev
+```
+
+### How the money numbers work (plain English)
+
+- **Gross order value** = what was sold (accepted COD, paid, dispatched orders). It is *not* cash received.
+- **Confirmed online collections** = Cashfree payments the server itself confirmed. A payment that is only "pending" is never counted.
+- **COD** order value is money you are *owed*. It becomes "collected" only when you press **Record cash collected** after dispatch, and "remitted" when you record that it reached you. These entries are typed by a person, so they are marked *operator recorded, not bank-verified*.
+- **Refunds** appear only when Cashfree confirms them. An order labelled "refunded" with no confirmed refund subtracts nothing.
+- **Test payments** are always excluded from real money.
+- Times are shown in **India time**. A month with no stored orders shows **"no data"**, never a made-up zero, and screens say when the ledger started.
+
+### Built for every device and browser
+
+- **Phones:** tables turn into easy-to-read cards, the menu opens as a drawer, buttons and fields are at least 44px tall, text fields are 16px so iPhones do not zoom, and the layout respects the notch and home bar. There is no sideways scrolling.
+- **Tablets and laptops:** the menu collapses to icons on narrower screens; large screens keep a comfortable reading width.
+- **Browsers:** current Chrome, Edge, Safari (iOS 15+), Firefox and Samsung Internet on Android and iOS, Windows, macOS and Linux.
+- **Accessibility:** works with the keyboard alone (visible focus, "Skip to content"), labels on every field, status shown with words and icons (not colour alone), charts have a "View as table" version, reduced-motion and high-contrast settings are respected, and every page can be printed.
+
+### Security in one minute
+
+- Sign-in is the existing e-mail code system and cookie; nothing secret is stored in the browser.
+- Every admin request is checked on the server for a valid session **and** the allow-list; admin writes also need a trusted `Origin` (protects against cross-site forgery).
+- Money, price, stock, shipping and cash changes are logged with the signed-in e-mail taken from the session (never typed in a form), and the logs cannot be edited.
+- Double clicks and double submits are harmless (the same stock adjustment or cash entry can only be applied once), and an out-of-date screen cannot overwrite newer changes.
+- If the session expires while you work, you are sent back to sign-in; if the server is unreachable you get a "try again" page instead of a blank screen.
+- Strict browser security headers on `admin.silveram.in` (no framing, locked-down scripts, no indexing by search engines).
+
+### What it deliberately does not do
+
+Start refunds, read Cashfree settlement reports, track couriers live, accept part-payment for COD, or send marketing messages. The screens say so instead of showing fake data.
+
+### Checking your work
+
+```powershell
+npm --prefix server test                                         # API tests
+npm --prefix admin run typecheck; npm --prefix admin test        # admin checks
+npm --prefix admin run build                                     # production build
+```
+
+### If something looks wrong
+
+| You see | Likely cause and fix |
+|---|---|
+| Yellow banner "database needs the admin schema update" | Run `npm --prefix server run appwrite:setup` (safe to repeat) |
+| "Administrator access is required" | Your e-mail is not in `ADMIN_EMAILS` on the API project (check spelling, redeploy) |
+| No code e-mail arrives | E-mail (Mailjet/SMTP) is not configured on the server; see Settings |
+| Orders cannot be found by name or phone | Run `npm --prefix server run admin:backfill -- --apply` once |
+| Sign-in loops back to the login page | `admin/vercel.json` rewrite does not point at your real API host, or the admin origin is missing from `FRONTEND_ORIGINS` |
+| "Image storage is not configured" when uploading | Cloudinary variables are missing on the API project |
+| Numbers look lower than expected | Read the yellow "Read this before relying on the numbers" box: older periods or earlier cash events may not be recorded |
+

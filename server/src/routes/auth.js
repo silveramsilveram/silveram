@@ -139,7 +139,10 @@ export function createAuthRouter(config) {
       // Checked before the code is consumed so the customer can switch to "Create account" and reuse it.
       const { users } = getAppwrite();
       const matches = await users.list({ queries: [Query.equal('email', email), Query.limit(1)] });
-      if (mode === 'signin' && !matches.users[0]) {
+      // The single store owner never registers on the storefront: an e-mail on the server-side
+      // ADMIN_EMAILS list that proves it owns the address with a valid code gets its account created
+      // on first sign-in. Everyone else still needs an existing account (or "Create account").
+      if (mode === 'signin' && !matches.users[0] && !config.adminEmails.has(email)) {
         return res.status(404).json({ error: 'No account exists for this email yet. Choose "Create account" to register.' });
       }
 

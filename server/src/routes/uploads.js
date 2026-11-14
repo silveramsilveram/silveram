@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAdmin, requireUser } from '../middleware.js';
+import { requireTrustedOrigin } from '../admin/common.js';
 import { createUploadSignature } from '../storage/cloudinary/client.js';
 import { productFolder, siteFolder, SITE_AREAS } from '../storage/cloudinary/folders.js';
 
@@ -21,7 +22,7 @@ const signSchema = z.union([
 // to Cloudinary with these short-lived signed parameters.
 export function createUploadsRouter(config) {
   const router = Router();
-  router.post('/sign', requireUser, requireAdmin(config), (req, res, next) => {
+  router.post('/sign', requireUser, requireAdmin(config), requireTrustedOrigin(config), (req, res, next) => {
     try {
       const parsed = signSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: 'Choose a valid upload target.' });

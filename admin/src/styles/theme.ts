@@ -1,0 +1,48 @@
+import type { ThemeConfig } from 'antd';
+
+/** Ant Design tokens remapped to Silveram's Midnight Editorial palette (see DESIGN.md). */
+export const silveramTheme: ThemeConfig = {
+  token: {
+    colorPrimary: '#182d49',
+    colorInfo: '#385575',
+    colorSuccess: '#2f5d3a',
+    colorWarning: '#8a5a12',
+    colorError: '#9b2c2c',
+    colorBgBase: '#ffffff',
+    colorBgLayout: '#f8f7f4',
+    colorTextBase: '#20232b',
+    colorTextSecondary: '#4a4f5c',
+    colorTextTertiary: '#5e6471',
+    colorTextPlaceholder: '#5e6471',
+    colorBorder: '#d9dadc',
+    colorBorderSecondary: '#e7e5e0',
+    colorLink: '#182d49',
+    colorLinkHover: '#243f63',
+    fontFamily: "'League Spartan Variable', 'League Spartan', system-ui, sans-serif",
+    fontSize: 15,
+    borderRadius: 8,
+    controlHeight: 40,
+    boxShadow: 'none',
+    boxShadowSecondary: '0 8px 24px rgb(16 31 52 / 0.12)',
+    wireframe: false,
+  },
+  components: {
+    Layout: { siderBg: '#182d49', headerBg: '#f8f7f4', bodyBg: '#f8f7f4' },
+    Menu: {
+      darkItemBg: '#182d49',
+      darkSubMenuItemBg: '#101f34',
+      darkItemSelectedBg: '#243f63',
+      darkItemSelectedColor: '#f8f7f4',
+      darkItemColor: '#dce6f0',
+      darkItemHoverBg: '#243f63',
+      darkItemHoverColor: '#ffffff',
+      itemMarginInline: 8,
+    },
+    Table: { headerBg: '#eeece7', headerColor: '#20232b', rowHoverBg: '#f8f7f4', borderColor: '#e7e5e0', cellPaddingBlock: 12 },
+    Button: { primaryShadow: 'none', defaultShadow: 'none', fontWeight: 500 },
+    Card: { colorBorderSecondary: '#d9dadc' },
+    Tag: { defaultBg: '#eeece7', defaultColor: '#20232b' },
+    Drawer: { colorBgElevated: '#ffffff' },
+    Segmented: { itemSelectedBg: '#182d49', itemSelectedColor: '#f8f7f4' },
+  },
+};
