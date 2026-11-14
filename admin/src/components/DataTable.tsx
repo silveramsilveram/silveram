@@ -73,7 +73,7 @@ export function DataTable<T extends object>(props: TableProps<T>) {
         </div>
       ) : null}
       {loading && rows.length === 0 ? <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div> : null}
-      {!loading && rows.length === 0 ? <div style={{ padding: 24 }}>{props.locale?.emptyText}</div> : null}
+      {!loading && rows.length === 0 ? <div style={{ padding: 24 }}>{typeof props.locale?.emptyText === 'function' ? props.locale.emptyText() : props.locale?.emptyText}</div> : null}
       <ul className="sv-cards" aria-busy={loading} style={{ opacity: loading && rows.length ? 0.6 : 1 }}>
         {rows.map((row, index) => (
           <li key={rowKey(row, index)} className="sv-card">
