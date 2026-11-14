@@ -1,6 +1,7 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { DataTable } from '@/components/DataTable';
 import { useOne } from '@refinedev/core';
-import { Alert, Descriptions, Table } from 'antd';
+import { Alert, Descriptions } from 'antd';
 import { Link, useParams } from 'react-router';
 import { ClearFilters, DateRangeFilter, SearchBox, SelectFilter, ToggleFilter } from '@/components/FilterControls';
 import { ErrorState, KpiTile, LoadingBlock, Money, Mono, PageHeader, ReconciliationTag, TxStatusTag } from '@/components/primitives';
@@ -31,7 +32,7 @@ export function TransactionListPage() {
       </div>
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} title="Could not load transactions" /> : (
         <div className="sv-surface flush">
-          <Table<TransactionRow> {...table.tableProps}
+          <DataTable<TransactionRow> {...table.tableProps}
             locale={{ emptyText: 'No ledger entries match. The ledger records events from the time tracking began; earlier orders appear on the Orders page.' }}
             columns={[
               { title: 'When', dataIndex: 'occurredAt', width: 170, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
@@ -102,9 +103,9 @@ export function CodReconciliationPage() {
             <KpiTile label="Collected, not yet remitted" value={<Money paise={data.heldNotRemitted.totalInPaise} />} sub={`${data.heldNotRemitted.count} order(s)`} />
           </div>
           <section className="sv-surface flush"><h2 style={{ padding: '16px 16px 0' }}>Awaiting collection</h2>
-            <Table<OrderRow> size="small" rowKey="id" pagination={{ pageSize: 10, hideOnSinglePage: true }} dataSource={data.awaitingCollection.orders} columns={compactOrderColumns} scroll={{ x: 760 }} locale={{ emptyText: 'No COD cash is waiting to be collected.' }} /></section>
+            <DataTable<OrderRow> size="small" rowKey="id" pagination={{ pageSize: 10, hideOnSinglePage: true }} dataSource={data.awaitingCollection.orders} columns={compactOrderColumns} scroll={{ x: 760 }} locale={{ emptyText: 'No COD cash is waiting to be collected.' }} /></section>
           <section className="sv-surface flush"><h2 style={{ padding: '16px 16px 0' }}>Collected, waiting to be remitted</h2>
-            <Table<OrderRow> size="small" rowKey="id" pagination={{ pageSize: 10, hideOnSinglePage: true }} dataSource={data.heldNotRemitted.orders} scroll={{ x: 760 }} locale={{ emptyText: 'Nothing is waiting to be remitted.' }}
+            <DataTable<OrderRow> size="small" rowKey="id" pagination={{ pageSize: 10, hideOnSinglePage: true }} dataSource={data.heldNotRemitted.orders} scroll={{ x: 760 }} locale={{ emptyText: 'Nothing is waiting to be remitted.' }}
               columns={[...compactOrderColumns.slice(0, 3), { title: 'Cash collected', dataIndex: 'codCollectedInPaise', align: 'right', render: (value: number) => <Money paise={value} /> }]} /></section>
           <Alert type="info" showIcon message="Settlements and refunds" description="Cashfree settlement reports and refund initiation are not connected to the admin. Refunds appear in the ledger only after Cashfree confirms them." />
         </div>

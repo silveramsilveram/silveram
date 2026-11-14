@@ -1,6 +1,7 @@
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { DataTable } from '@/components/DataTable';
 import { useOne } from '@refinedev/core';
-import { Alert, Descriptions, Table, Tag } from 'antd';
+import { Alert, Descriptions, Tag } from 'antd';
 import { Link, useParams } from 'react-router';
 import { ClearFilters, SearchBox, SelectFilter } from '@/components/FilterControls';
 import { ErrorState, KpiTile, LoadingBlock, Money, PageHeader } from '@/components/primitives';
@@ -24,7 +25,7 @@ export function CustomerListPage() {
       {note ? <Alert type="info" showIcon message={note} style={{ marginBottom: 12 }} /> : null}
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} /> : (
         <div className="sv-surface flush">
-          <Table<CustomerRow> {...table.tableProps} locale={{ emptyText: 'No customers match.' }}
+          <DataTable<CustomerRow> {...table.tableProps} locale={{ emptyText: 'No customers match.' }}
             columns={[
               { title: 'Customer', render: (_: unknown, row) => <div style={{ overflowWrap: 'anywhere' }}><Link to={`/customers/show/${row.id}`}><strong>{row.name || row.email}</strong></Link><div className="muted" style={{ fontSize: 13 }}>{row.email}</div></div> },
               { title: 'Phone', dataIndex: 'phoneMasked', width: 130, render: (value: string | null) => <span className="num">{value ?? '—'}</span> },
@@ -61,7 +62,7 @@ export function CustomerShowPage() {
       <div className="sv-grid sv-split" style={{ alignItems: 'start' }}>
         <section className="sv-surface flush" aria-label="Orders">
           <h2 style={{ padding: '16px 16px 0' }}>Order history</h2>
-          <Table<OrderRow> {...orders.tableProps} size="small" locale={{ emptyText: 'No orders found for this e-mail.' }} columns={orderListColumns.slice(0, 7).filter((column) => !('dataIndex' in column) || column.dataIndex !== 'customerName')} />
+          <DataTable<OrderRow> {...orders.tableProps} size="small" locale={{ emptyText: 'No orders found for this e-mail.' }} columns={orderListColumns.slice(0, 7).filter((column) => !('dataIndex' in column) || column.dataIndex !== 'customerName')} />
         </section>
         <section className="sv-surface" aria-label="Contact">
           <h2>Contact</h2>

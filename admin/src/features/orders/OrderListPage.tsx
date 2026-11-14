@@ -1,5 +1,6 @@
 import { DownloadOutlined } from '@ant-design/icons';
-import { Button, Table } from 'antd';
+import { DataTable } from '@/components/DataTable';
+import { Button } from 'antd';
 import { Link } from 'react-router';
 import { ClearFilters, DateRangeFilter, SearchBox, SelectFilter, ToggleFilter } from '@/components/FilterControls';
 import { EmptyState, ErrorState, PageHeader } from '@/components/primitives';
@@ -36,7 +37,7 @@ export default function OrderListPage() {
       </div>
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} title="Could not load orders" /> : (
         <div className="sv-surface flush">
-          <Table<OrderRow> {...table.tableProps} columns={orderListColumns.map((column) => ('dataIndex' in column && column.dataIndex === table.sort?.field
+          <DataTable<OrderRow> {...table.tableProps} columns={orderListColumns.map((column) => ('dataIndex' in column && column.dataIndex === table.sort?.field
             ? { ...column, sortOrder: table.sort?.order === 'asc' ? 'ascend' as const : 'descend' as const }
             : column))}
             locale={{ emptyText: <EmptyState title={table.hasFilters ? 'No orders match these filters' : 'No orders yet'} description={table.hasFilters ? 'Try widening the filters.' : 'Orders appear here as soon as customers check out.'} /> }} />

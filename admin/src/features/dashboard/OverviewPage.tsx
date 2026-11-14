@@ -1,4 +1,5 @@
-import { Alert, Collapse, Table } from 'antd';
+import { Alert, Collapse } from 'antd';
+import { DataTable } from '@/components/DataTable';
 import { Link } from 'react-router';
 import { BarChart } from '@/components/charts/BarChart';
 import { HBarList } from '@/components/charts/HBarList';
@@ -148,18 +149,18 @@ function Body({ data, stale }: { data: DashboardSummary; stale: boolean }) {
       <div className="sv-grid two">
         <section className="sv-surface flush" aria-label="Overdue deliveries">
           <h2 style={{ padding: '16px 16px 0' }}>Overdue deliveries ({data.overdueTotal})</h2>
-          <Table size="small" rowKey="id" pagination={false} dataSource={data.overdueOrders} columns={dueColumns} locale={{ emptyText: 'Nothing overdue.' }} scroll={{ x: 560 }} />
+          <DataTable size="small" rowKey="id" pagination={false} dataSource={data.overdueOrders} columns={dueColumns} locale={{ emptyText: 'Nothing overdue.' }} scroll={{ x: 560 }} />
         </section>
         <section className="sv-surface flush" aria-label="Upcoming deliveries">
           <h2 style={{ padding: '16px 16px 0' }}>Due in the next 7 days</h2>
-          <Table size="small" rowKey="id" pagination={false} dataSource={data.upcomingDeliveries} columns={dueColumns} locale={{ emptyText: 'No delivery dates set for the next week.' }} scroll={{ x: 560 }} />
+          <DataTable size="small" rowKey="id" pagination={false} dataSource={data.upcomingDeliveries} columns={dueColumns} locale={{ emptyText: 'No delivery dates set for the next week.' }} scroll={{ x: 560 }} />
         </section>
       </div>
 
       <div className="sv-grid two">
         <section className="sv-surface flush" aria-label="Low stock">
           <h2 style={{ padding: '16px 16px 0' }}>Low stock</h2>
-          <Table size="small" rowKey="id" pagination={false} dataSource={data.lowStock} locale={{ emptyText: 'No active product is running low.' }} columns={[
+          <DataTable size="small" rowKey="id" pagination={false} dataSource={data.lowStock} locale={{ emptyText: 'No active product is running low.' }} columns={[
             { title: 'Product', dataIndex: 'name', ellipsis: true },
             { title: 'SKU', dataIndex: 'sku', render: (value: string) => <span className="mono">{value}</span>, width: 120 },
             { title: 'In stock', dataIndex: 'stockQuantity', align: 'right', width: 90, render: (value: number) => <strong className="num" style={{ color: value === 0 ? 'var(--danger)' : undefined }}>{value}</strong> },
@@ -168,7 +169,7 @@ function Body({ data, stale }: { data: DashboardSummary; stale: boolean }) {
         </section>
         <section className="sv-surface flush" aria-label="Recent orders">
           <h2 style={{ padding: '16px 16px 0' }}>Recent orders in this period</h2>
-          <Table size="small" rowKey="id" pagination={false} dataSource={data.recentOrders} columns={compactOrderColumns} locale={{ emptyText: 'No orders in this period.' }} scroll={{ x: 760 }} />
+          <DataTable size="small" rowKey="id" pagination={false} dataSource={data.recentOrders} columns={compactOrderColumns} locale={{ emptyText: 'No orders in this period.' }} scroll={{ x: 760 }} />
           <div style={{ padding: 12 }}><Link to="/orders">All orders</Link></div>
         </section>
       </div>

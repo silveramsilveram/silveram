@@ -1,5 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
-import { App, Button, Popconfirm, Switch, Table, Tag } from 'antd';
+import { DataTable } from '@/components/DataTable';
+import { App, Button, Popconfirm, Switch, Tag } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router';
@@ -81,7 +82,7 @@ export default function ProductListPage() {
       </div>
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} title="Could not load products" /> : (
         <div className="sv-surface flush">
-          <Table<ProductRow> {...table.tableProps} columns={columns.map((column) => ('dataIndex' in column && column.dataIndex === table.sort?.field
+          <DataTable<ProductRow> {...table.tableProps} columns={columns.map((column) => ('dataIndex' in column && column.dataIndex === table.sort?.field
             ? { ...column, sortOrder: table.sort?.order === 'asc' ? 'ascend' as const : 'descend' as const } : column))}
             locale={{ emptyText: <EmptyState title={table.hasFilters ? 'No products match' : 'No products yet'} description={table.hasFilters ? 'Try different filters.' : 'Add the first product to start selling.'} action={table.hasFilters ? undefined : <Link to="/products/create"><Button type="primary">Add product</Button></Link>} /> }} />
         </div>

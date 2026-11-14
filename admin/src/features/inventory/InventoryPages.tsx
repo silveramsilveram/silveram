@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Alert, App, Button, Form, Input, InputNumber, Modal, Radio, Select, Table, Tag } from 'antd';
+import { DataTable } from '@/components/DataTable';
+import { Alert, App, Button, Form, Input, InputNumber, Modal, Radio, Select, Tag } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { ClearFilters, DateRangeFilter, SearchBox, SelectFilter } from '@/components/FilterControls';
@@ -81,7 +82,7 @@ export function StockPage() {
       </div>
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} /> : (
         <div className="sv-surface flush">
-          <Table<StockRow> {...table.tableProps} locale={{ emptyText: 'No products match.' }}
+          <DataTable<StockRow> {...table.tableProps} locale={{ emptyText: 'No products match.' }}
             columns={[
               { title: 'Product', dataIndex: 'name', render: (_: unknown, row) => <div><Link to={`/products/edit/${row.id}`}>{row.name}</Link><div><Mono>{row.sku}</Mono></div></div> },
               { title: 'In stock', dataIndex: 'stockQuantity', sorter: true, align: 'right', width: 130, render: (value: number, row) => (
@@ -115,7 +116,7 @@ export function MovementsPage() {
       </div>
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} /> : (
         <div className="sv-surface flush">
-          <Table<MovementRow> {...table.tableProps}
+          <DataTable<MovementRow> {...table.tableProps}
             locale={{ emptyText: 'No movements recorded yet. History starts from the first stock change after this feature was enabled.' }}
             columns={[
               { title: 'When', dataIndex: 'createdAt', width: 170, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },

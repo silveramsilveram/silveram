@@ -1,4 +1,4 @@
-import { Table } from 'antd';
+import { DataTable } from '@/components/DataTable';
 import { Link } from 'react-router';
 import { ErrorState, Mono, PageHeader } from '@/components/primitives';
 import { formatDate, formatDateTime } from '@/lib/dates';
@@ -14,7 +14,7 @@ export default function PriceHistoryPage() {
       <PageHeader title="Price history" description="Every price set or changed through the admin, newest first. Entries cannot be edited or removed." />
       {table.query.isError ? <ErrorState error={table.query.error} onRetry={() => table.query.refetch()} /> : (
         <div className="sv-surface flush">
-          <Table<PriceChange> {...table.tableProps}
+          <DataTable<PriceChange> {...table.tableProps}
             locale={{ emptyText: 'No price changes recorded yet. Tracking begins with the next price edit or new product.' }}
             columns={[
               { title: 'When', dataIndex: 'changedAt', width: 180, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
