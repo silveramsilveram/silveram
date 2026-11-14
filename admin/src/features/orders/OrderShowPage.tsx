@@ -44,7 +44,7 @@ export default function OrderShowPage() {
         {order.overdue ? <Tag color="red">Past promised delivery date</Tag> : null}
       </div>
 
-      <div className="sv-grid" style={{ gridTemplateColumns: 'minmax(0, 3fr) minmax(0, 2fr)', alignItems: 'start' }}>
+      <div className="sv-grid sv-split" style={{ alignItems: 'start' }}>
         <div className="sv-grid">
           <section className="sv-surface" aria-label="Items">
             <h2>Items (prices as purchased)</h2>

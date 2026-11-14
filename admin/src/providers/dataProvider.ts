@@ -83,10 +83,11 @@ export const dataProvider: DataProvider = {
     const page = pagination?.currentPage ?? 1;
     const limit = pagination?.pageSize ?? 25;
     try {
-      const json = await request<{ data: BaseRecord[]; total: number }>((meta?.path as string | undefined) ?? config.list, {
+      const { data, total, ...extra } = await request<{ data: BaseRecord[]; total: number } & Record<string, unknown>>((meta?.path as string | undefined) ?? config.list, {
         query: { page, limit, ...filtersToQuery(filters), ...sortersToQuery(sorters), ...(meta?.query as Record<string, string> | undefined) },
       });
-      return { data: json.data as never, total: json.total };
+      // Extra top-level fields (for example trackingStartedAt) ride along for pages that show them.
+      return { data: data as never, total, ...extra };
     } catch (error) {
       throw toHttpError(error);
     }
