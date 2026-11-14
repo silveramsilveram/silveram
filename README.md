@@ -10,6 +10,10 @@ Silveram is an Indian silver gifting and jewellery storefront. The repository co
 Customer browser
   ├─ Static React 19 + Vite storefront ─────────────── Vercel
   └─ Same-origin /api/* requests ── Express function ─ Vercel
+
+Store owner's browser (one person)
+  └─ admin.silveram.in: Refine + Ant Design dashboard ─ separate Vercel project
+        └─ its own /api/* is proxied to the same Express function above (same API, same database)
                                       ├─ Appwrite Auth: customer accounts
                                       ├─ Appwrite Database: profiles, sessions, catalog,
                                       │  orders, verification state, rate limits
@@ -47,6 +51,14 @@ The browser never receives an Appwrite server API key or connects to the private
 ## Repository structure
 
 ```text
+admin/                              Admin dashboard (separate Vite app, own package.json and Vercel project)
+  src/features/                    One folder per screen: dashboard, orders, products, transactions,
+                                   inventory, customers, analytics, reports, settings, auth
+  src/providers/                   Refine auth provider (e-mail OTP) and data provider (talks to /api)
+  src/services/                    Typed API client, cached queries, URL-synced table state
+  src/components/                  Shared UI: tables/cards, filters, charts, status tags, date range
+  src/styles/                      Silveram theme tokens and responsive CSS
+  vercel.json                      Proxies /api to the storefront API; strict security headers
 api/
   index.js                         Vercel API function entry (vercel.json rewrites /api/* here)
 scripts/
@@ -83,6 +95,8 @@ server/
       appwrite.js                  Appwrite SDK client, document and transaction helpers
       appwrite-schema.js            Appwrite collection/attribute/index definitions
     routes/                        Auth, products, orders, admin, upload, email/webhook APIs
+    admin/                         Admin-only logic: orders, shipping rules, COD cash, transactions ledger,
+                                   inventory, customers, analytics, CSV reports (all behind requireAdmin)
     security.js                    OTP hashing, opaque sessions and persisted rate limits
     mail/                          Mailjet transport and transactional email templates
     payments/cashfree/             Order creation, payment verification, webhook signature (gated)
@@ -92,6 +106,7 @@ server/
 docs/
   APPWRITE_SETUP.md                 Appwrite setup, schema, security and deployment guide
   CASHFREE_SETUP.md                 Cashfree go-live checklist
+  ADMIN_DEPLOYMENT.md               Admin dashboard: rollout order, deployment, security, rollback
 public/images/products/             Optimized WebP fallback images
 vercel.json                         Region, rewrites, cron jobs, cache + security headers (CSP), noindex rules
 CONTRIBUTING.md                     Developer guide: where things live, conventions, checks
@@ -132,6 +147,8 @@ Vite proxies `/api` to `http://127.0.0.1:4000`. The shop uses same-origin API re
 | `npm --prefix server run check` | Syntax-check backend modules/scripts |
 | `npm --prefix server run appwrite:setup` | Provision required Appwrite database, private collections, attributes and indexes |
 | `npm --prefix server run appwrite:check` | Verify configured Appwrite collections/indexes |
+| `npm --prefix server run admin:backfill` | Dry run: make old orders searchable by name/phone for the admin (add `-- --apply` to write) |
+| `npm --prefix admin install` / `run dev` / `run build` / `test` | Install, run (port 3100), build and test the admin dashboard |
 | `npm --prefix server run seed:catalog` | Add or refresh inactive starter products with zero stock |
 | `npm --prefix server run upload:catalog-images -- --environment=production` | Sync catalog images/videos from `public/images/products` to Cloudinary and save references in Appwrite |
 
