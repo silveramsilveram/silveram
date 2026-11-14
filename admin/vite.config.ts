@@ -13,14 +13,6 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          antd: ['antd', '@ant-design/icons'],
-          refine: ['@refinedev/core', '@refinedev/antd', '@refinedev/react-router'],
-        },
-      },
-    },
   },
-  test: { environment: 'jsdom', globals: false, include: ['src/**/*.test.{ts,tsx}'] },
+  test: { environment: 'node', globals: false, include: ['src/**/*.test.{ts,tsx}'] },
 });
