@@ -23,7 +23,10 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             server/package-lock.json
+            admin/package-lock.json
       - run: npm ci --include=dev && npm --prefix server ci
       - run: npm run validate
+      # The admin is a separate frontend (admin/) with its own dependencies; it must build on a clean install.
+      - run: npm --prefix admin ci && npm --prefix admin run build && npm --prefix admin test
       - name: Dependency audit (production dependencies)
         run: npm audit --omit=dev --audit-level=high && npm --prefix server audit --omit=dev --audit-level=high
