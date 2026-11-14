@@ -381,3 +381,8 @@ npm --prefix server run appwrite:check # the live database has every attribute/i
 Then stage-test account creation, email OTP rate limits, session/logout, product reads, private admin access, signed Cloudinary uploads, order creation/cancellation and order email. Enable payment methods only after payment-provider webhook testing and required scheduled cleanup are verified.
 
 For design and product notes, see [DESIGN.md](./DESIGN.md) and [PRODUCT.md](./PRODUCT.md).
+
+## Admin dashboard
+
+A separate Refine + Ant Design admin lives in [admin/](admin/) and talks to the same API and Appwrite project. See [docs/ADMIN_DEPLOYMENT.md](docs/ADMIN_DEPLOYMENT.md) for the schema roll-out, deployment to admin.silveram.in, security decisions and financial definitions.
+
