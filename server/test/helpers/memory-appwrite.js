@@ -124,6 +124,23 @@ export function createMemoryAppwrite() {
     },
   };
 
+  // Minimal Appwrite Users service (auth tests).
+  const accounts = [];
+  const users = {
+    list: async ({ queries = [] }) => {
+      const email = queries.map((raw) => JSON.parse(raw)).find((q) => q.method === 'equal' && q.attribute === 'email')?.values[0];
+      return { users: accounts.filter((account) => account.email === email) };
+    },
+    create: async ({ userId, email, name }) => {
+      const account = { $id: userId, email, name, emailVerification: false };
+      accounts.push(account);
+      return account;
+    },
+    updateName: async ({ userId, name }) => Object.assign(accounts.find((a) => a.$id === userId), { name }),
+    updateEmailVerification: async ({ userId }) => Object.assign(accounts.find((a) => a.$id === userId), { emailVerification: true }),
+    get: async ({ userId }) => accounts.find((a) => a.$id === userId),
+  };
+
   const named = {
     Query,
     ID: { unique: () => `id${(counter += 1).toString().padStart(8, '0')}` },
@@ -131,6 +148,7 @@ export function createMemoryAppwrite() {
     getAppwrite: () => ({
       databaseId: 'db',
       collections: new Proxy({}, { get: (_t, name) => String(name) }),
+      users,
       databases: {
         updateDocument: async ({ collectionId, documentId, data, transactionId }) => direct.updateDocument(collectionId, documentId, data, transactionId),
         incrementDocumentAttribute: async ({ collectionId, documentId, attribute, value, max }) => {
@@ -170,6 +188,7 @@ export function createMemoryAppwrite() {
     seed: (collection, id, data) => store.set(key(collection, id), { $id: id, ...data }),
     get: (collection, id) => store.get(key(collection, id)),
     all: rows,
-    clear: () => store.clear(),
+    accounts,
+    clear: () => { store.clear(); accounts.length = 0; },
   };
 }
