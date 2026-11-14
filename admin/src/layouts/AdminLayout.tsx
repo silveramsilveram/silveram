@@ -99,7 +99,7 @@ export function AdminLayout() {
           {menu}
         </Drawer>
       ) : (
-        <Sider className="sv-sider" width={264} collapsible collapsed={collapsed} onCollapse={setCollapsed} breakpoint="lg" style={{ position: 'sticky', top: 0, height: '100vh', overflowY: 'auto' }}>
+        <Sider className="sv-sider" width={264} collapsible collapsed={collapsed} onCollapse={setCollapsed} breakpoint="lg" style={{ position: 'sticky', top: 0, overflowY: 'auto' }}>
           {collapsed ? <div className="sv-brand" style={{ padding: '22px 0', textAlign: 'center' }}><span className="display">S</span></div> : <Brand />}
           {menu}
         </Sider>

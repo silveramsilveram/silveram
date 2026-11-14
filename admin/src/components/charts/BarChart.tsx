@@ -90,6 +90,7 @@ export function BarChart({ data, series, format, formatAxis = format, ariaLabel,
                     aria-label={`${row.label}, ${item.name}: ${format(value)}`}
                     onMouseEnter={() => setActive({ index, x: ((left + groupW / 2) / width) * 100 })}
                     onFocus={() => setActive({ index, x: ((left + groupW / 2) / width) * 100 })}
+                    onClick={() => setActive({ index, x: ((left + groupW / 2) / width) * 100 })}
                     onBlur={() => setActive(null)}
                   />
                 );
