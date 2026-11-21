@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import ImageSlot from '@/shared/ui/ImageSlot';
-import { CloseIcon } from '@/shared/ui/icons';
+import { ArrowLeftIcon, ArrowRightIcon, CloseIcon } from '@/shared/ui/icons';
 import { useDialog } from '@/shared/hooks/useDialog';
 import type { Product } from '../data/products';
 
@@ -126,7 +126,7 @@ export default function ProductGallery({ product }: { product: Product }) {
             aria-label="Previous image"
             className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-primary/90 text-text-primary hover:bg-surface-primary"
           >
-            <span aria-hidden="true">‹</span>
+            <ArrowLeftIcon size={18} />
           </button>
           <button
             type="button"
@@ -134,7 +134,7 @@ export default function ProductGallery({ product }: { product: Product }) {
             aria-label="Next image"
             className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-primary/90 text-text-primary hover:bg-surface-primary"
           >
-            <span aria-hidden="true">›</span>
+            <ArrowRightIcon size={18} />
           </button>
         </>
       )}

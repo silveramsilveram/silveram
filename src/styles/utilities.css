@@ -123,8 +123,8 @@
 .silver-light {
   background-color: var(--color-brand-primary);
   background-image:
-    radial-gradient(ellipse 60% 70% at 70% 35%, rgb(167 173 181 / 0.22) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 50% at 20% 90%, rgb(167 173 181 / 0.10) 0%, transparent 70%);
+    radial-gradient(ellipse 60% 70% at 70% 35%, color-mix(in srgb, var(--color-accent-silver) 22%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 90%, color-mix(in srgb, var(--color-accent-silver) 10%, transparent) 0%, transparent 70%);
 }
 
 /* Details/summary disclosure marker (custom, League Spartan-friendly). */
@@ -491,12 +491,6 @@ html[data-motion="paused"] .anim-blink {
     color: var(--color-brand-primary);
   }
   .header-home-overlay :focus-visible { outline-color: var(--color-surface-primary); }
-
-  .hero-image-scrim {
-    background:
-      linear-gradient(to bottom, rgb(24 45 73 / 0.76) 0%, rgb(24 45 73 / 0.3) 15%, transparent 32%),
-      linear-gradient(to top, rgb(24 45 73 / 0.98) 0%, rgb(24 45 73 / 0.92) 34%, rgb(24 45 73 / 0.72) 58%, transparent 100%);
-  }
 
   /* Hero: each headline line rises from behind a mask. Text is always painted (no opacity fade), so it
    * never delays first paint; the mask just reveals it. */

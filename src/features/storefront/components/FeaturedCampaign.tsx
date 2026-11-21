@@ -50,7 +50,7 @@ export default function FeaturedCampaign() {
       <div className="page-container-wide grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
         <div className="lg:col-span-5">
           <p className="label-mono">
-            {FEATURED.label} · {index + 1} of {count}
+            {FEATURED.label}, {index + 1} of {count}
           </p>
 
           <div key={product.id} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${count}`} className="slide-in">
