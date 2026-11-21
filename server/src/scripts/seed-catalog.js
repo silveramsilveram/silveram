@@ -27,6 +27,38 @@ const products = [
     category: 'ring',
     priceInPaise: 1299900,
   },
+  {
+    id: 'product-4',
+    sku: 'SV-004',
+    name: 'Chapka',
+    description: 'A traditional chapka with pearl strands, colourful beads and ornate gold tone detailing.',
+    category: 'uncategorised',
+    priceInPaise: 1199900,
+  },
+  {
+    id: 'product-5',
+    sku: 'SV-005',
+    name: 'Shiv Locket',
+    description: 'A round Shiv locket featuring a detailed portrait, trishul and decorative relief.',
+    category: 'necklace',
+    priceInPaise: 499900,
+  },
+  {
+    id: 'product-6',
+    sku: 'SV-006',
+    name: 'Adipurush Locket',
+    description: 'An Adipurush locket with a sculpted face, flowing hair and intricate devotional detailing.',
+    category: 'necklace',
+    priceInPaise: 499900,
+  },
+  {
+    id: 'product-7',
+    sku: 'SV-007',
+    name: 'Kurta Pin',
+    description: 'Decorative kurta pins joined by delicate chains, with sparkling circular motifs for festive styling.',
+    category: 'uncategorised',
+    priceInPaise: 99900,
+  },
 ];
 
 const config = loadConfig();

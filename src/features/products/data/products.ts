@@ -1,7 +1,7 @@
 /**
  * THE product catalogue for the storefront — the one file to edit.
  *
- * Launch catalogue = exactly three records (Silver Frame, Silver Kada, Peacock Ring).
+ * Store catalogue includes the original collection and the latest supplied products.
  * Name, price, copy and photographs are supplied by the store. Silver purity,
  * hallmarking, weight, dimensions and stock are NOT supplied, so none are shown.
  *
@@ -44,7 +44,7 @@ export interface Product {
   name: string;
   isPlaceholder: boolean;
   /** Must match PRODUCT_CATEGORIES in server/src/database/schema.js. */
-  category: 'frame' | 'bangle' | 'ring';
+  category: 'frame' | 'bangle' | 'ring' | 'necklace' | 'uncategorised';
   /** Short label used on category tiles and breadcrumbs. */
   categoryLabel: string;
   /** Rupees, whole number. null = not yet priced. */
@@ -123,6 +123,66 @@ export const PRODUCTS: Product[] = [
     images: [
       { src: productImageUrl('SV-003', 'peacock-ring-01', 1400, '/images/products/peacock-ring-01.webp'), fallbackSrc: '/images/products/peacock-ring-01.webp', width: 920, height: 768, alt: 'Peacock-inspired statement ring with blue and green feather detailing, side view' },
       { src: productImageUrl('SV-003', 'peacock-ring-02', 1400, '/images/products/peacock-ring-02.webp'), fallbackSrc: '/images/products/peacock-ring-02.webp', width: 920, height: 768, alt: 'Peacock-inspired statement ring seen from above, showing the fanned feather detail' },
+    ],
+  },
+  {
+    id: 'product-4',
+    sku: 'SV-004',
+    slug: 'chapka',
+    name: 'Chapka',
+    isPlaceholder: false,
+    category: 'uncategorised',
+    categoryLabel: 'Hair jewellery',
+    price: 11999,
+    shortDescription: 'A traditional chapka with pearl strands, colourful beads and ornate gold tone detailing.',
+    description: 'A traditional chapka with pearl strands, colourful beads and ornate gold tone detailing.',
+    images: [
+      { src: productImageUrl('SV-004', 'chapka-01', 1400, '/images/products/chapka-01.jpeg'), fallbackSrc: '/images/products/chapka-01.jpeg', width: 1024, height: 1536, alt: 'Chapka with pearl strands and red and green bead detailing on burgundy velvet' },
+    ],
+  },
+  {
+    id: 'product-5',
+    sku: 'SV-005',
+    slug: 'shiv-locket',
+    name: 'Shiv Locket',
+    isPlaceholder: false,
+    category: 'necklace',
+    categoryLabel: 'Devotional lockets',
+    price: 4999,
+    shortDescription: 'A round Shiv locket featuring a detailed portrait, trishul and decorative relief.',
+    description: 'A round Shiv locket featuring a detailed portrait, trishul and decorative relief.',
+    images: [
+      { src: productImageUrl('SV-005', 'shiv-locket-01', 1400, '/images/products/shiv-locket-01.jpeg'), fallbackSrc: '/images/products/shiv-locket-01.jpeg', width: 1536, height: 1024, alt: 'Round Shiv locket with a trishul and detailed relief on a stone display' },
+    ],
+  },
+  {
+    id: 'product-6',
+    sku: 'SV-006',
+    slug: 'adipurush-locket',
+    name: 'Adipurush Locket',
+    isPlaceholder: false,
+    category: 'necklace',
+    categoryLabel: 'Devotional lockets',
+    price: 4999,
+    shortDescription: 'An Adipurush locket with a sculpted face, flowing hair and intricate devotional detailing.',
+    description: 'An Adipurush locket with a sculpted face, flowing hair and intricate devotional detailing.',
+    images: [
+      { src: productImageUrl('SV-006', 'adipurush-locket-01', 1400, '/images/products/adipurush-locket-01.jpeg'), fallbackSrc: '/images/products/adipurush-locket-01.jpeg', width: 1536, height: 1024, alt: 'Adipurush locket with a sculpted face and crescent detail on a stone display' },
+    ],
+  },
+  {
+    id: 'product-7',
+    sku: 'SV-007',
+    slug: 'kurta-pin',
+    name: 'Kurta Pin',
+    isPlaceholder: false,
+    category: 'uncategorised',
+    categoryLabel: 'Kurta accessories',
+    price: 999,
+    shortDescription: 'Decorative kurta pins joined by delicate chains, with sparkling circular motifs for festive styling.',
+    description: 'Decorative kurta pins joined by delicate chains, with sparkling circular motifs for festive styling.',
+    images: [
+      { src: productImageUrl('SV-007', 'kurta-pin-01', 1400, '/images/products/kurta-pin-01.jpeg'), fallbackSrc: '/images/products/kurta-pin-01.jpeg', width: 1536, height: 1024, alt: 'Decorative kurta pins connected by chains on a cream presentation cushion' },
     ],
   },
 ];

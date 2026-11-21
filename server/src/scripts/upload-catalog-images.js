@@ -16,8 +16,16 @@ const CATALOG = [
   { id: 'product-1', sku: 'SV-001', prefix: 'silver-frame' },
   { id: 'product-2', sku: 'SV-002', prefix: 'silver-kada' },
   { id: 'product-3', sku: 'SV-003', prefix: 'peacock-ring' },
+  { id: 'product-4', sku: 'SV-004', prefix: 'chapka' },
+  { id: 'product-5', sku: 'SV-005', prefix: 'shiv-locket' },
+  { id: 'product-6', sku: 'SV-006', prefix: 'adipurush-locket' },
+  { id: 'product-7', sku: 'SV-007', prefix: 'kurta-pin' },
 ];
 const ALT = {
+  'kurta-pin': 'Decorative kurta pins connected by chains on a cream presentation cushion',
+  'adipurush-locket': 'Adipurush locket with a sculpted face and crescent detail on a stone display',
+  'shiv-locket': 'Round Shiv locket with a trishul and detailed relief on a stone display',
+  'chapka': 'Chapka with pearl strands and red and green bead detailing on burgundy velvet',
   'silver-frame': 'Silver Frame with Lakshmi and Ganesha devotional relief',
   'silver-kada': 'Silver Kada with patterned bangle design',
   'peacock-ring': 'Peacock-inspired statement ring with colourful detailing',
