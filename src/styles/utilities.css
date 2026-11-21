@@ -284,7 +284,7 @@ details[open] > summary::after { content: "\2212"; }
     white-space: nowrap;
   }
 
-  /* ---- Pill action: fine outline with a checkered underside --------------- */
+  /* ---- Pill action: fine outline, flat (no underside / shadow) ------------- */
   .btn-pill {
     --btn-bg: var(--color-brand-primary);
     --btn-fg: var(--color-surface-primary);
@@ -299,7 +299,6 @@ details[open] > summary::after { content: "\2212"; }
     gap: 0.5rem;
     min-height: 2.75rem;
     padding: 0 1.5rem;
-    margin-bottom: 5px; /* room for the underside so layout never shifts */
     border: 1px solid var(--btn-edge);
     border-radius: var(--radius-pill);
     background-color: var(--btn-bg);
@@ -314,38 +313,18 @@ details[open] > summary::after { content: "\2212"; }
     transition:
       background-color var(--dur-state) ease-in-out,
       color var(--dur-state) ease-in-out,
-      border-color var(--dur-state) ease-in-out,
-      transform 150ms var(--ease-out);
-  }
-  .btn-pill::after {
-    content: "";
-    position: absolute;
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: -6px;
-    height: 5px;
-    border-radius: 0 0 var(--radius-pill) var(--radius-pill);
-    background: repeating-conic-gradient(var(--btn-edge) 0 25%, transparent 0 50%) 0 0 / 4px 4px;
-    opacity: 0.6;
-    transform-origin: top;
-    transition: transform var(--dur-state) var(--ease-out), opacity var(--dur-state) ease-in-out;
+      border-color var(--dur-state) ease-in-out;
   }
   .btn-pill:hover:not(:disabled):not([aria-disabled="true"]) {
     background-color: var(--btn-hover-bg);
     color: var(--btn-hover-fg);
     border-color: var(--btn-hover-edge);
-    transform: translateY(2px);
   }
-  .btn-pill:hover:not(:disabled):not([aria-disabled="true"])::after { transform: scaleY(0.4); }
-  .btn-pill:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(4px); }
-  .btn-pill:active:not(:disabled):not([aria-disabled="true"])::after { opacity: 0; }
   .btn-pill:disabled,
   .btn-pill[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.5;
   }
-  .btn-pill:disabled::after,
-  .btn-pill[aria-disabled="true"]::after { display: none; }
   .btn-pill[aria-busy="true"] { cursor: progress; }
 
   .btn-pill--secondary {
@@ -445,7 +424,7 @@ html[data-motion="paused"] .anim-blink {
   .marquee__group[aria-hidden="true"] { display: none; }
   .marquee { overflow-x: auto; }
   .anim-spin, .anim-blink { animation: none !important; }
-  .btn-pill, .btn-pill::after, .btn-round { transition-duration: 0.01ms !important; }
+  .btn-pill, .btn-round { transition-duration: 0.01ms !important; }
 }
 
 /* =============================================================================

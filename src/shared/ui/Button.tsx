@@ -4,8 +4,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'inverse' | 'outline-inver
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 /**
- * Pill actions (see `.btn-pill` in utilities.css): fine outline, checkered underside that
- * compresses on hover and press. League Spartan, sentence case. States: default, hover,
+ * Pill actions (see `.btn-pill` in utilities.css): fine outline, flat (no underside or shadow). League Spartan, sentence case. States: default, hover,
  * focus-visible (global ring), pressed, disabled, busy (`aria-busy`).
  */
 const variants: Record<Exclude<ButtonVariant, 'text'>, string> = {
