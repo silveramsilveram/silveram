@@ -100,7 +100,7 @@ export default function ProductGallery({ product }: { product: Product }) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="group relative block w-full cursor-zoom-in border border-border"
+        className="group relative block w-full cursor-zoom-in overflow-hidden rounded-[var(--radius-media)]"
         aria-label={`Enlarge image ${index + 1} of ${images.length}: ${current.alt}`}
       >
         <ImageSlot
@@ -124,7 +124,7 @@ export default function ProductGallery({ product }: { product: Product }) {
             type="button"
             onClick={() => step(-1)}
             aria-label="Previous image"
-            className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-[2px] bg-surface-primary/90 text-text-primary hover:bg-surface-primary"
+            className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-primary/90 text-text-primary hover:bg-surface-primary"
           >
             <span aria-hidden="true">‹</span>
           </button>
@@ -132,7 +132,7 @@ export default function ProductGallery({ product }: { product: Product }) {
             type="button"
             onClick={() => step(1)}
             aria-label="Next image"
-            className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-[2px] bg-surface-primary/90 text-text-primary hover:bg-surface-primary"
+            className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-primary/90 text-text-primary hover:bg-surface-primary"
           >
             <span aria-hidden="true">›</span>
           </button>
@@ -149,7 +149,7 @@ export default function ProductGallery({ product }: { product: Product }) {
                 onClick={() => setIndex(i)}
                 aria-label={`Show image ${i + 1} of ${images.length}`}
                 aria-current={i === index}
-                className={`block w-full rounded-[2px] overflow-hidden border-2 transition-all duration-200 ${i === index ? 'border-brand-primary shadow-sm' : 'border-border/60 hover:border-accent-silver'}`}
+                className={`block w-full overflow-hidden rounded-[var(--radius-field)] border-2 transition-colors duration-[250ms] ${i === index ? 'border-brand-primary' : 'border-border/60 hover:border-accent-silver'}`}
               >
                 <ImageSlot
                   src={image.src}
