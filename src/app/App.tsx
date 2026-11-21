@@ -10,18 +10,13 @@ import { useSignedInCartSync } from '@/features/cart/lib/syncCart';
 import { CheckoutProvider } from '@/features/checkout/context/CheckoutContext';
 import { preloadCashfree } from '@/features/checkout/lib/cashfree';
 import AnnouncementBar from '@/features/storefront/components/AnnouncementBar';
-import CollectionRail from '@/features/storefront/components/CollectionRail';
 import EditorialPromise from '@/features/storefront/components/EditorialPromise';
 import FaqSection from '@/features/storefront/components/FaqSection';
-import FeaturedCampaign from '@/features/storefront/components/FeaturedCampaign';
 import FooterSection from '@/features/storefront/components/FooterSection';
 import GiftingSection from '@/features/storefront/components/GiftingSection';
 import Header from '@/features/storefront/components/Header';
 import HeroSection from '@/features/storefront/components/HeroSection';
-import LookCloselySection from '@/features/storefront/components/LookCloselySection';
-import OccasionsSection from '@/features/storefront/components/OccasionsSection';
 import ProductLineup from '@/features/storefront/components/ProductLineup';
-import PromisesSection from '@/features/storefront/components/PromisesSection';
 import VisitSection from '@/features/storefront/components/VisitSection';
 import { FloatingWhatsApp } from '@/features/whatsapp';
 import { useLinkInterception, useRoute } from '@/shared/routing/router';
@@ -91,14 +86,9 @@ function HomePage() {
       <Header overlay />
       <main id="main-content" tabIndex={-1} className="focus:outline-none">
         <HeroSection />
-        <FeaturedCampaign />
-        <EditorialPromise />
         <ProductLineup />
-        <PromisesSection />
-        <LookCloselySection />
-        <OccasionsSection />
+        <EditorialPromise />
         <GiftingSection />
-        <CollectionRail />
         <VisitSection />
         <FaqSection />
       </main>

@@ -14,8 +14,7 @@ export default function GiftingSection() {
     <section id="gifting" aria-labelledby="gifting-heading" className="scene scene-deep py-16 md:py-24">
       <div className="page-container-wide">
         <div className="rule-dashed pt-6 text-center">
-          <p className="label-mono">Gifting</p>
-          <h2 id="gifting-heading" className="ed-h1 mx-auto mt-4 max-w-3xl">
+          <h2 id="gifting-heading" className="ed-h1 mx-auto max-w-3xl">
             {GIFTING.heading}
           </h2>
           <p className="scene-body mx-auto mt-5 max-w-2xl font-sans text-lg leading-relaxed">{GIFTING.description}</p>

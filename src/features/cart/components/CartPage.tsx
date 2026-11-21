@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { MAX_ITEM_QUANTITY, useCart } from '@/features/cart/store/cartStore';
-import { productPath, getProductById } from '@/features/products/data/products';
+import ProductCard from '@/features/products/components/ProductCard';
+import { PRODUCTS, productPath, getProductById } from '@/features/products/data/products';
 import { buttonClasses } from '@/shared/ui/Button';
 import ImageSlot from '@/shared/ui/ImageSlot';
 import { MinusIcon, PlusIcon } from '@/shared/ui/icons';
@@ -17,26 +18,31 @@ export default function CartPage() {
   }, []);
 
   return (
-    <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <div className="page-container pb-32 pt-8 md:pb-24 md:pt-12">
-        <h1 className="type-h1">
+    <main id="main-content" tabIndex={-1} className="scene scene-canvas focus:outline-none">
+      <div className="page-container-wide pb-32 pt-8 md:pb-24 md:pt-12">
+        <h1 className="ed-display">
           Your bag
-          {itemCount > 0 && <span className="ml-3 text-lg font-normal text-text-muted">({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>}
+          {itemCount > 0 && <span className="ml-3 font-sans text-lg text-text-muted">({itemCount} {itemCount === 1 ? 'item' : 'items'})</span>}
         </h1>
 
         {cart.length === 0 ? (
-          <div className="mt-10 max-w-xl border border-border bg-surface-white p-8 text-center">
-            <p className="type-h3">Your bag is empty</p>
-            <p className="type-body mt-2 text-text-secondary">
-              Explore the collection and add your favourite pieces.
+          <div className="mt-8">
+            <p className="ed-h3">Nothing here yet.</p>
+            <p className="scene-body mt-3 max-w-md font-sans text-lg leading-relaxed">
+              Pick a piece to start. You pay when it arrives.
             </p>
             <a href="/shop" className={buttonClasses('primary', 'lg', 'mt-6')}>
-              View collection
+              View the collection
             </a>
+            <div className="rule-dashed mt-10 grid gap-x-8 gap-y-12 pt-10 sm:grid-cols-2 lg:grid-cols-3">
+              {PRODUCTS.slice(0, 3).map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_22rem] lg:gap-14">
-            <ul className="divide-y divide-border border-y border-border" aria-label="Items in your bag">
+          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_24rem] lg:gap-16">
+            <ul className="divide-y divide-dashed divide-[var(--scene-line)] border-y border-dashed border-[var(--scene-line)]" aria-label="Items in your bag">
               {cart.map((item) => {
                 const product = getProductById(item.id);
                 return (
@@ -48,12 +54,12 @@ export default function CartPage() {
                       height={1}
                       fit="contain"
                       placeholderLabel=""
-                      className="w-24 shrink-0 rounded-[2px] border border-border sm:w-32"
+                      className="w-24 shrink-0 rounded-[var(--radius-field)] sm:w-32"
                       sizes="128px"
                     />
                     <div className="flex min-w-0 flex-1 flex-col">
                       <div className="flex items-start justify-between gap-3">
-                        <h2 className="type-body-lg font-medium">
+                        <h2 className="ed-product">
                           {product ? (
                             <a href={productPath(product)} className="hover:underline underline-offset-4">
                               {item.name}
@@ -68,7 +74,7 @@ export default function CartPage() {
                       </div>
                       <p className="type-caption text-text-muted">{formatINR(item.price)} each</p>
                       <div className="mt-auto flex items-center justify-between pt-4">
-                        <div className="flex items-center rounded-[2px] border border-border-strong bg-surface-white">
+                        <div className="flex items-center rounded-[var(--radius-field)] border border-text-muted bg-surface-white">
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, -1)}
@@ -105,8 +111,8 @@ export default function CartPage() {
               })}
             </ul>
 
-            <aside aria-label="Order summary" className="h-fit border border-border bg-surface-white p-6 lg:sticky lg:top-24">
-              <h2 className="type-h3">Summary</h2>
+            <aside aria-label="Order summary" className="frame-dashed h-fit p-6 lg:sticky lg:top-24">
+              <h2 className="ed-h3">Summary</h2>
               <dl className="mt-5 space-y-3 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-text-secondary">Items ({itemCount})</dt>
@@ -131,9 +137,9 @@ export default function CartPage() {
                   <p className="type-caption text-text-muted">Checkout is opening soon.</p>
                 )}
                 <ul className="space-y-1.5 border-t border-border pt-4 text-xs text-text-secondary">
-                  <li>✓ Cash on delivery: pay when your order arrives</li>
-                  <li>✓ Checkout as a guest, no account needed</li>
-                  <li>✓ Order confirmation sent by email</li>
+                  <li>Cash on delivery: pay when your order arrives</li>
+                  <li>Checkout as a guest, no account needed</li>
+                  <li>Order confirmation sent by email</li>
                   <li className="text-text-muted">UPI &amp; card payments coming soon</li>
                 </ul>
                 <a href="/shop" className="block min-h-11 text-center text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
@@ -145,7 +151,7 @@ export default function CartPage() {
         )}
 
         {cart.length > 0 && isCheckoutEnabled && (
-          <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-4 border-t border-border bg-surface-primary px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] lg:hidden">
+          <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-4 border-t border-border bg-surface-primary px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
             <div>
               <p className="text-xs text-text-muted">Total</p>
               <p className="text-lg font-semibold tabular-nums text-brand-primary">{formatINR(subtotal)}</p>

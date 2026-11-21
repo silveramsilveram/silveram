@@ -13,8 +13,17 @@ import { useEffect, useMemo, useSyncExternalStore } from 'react';
  *   /signin  /signup  /account  /track  /policy/<id>
  */
 
-export type PolicyId = 'shipping' | 'returns' | 'privacy' | 'terms';
-const POLICY_IDS: readonly string[] = ['shipping', 'returns', 'privacy', 'terms'];
+export const POLICY_IDS = [
+  'shipping',
+  'returns',
+  'cancellation',
+  'grievance',
+  'contact',
+  'hallmarking',
+  'privacy',
+  'terms',
+] as const;
+export type PolicyId = (typeof POLICY_IDS)[number];
 
 export type Route =
   | { name: 'home' }
@@ -55,7 +64,7 @@ export function parseRoute(pathname: string): Route {
   if (second && rest.length === 0 && SEGMENT.test(second)) {
     if (first === 'product') return { name: 'product', slug: second.toLowerCase() };
     if (first === 'order') return { name: 'order', id: second };
-    if (first === 'policy' && POLICY_IDS.includes(second)) return { name: 'policy', id: second as PolicyId };
+    if (first === 'policy' && (POLICY_IDS as readonly string[]).includes(second)) return { name: 'policy', id: second as PolicyId };
   }
   return { name: 'notfound' };
 }

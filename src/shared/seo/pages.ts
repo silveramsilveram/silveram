@@ -202,10 +202,17 @@ export function policySeo(policy: Policy): SeoPage {
   return {
     path: `/policy/${policy.id}`,
     title: `${policy.title} | ${SITE.name}`,
-    description: `${policy.title} for ${SITE.name}.`,
+    description: policy.summary,
     noindex: policy.draft,
     jsonLd: [],
-    fallbackHtml: `<h1>${escapeHtml(policy.title)}</h1>${policy.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('')}`,
+    fallbackHtml: `<h1>${escapeHtml(policy.title)}</h1><p>${escapeHtml(policy.summary)}</p>${policy.sections
+      .map(
+        (section) =>
+          `<h2>${escapeHtml(section.heading)}</h2>${(section.paragraphs ?? []).map((p) => `<p>${escapeHtml(p)}</p>`).join('')}${
+            section.items ? `<ul>${section.items.map((i) => `<li>${escapeHtml(i)}</li>`).join('')}</ul>` : ''
+          }`,
+      )
+      .join('')}`,
   };
 }
 

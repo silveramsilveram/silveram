@@ -103,7 +103,7 @@ export default function Header({ overlay = false }: { overlay?: boolean }) {
         }}
         className={`${position} z-40 ${
           transparent ? 'header-home-overlay bg-transparent' : 'bg-surface-primary'
-        } transition-[top,transform,box-shadow,background-color] duration-[400ms] ease-in-out ${
+        } transition-[transform,box-shadow,background-color] duration-[400ms] ease-in-out ${
           slideAway ? '-translate-y-full' : ''
         } ${shadow}`}
       >

@@ -10,14 +10,16 @@ export default function TrackOrderPage() {
   }, []);
 
   return (
-    <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <div className="page-container pb-20 pt-10 md:pb-28 md:pt-16">
-        <div className="mx-auto max-w-md">
-          <h1 className="type-h1">Track your order</h1>
-          <p className="type-body mb-8 mt-3 text-text-secondary">
+    <main id="main-content" tabIndex={-1} className="scene scene-canvas focus:outline-none">
+      <div className="page-container-wide grid gap-10 pb-20 pt-10 md:pb-28 md:pt-16 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-5">
+          <h1 className="ed-display">Track your order</h1>
+          <p className="scene-body mt-5 max-w-md font-sans text-lg leading-relaxed">
             Enter the order reference from your confirmation email and the email address you used at checkout.
             If you have an account, <a href="/signin" className="underline underline-offset-4">sign in</a> to see all your orders.
           </p>
+        </div>
+        <div className="frame-dashed max-w-xl p-6 md:p-9 lg:col-span-6 lg:col-start-7">
           <OrderLookupForm />
         </div>
       </div>

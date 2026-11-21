@@ -56,12 +56,12 @@ export default function ProductPage({ slug }: ProductPageProps) {
   }
 
   const specs = specRows(product);
-  const others = PRODUCTS.filter((item) => item.id !== product.id);
+  const others = PRODUCTS.filter((item) => item.id !== product.id).slice(0, 3);
   const canBuy = product.price !== null && !product.isPlaceholder;
 
   return (
-    <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <div className="page-container pb-16 pt-6 md:pb-24 md:pt-10">
+    <main id="main-content" tabIndex={-1} className="scene scene-canvas focus:outline-none">
+      <div className="page-container-wide pb-16 pt-6 md:pb-24 md:pt-10">
         <nav aria-label="Breadcrumb" className="type-caption mb-6 text-text-secondary">
           <ol className="flex flex-wrap items-center gap-x-2">
             <li><a href="/" className="inline-flex min-h-11 items-center hover:text-text-primary hover:underline">Home</a></li>
@@ -72,25 +72,15 @@ export default function ProductPage({ slug }: ProductPageProps) {
           </ol>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-          <ProductGallery product={product} />
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+          <div className="max-w-[32rem] lg:col-span-6"><ProductGallery product={product} /></div>
 
-          <div className="lg:pt-4">
-            <div className="inline-flex items-center gap-2 rounded-[2px] border border-border bg-surface-primary px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand-primary">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-silver" aria-hidden="true" />
-              <span>{product.categoryLabel}</span>
-            </div>
-            <h1 className="type-h1 mt-3">{product.name}</h1>
-            <PriceLabel price={product.price} className="type-h3 mt-4 block" />
+          <div className="lg:col-span-5 lg:col-start-7 lg:pt-2">
+            <h1 className="ed-h1">{product.name}</h1>
+            <PriceLabel price={product.price} className="mt-3 block font-sans text-2xl font-semibold tabular-nums text-brand-primary" />
 
             {product.shortDescription && (
               <p className="type-body-lg mt-5 text-text-secondary">{product.shortDescription}</p>
-            )}
-            {product.description && <p className="type-body mt-4 text-text-secondary">{product.description}</p>}
-            {!product.material && !product.purity && (
-              <p className="type-caption mt-5 text-text-muted">
-                Material and purity details have not been verified for this listing. Please message us on WhatsApp before buying if you need these details.
-              </p>
             )}
             {product.isPlaceholder && (
               <p className="type-body mt-5 border-l-2 border-accent-silver pl-4 text-text-secondary">
@@ -98,10 +88,10 @@ export default function ProductPage({ slug }: ProductPageProps) {
               </p>
             )}
 
-            <div className="mt-8 flex flex-col gap-3">
+            <div className="mt-7 flex flex-col gap-3">
               <div className="flex items-center gap-4">
-                <span id="qty-label" className="type-caption uppercase tracking-[0.12em] text-text-muted">Quantity</span>
-                <div role="group" aria-labelledby="qty-label" className="flex items-center rounded-[2px] border border-border-strong">
+                <span id="qty-label" className="font-sans text-sm text-text-secondary">Quantity</span>
+                <div role="group" aria-labelledby="qty-label" className="flex items-center rounded-[var(--radius-field)] border border-text-muted bg-surface-white">
                   <button
                     type="button"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -130,7 +120,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 disabled={!canBuy}
                 onClick={() => addToCart(product, true, quantity)}
               >
-                Add to Cart
+                Add to bag
               </Button>
               <Button
                 variant="secondary"
@@ -142,7 +132,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
                   navigate('/checkout');
                 }}
               >
-                Buy Now
+                Buy now
               </Button>
               {!canBuy && (
                 <p className="type-caption text-text-muted">This piece can be added to the bag once a price is set.</p>
@@ -155,11 +145,20 @@ export default function ProductPage({ slug }: ProductPageProps) {
               </WhatsAppButton>
             </div>
 
+            <div className="mt-8">
+              {product.description && <p className="type-body  text-text-secondary">{product.description}</p>}
+            {!product.material && !product.purity && (
+              <p className="type-caption mt-4 text-text-muted">
+                Material and purity details have not been verified for this listing. Please message us on WhatsApp before buying if you need these details. <a href="/policy/hallmarking" className="underline underline-offset-4">About purity and hallmarking</a>.
+              </p>
+            )}
+            </div>
+
             {specs.length > 0 && (
               <dl className="mt-10 divide-y divide-border border-y border-border">
                 {specs.map(([label, value]) => (
                   <div key={label} className="grid grid-cols-[9rem_1fr] gap-4 py-3">
-                    <dt className="type-caption uppercase tracking-[0.12em] text-text-muted">{label}</dt>
+                    <dt className="font-sans text-sm text-text-muted">{label}</dt>
                     <dd className="type-body">{value}</dd>
                   </div>
                 ))}
@@ -188,11 +187,11 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 </p>
               </details>
               <details className="group py-4">
-                <summary className="type-body cursor-pointer list-none font-medium">Returns &amp; exchanges</summary>
+                <summary className="type-body cursor-pointer list-none font-medium">Returns &amp; refunds</summary>
                 <p className="type-body mt-3 text-text-secondary">
-                  {product.returnInfo ?? 'See our return and exchange policy before you order.'}{' '}
+                  {product.returnInfo ?? 'We do not refund for a change of mind. Your legal rights are not affected. Read the policy before you order.'}{' '}
                   <a href="/policy/returns" className="underline underline-offset-4">
-                    Return policy
+                    Return &amp; refund policy
                   </a>
                 </p>
               </details>
@@ -200,11 +199,11 @@ export default function ProductPage({ slug }: ProductPageProps) {
           </div>
         </div>
 
-        <section aria-labelledby="more-heading" className="mt-20 border-t border-border pt-10">
-          <h2 id="more-heading" className="type-h3">
-            Related products
+        <section aria-labelledby="more-heading" className="rule-dashed mt-20 pt-10">
+          <h2 id="more-heading" className="ed-h3">
+            More from the collection
           </h2>
-          <div className="mt-8 grid gap-10 lg:grid-cols-2 lg:gap-8">
+          <div className="mt-8 grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
             {others.map((item) => (
               <ProductCard key={item.id} product={item} />
             ))}

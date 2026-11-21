@@ -46,11 +46,9 @@
     font-weight: 400;
   }
   .type-eyebrow {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     line-height: 1.4;
-    font-weight: 600;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
+    font-weight: 500;
   }
 
   .page-container {
@@ -96,7 +94,6 @@
   }
   .silver-card:hover {
     border-color: var(--color-border-strong);
-    box-shadow: 0 10px 30px -10px rgba(24, 45, 73, 0.08);
   }
 
   .jewellery-image-stage {
@@ -126,8 +123,8 @@
 .silver-light {
   background-color: var(--color-brand-primary);
   background-image:
-    radial-gradient(ellipse 60% 70% at 70% 35%, rgb(167 173 181 / 0.22) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 50% at 20% 90%, rgb(167 173 181 / 0.10) 0%, transparent 70%);
+    radial-gradient(ellipse 60% 70% at 70% 35%, color-mix(in srgb, var(--color-accent-silver) 22%, transparent) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 50% at 20% 90%, color-mix(in srgb, var(--color-accent-silver) 10%, transparent) 0%, transparent 70%);
 }
 
 /* Details/summary disclosure marker (custom, League Spartan-friendly). */
@@ -495,12 +492,6 @@ html[data-motion="paused"] .anim-blink {
   }
   .header-home-overlay :focus-visible { outline-color: var(--color-surface-primary); }
 
-  .hero-image-scrim {
-    background:
-      linear-gradient(to bottom, rgb(24 45 73 / 0.76) 0%, rgb(24 45 73 / 0.3) 15%, transparent 32%),
-      linear-gradient(to top, rgb(24 45 73 / 0.98) 0%, rgb(24 45 73 / 0.92) 34%, rgb(24 45 73 / 0.72) 58%, transparent 100%);
-  }
-
   /* Hero: each headline line rises from behind a mask. Text is always painted (no opacity fade), so it
    * never delays first paint; the mask just reveals it. */
   .line-reveal {
@@ -517,6 +508,8 @@ html[data-motion="paused"] .anim-blink {
   /* Photograph settles in: transform only, so it never delays the largest contentful paint. */
   .hero-media-in img,
   .hero-media-in video { animation: media-settle 1400ms var(--ease-out) both; }
+  .hero-link { color: var(--scene-fg); text-decoration: underline; text-decoration-color: var(--color-accent-silver); text-underline-offset: 0.3em; transition: text-decoration-color var(--dur-state) ease-in-out; }
+  .hero-link:hover { text-decoration-color: currentColor; }
   .hero-fade-in { animation: hero-fade 700ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 110ms + 350ms); }
 
   /* Mobile menu panel and its staggered links. */

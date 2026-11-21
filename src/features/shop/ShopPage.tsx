@@ -4,7 +4,7 @@ import { PRODUCTS } from '@/features/products/data/products';
 import { applyPageSeo } from '@/shared/lib/seo';
 import { shopSeo } from '@/shared/seo/pages';
 
-/** All products on one page. */
+/** All products on one page: a short statement, then the pieces. Six across two rows after the lead piece would orphan, so the grid is three wide. */
 export default function ShopPage() {
   useEffect(() => {
     applyPageSeo(shopSeo());
@@ -12,16 +12,20 @@ export default function ShopPage() {
   }, []);
 
   return (
-    <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <div className="page-container pb-20 pt-10 md:pb-28 md:pt-16">
-        <nav aria-label="Breadcrumb" className="type-caption mb-4 text-text-secondary">
-          <a href="/" className="underline underline-offset-4 hover:text-text-primary">Home</a> / <span className="text-text-primary">Shop</span>
+    <main id="main-content" tabIndex={-1} className="scene scene-canvas focus:outline-none">
+      <div className="page-container-wide pb-20 pt-10 md:pb-28 md:pt-14">
+        <nav aria-label="Breadcrumb" className="font-sans text-sm text-text-secondary">
+          <a href="/" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-text-primary">Home</a>
+          <span aria-hidden="true"> / </span>
+          <span aria-current="page" className="text-text-primary">Shop</span>
         </nav>
-        <h1 className="type-h1">Shop all</h1>
-        <p className="type-body-lg mt-3 max-w-2xl text-text-secondary">
-          {PRODUCTS.length} pieces, each chosen for gifting, festivals and everyday celebration.
-        </p>
-        <div className="mt-10 grid gap-12 md:gap-14 lg:grid-cols-3 lg:gap-8">
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+          <h1 className="ed-display">Shop all</h1>
+          <p className="scene-body max-w-sm pb-2 font-sans text-lg leading-relaxed">
+            {PRODUCTS.length} pieces for gifting, festivals and everyday celebration. Cash on delivery across India.
+          </p>
+        </div>
+        <div className="rule-dashed mt-10 grid gap-x-8 gap-y-14 pt-12 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-10">
           {PRODUCTS.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

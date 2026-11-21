@@ -39,7 +39,7 @@ function Preview() {
     <>
       <header className="scene scene-deep py-6">
         <div className="page-container-wide flex items-baseline justify-between gap-4">
-          <p className="font-sans text-lg font-semibold tracking-[0.3em] uppercase">Silveram</p>
+          <p className="font-sans text-lg font-semibold">Silveram</p>
           <p className="label-mono-sm">Design system, dev preview</p>
         </div>
       </header>
@@ -66,7 +66,7 @@ function Preview() {
         <p className="ed-h2 mt-6">Chosen for festivals, weddings and housewarmings</p>
         <p className="ed-h3 mt-6">Silver Kada</p>
         <p className="ed-product mt-6">Peacock Ring</p>
-        <p className="label-mono mt-8">Devotional frames · ₹999 · Cash on delivery across India</p>
+        <p className="label-mono mt-8">Devotional frames, ₹999, cash on delivery across India</p>
         <p className="label-mono-sm label-mono-strong mt-2">Courier Prime bold, 13px floor for captions</p>
         <p className="mt-8 max-w-prose font-sans text-base leading-relaxed scene-body">
           League Spartan carries navigation, buttons, prices, forms and every paragraph a customer has to read. It stays
