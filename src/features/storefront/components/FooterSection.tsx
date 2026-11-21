@@ -51,7 +51,7 @@ export default function FooterSection() {
 
             {isNewsletterEnabled && (
               <form className="mt-8 max-w-md" onSubmit={submitNewsletter}>
-                <label htmlFor="newsletter-email" className="label-mono">
+                <label htmlFor="newsletter-email" className="font-sans text-sm font-semibold">
                   Silveram updates
                 </label>
                 <p className="scene-body mt-2 font-sans text-base">Product news and occasional offers, only if you opt in.</p>
@@ -98,7 +98,7 @@ export default function FooterSection() {
 
           <div className="grid gap-10 sm:grid-cols-3 lg:col-span-8 lg:border-l lg:border-dashed lg:border-[color:var(--scene-line)] lg:pl-10">
             <nav aria-label="Collection">
-              <h2 className="label-mono label-mono-strong">Collection</h2>
+              <h2 className="font-sans text-base font-semibold">Collection</h2>
               <ul className="mt-3">
                 {PRODUCTS.map((product) => (
                   <li key={product.id}>
@@ -116,7 +116,7 @@ export default function FooterSection() {
             </nav>
 
             <nav aria-label="Company and policies">
-              <h2 className="label-mono label-mono-strong">Silveram</h2>
+              <h2 className="font-sans text-base font-semibold">Silveram</h2>
               <ul className="mt-3">
                 <li><a href="/#story" className={linkClass}>About us</a></li>
                 <li><a href="/#gifting" className={linkClass}>Gifting</a></li>
@@ -133,7 +133,7 @@ export default function FooterSection() {
             </nav>
 
             <div>
-              <h2 className="label-mono label-mono-strong">Visit &amp; contact</h2>
+              <h2 className="font-sans text-base font-semibold">Visit &amp; contact</h2>
               <address className="scene-body mt-3 font-sans text-base not-italic leading-relaxed">
                 <strong className="font-semibold text-surface-primary">{SITE.legalName}</strong>
                 <br />
@@ -194,8 +194,8 @@ export default function FooterSection() {
           </div>
         </div>
 
-        <p className="rule-dashed mt-12 pt-5 font-mono text-[0.8125rem] text-surface-primary/75">
-          © {new Date().getFullYear()} Silveram. All rights reserved.
+        <p className="rule-dashed mt-12 pt-5 font-sans text-sm text-surface-primary/75">
+          © {new Date().getFullYear()} Silveram
         </p>
       </div>
 

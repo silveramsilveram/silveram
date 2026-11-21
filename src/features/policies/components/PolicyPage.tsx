@@ -20,7 +20,7 @@ export default function PolicyPage({ id }: { id: PolicyId }) {
           <h1 className="type-h1">{policy.title}</h1>
           {policy.draft && (
             <p className="mt-6 border border-border bg-surface-secondary px-4 py-3 text-sm text-text-primary" role="status">
-              Draft for store review — these terms are not yet approved for production.
+              Draft for store review: these terms are not yet approved for production.
             </p>
           )}
           <div className="type-body mt-8 space-y-4 text-text-secondary">

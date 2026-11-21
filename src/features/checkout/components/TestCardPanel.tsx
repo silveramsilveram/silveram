@@ -34,8 +34,8 @@ export function validateTestUpi(upiId: string): string {
 
 function Banner() {
   return (
-    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-primary">
-      Test mode · no real money is charged
+    <p className="text-sm font-semibold text-brand-primary">
+      Test mode: no real money is charged
     </p>
   );
 }

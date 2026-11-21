@@ -38,13 +38,15 @@ export default function AuthPage({ mode }: { mode: AuthMode }) {
   }, [user]);
 
   return (
-    <main id="main-content" tabIndex={-1} className="focus:outline-none">
-      <div className="page-container pb-20 pt-10 md:pb-28 md:pt-16">
-        <div className="mx-auto max-w-md">
-          <h1 className="type-h1">{copy.title}</h1>
-          <p className="type-body mb-8 mt-3 text-text-secondary">{copy.lead}</p>
+    <main id="main-content" tabIndex={-1} className="scene scene-canvas focus:outline-none">
+      <div className="page-container-wide grid gap-10 pb-20 pt-10 md:pb-28 md:pt-16 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-5">
+          <h1 className="ed-display">{copy.title}</h1>
+          <p className="scene-body mt-5 max-w-md font-sans text-lg leading-relaxed">{copy.lead}</p>
+        </div>
+        <div className="frame-dashed max-w-xl p-6 md:p-9 lg:col-span-6 lg:col-start-7">
           <AuthForm key={mode} mode={mode} initialEmail={getAuthEmail()} />
-          <p className="type-body mt-8 border-t border-border pt-6 text-text-secondary">
+          <p className="type-body rule-dashed mt-8 pt-6 text-text-secondary">
             {copy.switchText}{' '}
             <a href={copy.switchHref} className="font-medium text-brand-primary underline underline-offset-4">
               {copy.switchLabel}

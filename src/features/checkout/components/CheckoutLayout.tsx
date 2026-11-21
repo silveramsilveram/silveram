@@ -9,7 +9,7 @@ const STEPS = ['Bag', 'Details', 'Payment', 'Confirmation'] as const;
 /** Progress indicator shown on every checkout page. `current` is 0-based (0 = Bag). */
 export function CheckoutSteps({ current }: { current: number }) {
   return (
-    <ol className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold uppercase tracking-[0.12em]" aria-label="Checkout progress">
+    <ol className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold" aria-label="Checkout progress">
       {STEPS.map((label, index) => {
         const done = index < current;
         const active = index === current;

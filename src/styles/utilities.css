@@ -46,11 +46,9 @@
     font-weight: 400;
   }
   .type-eyebrow {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     line-height: 1.4;
-    font-weight: 600;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
+    font-weight: 500;
   }
 
   .page-container {
@@ -96,7 +94,6 @@
   }
   .silver-card:hover {
     border-color: var(--color-border-strong);
-    box-shadow: 0 10px 30px -10px rgba(24, 45, 73, 0.08);
   }
 
   .jewellery-image-stage {
