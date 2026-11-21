@@ -3,7 +3,7 @@ import { ArrowRightIcon, InstagramIcon, WhatsAppIcon } from '@/shared/ui/icons';
 import { SITE } from '@/shared/config/site';
 import { PRODUCTS, productPath } from '@/features/products/data/products';
 import { WHATSAPP_DISPLAY, buildGeneralMessage, buildWhatsAppUrl } from '@/features/whatsapp';
-import { POLICIES, type PolicyId } from '@/features/policies/data/policies';
+import { POLICIES, POLICY_ORDER } from '@/features/policies/data/policies';
 import { policyPath } from '@/shared/routing/router';
 import { apiRequest, isNewsletterEnabled } from '@/shared/lib/api';
 import WordSculpture from '@/shared/ui/WordSculpture';
@@ -122,7 +122,7 @@ export default function FooterSection() {
                 <li><a href="/#gifting" className={linkClass}>Gifting</a></li>
                 <li><a href="/#faq" className={linkClass}>FAQ</a></li>
                 <li><a href="/track" className={linkClass}>Track your order</a></li>
-                {(Object.keys(POLICIES) as PolicyId[]).map((id) => (
+                {POLICY_ORDER.map((id) => (
                   <li key={id}>
                     <a href={policyPath(id)} className={linkClass}>
                       {POLICIES[id].title}

@@ -189,3 +189,11 @@ Show a field on a product page only when the owner has verified it for that prod
 - BIS silver hallmarking order and standard (IS 2112) from bis.gov.in; BIS Care app guidance.
 - DPDP Act 2023 and the Rules 2025 as published in the Gazette (GSR numbers quoted by secondary sources: verify).
 - Consumer Protection Act 2019, CCPA dark-patterns guidelines 2023, GST invoice rules.
+
+---
+
+## 9. Implementation status (added after the pages were generated)
+
+Eight policy pages now exist, all **drafts** (banner, noindex, left out of the sitemap): Shipping & Delivery, Return & Refund, Cancellation, Grievance Redressal, Silver Purity & Hallmarking, Privacy, Terms & Conditions, Contact Us (`/policy/<id>`, text in `src/features/policies/data/policies.ts`). Unknown facts appear as highlighted `[OWNER INPUT REQUIRED: ...]` markers and legal questions as `[LEGAL REVIEW REQUIRED: ...]`; each page shows how many are open (currently 45 across the eight pages). The footer links all eight; checkout shows the no-change-of-mind summary, a statement that legal rights are unaffected, and links to six policies; product pages link to the hallmarking page; the FAQ answer on returns and the product-page returns accordion now match the Return & Refund page.
+
+Still open: every OWNER INPUT marker, the lawyer review, the unresolved contradictions (the bag says "Delivery charges: None added at checkout" while the policies leave delivery charges as an owner input; the FAQ delivery answer says charges are shown before payment; no tax wording on prices), per-product disclosures (nothing recorded to show), the Legal Metrology review, and the research listed in section 8. No page claims Silveram is compliant. Checkout has no tick-box: the summary is shown with links and the button press is the action; add a required acknowledgement box only after the owner and a lawyer decide it.

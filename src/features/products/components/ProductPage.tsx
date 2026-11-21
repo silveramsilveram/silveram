@@ -149,7 +149,7 @@ export default function ProductPage({ slug }: ProductPageProps) {
               {product.description && <p className="type-body  text-text-secondary">{product.description}</p>}
             {!product.material && !product.purity && (
               <p className="type-caption mt-4 text-text-muted">
-                Material and purity details have not been verified for this listing. Please message us on WhatsApp before buying if you need these details.
+                Material and purity details have not been verified for this listing. Please message us on WhatsApp before buying if you need these details. <a href="/policy/hallmarking" className="underline underline-offset-4">About purity and hallmarking</a>.
               </p>
             )}
             </div>
@@ -187,11 +187,11 @@ export default function ProductPage({ slug }: ProductPageProps) {
                 </p>
               </details>
               <details className="group py-4">
-                <summary className="type-body cursor-pointer list-none font-medium">Returns &amp; exchanges</summary>
+                <summary className="type-body cursor-pointer list-none font-medium">Returns &amp; refunds</summary>
                 <p className="type-body mt-3 text-text-secondary">
-                  {product.returnInfo ?? 'See our return and exchange policy before you order.'}{' '}
+                  {product.returnInfo ?? 'We do not refund for a change of mind. Your legal rights are not affected. Read the policy before you order.'}{' '}
                   <a href="/policy/returns" className="underline underline-offset-4">
-                    Return policy
+                    Return &amp; refund policy
                   </a>
                 </p>
               </details>

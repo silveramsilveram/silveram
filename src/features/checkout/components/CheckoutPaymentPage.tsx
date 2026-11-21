@@ -285,11 +285,22 @@ export default function CheckoutPaymentPage() {
           <p className="mt-4 min-h-5 text-sm text-danger" role="alert">
             {error}
           </p>
-          <p className="type-caption text-text-muted">
-            By placing your order you agree to Silveram’s{' '}
-            <a href="/policy/terms" className="underline underline-offset-4">terms</a> and{' '}
-            <a href="/policy/returns" className="underline underline-offset-4">return policy</a>.
-          </p>
+          <div className="mt-4 max-w-xl font-sans text-sm leading-relaxed text-text-secondary">
+            <p>
+              <span className="font-semibold text-text-primary">Before you order:</span> we do not refund or take returns for a
+              change of mind. If an item is defective, damaged, wrong or not as described, tell us and we will resolve it as the law
+              provides. This does not affect your legal rights.
+            </p>
+            <p className="mt-2">
+              By placing your order you accept Silveram’s{' '}
+              <a href="/policy/terms" className="underline underline-offset-4">terms</a>. Please also read our{' '}
+              <a href="/policy/returns" className="underline underline-offset-4">return and refund policy</a>,{' '}
+              <a href="/policy/cancellation" className="underline underline-offset-4">cancellation policy</a>,{' '}
+              <a href="/policy/shipping" className="underline underline-offset-4">shipping policy</a>,{' '}
+              <a href="/policy/privacy" className="underline underline-offset-4">privacy policy</a> and{' '}
+              <a href="/policy/grievance" className="underline underline-offset-4">grievance redressal</a>.
+            </p>
+          </div>
           <a href="/checkout" className="mt-2 inline-block min-h-11 text-sm leading-[2.75rem] text-text-secondary underline underline-offset-4 hover:text-text-primary">
             ← Back to delivery details
           </a>

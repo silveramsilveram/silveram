@@ -231,9 +231,9 @@ export const FAQS: FaqItem[] = [
   {
     id: 'faq-returns',
     category: 'Delivery and returns',
-    question: 'What is the return or exchange policy?',
+    question: 'What is the return and refund policy?',
     answer:
-      'Our return and exchange policy is being finalised. Please message us on WhatsApp if you need the terms before ordering.',
+      'We do not refund or take returns for a change of mind. If an item is defective, damaged, wrong or not as described, contact us and we will resolve it as the law provides. Your legal rights are not affected. The full policy is linked in the footer.',
   },
   {
     id: 'faq-contact',
