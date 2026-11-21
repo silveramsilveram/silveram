@@ -33,6 +33,10 @@ export const HERO = {
   heading: 'Small keepsakes. Lasting meaning.',
   description:
     'A devotional frame, patterned bangles and a peacock-inspired ring, thoughtfully chosen for meaningful occasions.',
+  /** The piece and photograph shown beside the headline (bundled product photography, shown at native size). */
+  productId: 'product-3',
+  imageIndex: 1,
+  /** Legacy full-bleed site photograph; no longer used by the hero. */
   image: {
     name: 'silveram-fullbleed-hero',
     alt: 'Two silver rings arranged on a dark blue surface.',
@@ -67,8 +71,8 @@ export const PROMISE = {
 };
 
 export const LINEUP = {
-  heading: 'Three pieces. Endless meaning.',
-  description: 'A carefully curated selection, each piece chosen for gifting, festivals and everyday celebration.',
+  heading: 'The collection',
+  description: 'Seven pieces for gifting, festivals and everyday celebration.',
 };
 
 /** “Silveram is always”: only promises the site actually keeps. */

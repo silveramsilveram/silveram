@@ -517,6 +517,8 @@ html[data-motion="paused"] .anim-blink {
   /* Photograph settles in: transform only, so it never delays the largest contentful paint. */
   .hero-media-in img,
   .hero-media-in video { animation: media-settle 1400ms var(--ease-out) both; }
+  .hero-link { color: var(--scene-fg); text-decoration: underline; text-decoration-color: var(--color-accent-silver); text-underline-offset: 0.3em; transition: text-decoration-color var(--dur-state) ease-in-out; }
+  .hero-link:hover { text-decoration-color: currentColor; }
   .hero-fade-in { animation: hero-fade 700ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 110ms + 350ms); }
 
   /* Mobile menu panel and its staggered links. */
