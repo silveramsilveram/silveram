@@ -31,14 +31,14 @@ export default function CartPage() {
             <p className="scene-body mt-3 max-w-md font-sans text-lg leading-relaxed">
               Pick a piece to start. You pay when it arrives.
             </p>
+            <a href="/shop" className={buttonClasses('primary', 'lg', 'mt-6')}>
+              View the collection
+            </a>
             <div className="rule-dashed mt-10 grid gap-x-8 gap-y-12 pt-10 sm:grid-cols-2 lg:grid-cols-3">
               {PRODUCTS.slice(0, 3).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-            <a href="/shop" className={buttonClasses('secondary', 'lg', 'mt-10')}>
-              View the whole collection
-            </a>
           </div>
         ) : (
           <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_24rem] lg:gap-16">

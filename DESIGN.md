@@ -88,7 +88,7 @@ Keep reading measure under about 70 characters. Use `text-wrap: balance` on head
 
 ## Components
 
-- **Button** (`src/shared/ui/Button.tsx`, `.btn-pill`): pill with a fine outline and a checkered underside. Variants `primary`, `secondary`, `inverse`, `outline-inverse`, `text`; sizes `sm`, `md`, `lg`. Hover compresses the underside, press flattens it, `disabled` and `aria-busy` are styled, focus uses the global ring. One primary action per view.
+- **Button** (`src/shared/ui/Button.tsx`, `.btn-pill`): flat pill with a fine outline (no underside, no shadow). Variants `primary`, `secondary`, `inverse`, `outline-inverse`, `text`; sizes `sm`, `md`, `lg`. Hover changes colour, `disabled` and `aria-busy` are styled, focus uses the global ring. One primary action per view.
 - **Media** (`src/shared/ui/Media.tsx`): one component for photographs and films. Images render at native size with an explicit focal point. Films are silent and muted, play only while visible, and never when the visitor prefers reduced motion, has paused decorative motion or has data-saver on; a visible control plays or pauses. A missing film shows its first-frame still or the neutral placeholder.
 - **Marquee** (`Marquee.tsx`): 20-second linear ticker of short, factual phrases. A pause control switches off all decorative motion site-wide (`useDecorativeMotionPaused`); under reduced motion the strip is static.
 - **CarouselControls**, **Stamp**, **WordSculpture** (container-query sized so the brand word spans the width from 360 to 1440px, decorative and `aria-hidden`).
@@ -118,6 +118,12 @@ Photography is the product: real Silveram photographs only, never generated or s
 - Use **only verified facts**. Material, silver purity, hallmarking, weight, dimensions, craftsmanship, origin, care, delivery, returns, reviews and guarantees appear only when the store has confirmed them. No invented testimonials, ratings, statistics, makers, provenance or scarcity.
 - Write original Silveram copy: warm, conversational, concise, specific. Styling, presentation and gifting inspiration is welcome when it is opinion or suggestion, not a factual claim about the product.
 - Say "bag" consistently. Errors say what went wrong and how to fix it, calmly.
+
+## Composition (Hallmark redesign)
+
+- **Home** is eight parts: Stage hero (headline left, one native-size product photograph right, no remote hero image), collection (one lead piece large, the rest as a dashed list), story, gifting, visit, FAQ, footer. Product pages and `/shop` use one action per card.
+- **Labels** are sentence case in League Spartan. Courier Prime stays on the announcement strip only.
+- Product photographs are shown at their native size (the Silver Frame gallery is capped at 32rem for its 508px source).
 
 ## Do and don't
 
