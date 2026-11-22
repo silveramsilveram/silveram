@@ -166,7 +166,9 @@ export function createAuthRouter(config) {
             userId: ID.unique(),
             email,
             password: createOpaqueToken(),
-            name: name || '',
+            // Appwrite rejects an empty name. An allow-listed admin signs in without one on first use,
+            // so fall back to the address's local part (Appwrite allows at most 128 characters).
+            name: (name || email.split('@')[0] || 'Silveram').slice(0, 128),
           });
         } catch (error) {
           if (error?.code !== 409) throw error;
