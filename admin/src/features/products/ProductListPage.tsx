@@ -64,7 +64,7 @@ export default function ProductListPage() {
         </Popconfirm>
       ) : <Switch checked={false} loading={busy === product.id} aria-label={`${product.name} is hidden. Turn on`} onChange={() => setActive(product, true)} />
     ) },
-    { title: 'Updated', dataIndex: 'updatedAt', sorter: true, width: 170, render: (value: number) => <span className="num muted">{formatDateTime(value)}</span> },
+    { title: 'Updated', dataIndex: 'updatedAt', sorter: true, width: 170, render: (value: number) => <span className="num muted sv-nowrap">{formatDateTime(value)}</span> },
     { title: '', width: 90, fixed: 'right', render: (_: unknown, product) => <Link to={`/products/edit/${product.id}`}>Edit</Link> },
   ];
 

@@ -37,7 +37,7 @@ export function paymentState(order: OrderRow): string {
 /** Compact column set shared by the overview, customer and COD tables. */
 export const compactOrderColumns: TableColumnsType<OrderRow> = [
   { title: 'Order', dataIndex: 'id', render: (_: unknown, order) => orderRef(order), fixed: 'left', width: 150 },
-  { title: 'Placed', dataIndex: 'createdAt', render: (value: number) => <span className="num">{formatDateTime(value)}</span>, width: 170 },
+  { title: 'Placed', dataIndex: 'createdAt', render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span>, width: 170 },
   { title: 'Customer', dataIndex: 'customerName', render: (_: unknown, order) => order.customerName || order.email, ellipsis: true },
   { title: 'Total', dataIndex: 'amountInPaise', align: 'right', render: (value: number) => <Money paise={value} />, width: 120 },
   { title: 'Status', dataIndex: 'status', render: (value: string) => <OrderStatusTag status={value} />, width: 160 },
@@ -47,7 +47,7 @@ export const orderListColumns: TableColumnsType<OrderRow> = [
   { title: 'Order', dataIndex: 'id', fixed: 'left', width: 160, render: (_: unknown, order) => (
     <div>{orderRef(order)}{order.isTest ? <Tag style={{ marginLeft: 6 }}>Test</Tag> : null}</div>
   ) },
-  { title: 'Placed', dataIndex: 'createdAt', sorter: true, width: 170, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
+  { title: 'Placed', dataIndex: 'createdAt', sorter: true, width: 170, render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span> },
   { title: 'Customer', dataIndex: 'customerName', width: 200, render: (_: unknown, order) => (
     <div style={{ overflowWrap: 'anywhere' }}>
       <div>{order.customerName || '—'}</div>
@@ -69,5 +69,5 @@ export const orderListColumns: TableColumnsType<OrderRow> = [
       </span>
     ) : <span className="muted">Not set</span>
   ) },
-  { title: 'Updated', dataIndex: 'updatedAt', sorter: true, width: 170, render: (value: number) => <span className="num muted">{formatDateTime(value)}</span> },
+  { title: 'Updated', dataIndex: 'updatedAt', sorter: true, width: 170, render: (value: number) => <span className="num muted sv-nowrap">{formatDateTime(value)}</span> },
 ];

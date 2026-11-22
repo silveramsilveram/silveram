@@ -75,7 +75,7 @@ export default function OrderShowPage() {
             <Table<TransactionRow> size="small" rowKey="id" pagination={false} dataSource={order.transactions} scroll={{ x: 720 }}
               locale={{ emptyText: 'No ledger entries. Entries are recorded from when ledger tracking began.' }}
               columns={[
-                { title: 'When', dataIndex: 'occurredAt', render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
+                { title: 'When', dataIndex: 'occurredAt', render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span> },
                 { title: 'Type', dataIndex: 'type', render: (value: string) => TX_TYPE[value] ?? value },
                 { title: 'Status', dataIndex: 'status', render: (value: string) => <TxStatusTag status={value} /> },
                 { title: 'Amount', dataIndex: 'amountInPaise', align: 'right', render: (value: number) => <Money paise={value} /> },

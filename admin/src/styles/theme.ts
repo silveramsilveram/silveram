@@ -27,7 +27,7 @@ export const silveramTheme: ThemeConfig = {
     wireframe: false,
   },
   components: {
-    Layout: { siderBg: '#182d49', headerBg: '#f8f7f4', bodyBg: '#f8f7f4' },
+    Layout: { siderBg: '#182d49', headerBg: '#f8f7f4', bodyBg: '#f8f7f4', triggerBg: '#101f34', triggerColor: '#dce6f0' },
     Menu: {
       darkItemBg: '#182d49',
       darkSubMenuItemBg: '#101f34',
@@ -38,7 +38,11 @@ export const silveramTheme: ThemeConfig = {
       darkItemHoverColor: '#ffffff',
       itemMarginInline: 8,
     },
-    Table: { headerBg: '#eeece7', headerColor: '#20232b', rowHoverBg: '#f8f7f4', borderColor: '#e7e5e0', cellPaddingBlock: 12 },
+    Table: {
+      headerBg: '#eeece7', headerColor: '#20232b', rowHoverBg: '#f8f7f4', borderColor: '#e7e5e0', cellPaddingBlock: 12,
+      // Sorting must not tint a whole column: the arrow already shows the active sort.
+      bodySortBg: 'transparent', headerSortActiveBg: '#eeece7', headerSortHoverBg: '#e6e3dc', headerSplitColor: 'transparent',
+    },
     Button: { primaryShadow: 'none', defaultShadow: 'none', fontWeight: 500 },
     Card: { colorBorderSecondary: '#d9dadc' },
     Tag: { defaultBg: '#eeece7', defaultColor: '#20232b' },

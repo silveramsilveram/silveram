@@ -167,7 +167,7 @@ function ProductForm({ mode, product }: { mode: 'create' | 'edit'; product?: Pro
                     <Table size="small" rowKey="id" pagination={false} loading={history.isLoading} dataSource={history.data?.data ?? []} scroll={{ x: 460 }}
                       locale={{ emptyText: history.data?.trackingStartedAt ? `No price changes recorded for this product. History tracking started on ${formatDate(history.data.trackingStartedAt)}.` : 'History tracking has not recorded any change yet. It starts with the next price change.' }}
                       columns={[
-                        { title: 'When', dataIndex: 'changedAt', render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
+                        { title: 'When', dataIndex: 'changedAt', render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span> },
                         { title: 'From → to', render: (_: unknown, row) => <span className="num">{row.previousPriceInPaise === null ? 'Created at' : formatPaise(row.previousPriceInPaise)} → <strong>{formatPaise(row.newPriceInPaise)}</strong></span> },
                         { title: 'By', dataIndex: 'changedBy', ellipsis: true },
                       ]} />
