@@ -17,7 +17,7 @@ export default function PriceHistoryPage() {
           <DataTable<PriceChange> {...table.tableProps}
             locale={{ emptyText: 'No price changes recorded yet. Tracking begins with the next price edit or new product.' }}
             columns={[
-              { title: 'When', dataIndex: 'changedAt', width: 180, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
+              { title: 'When', dataIndex: 'changedAt', width: 180, render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span> },
               { title: 'Product', render: (_: unknown, row) => <div><Link to={`/products/edit/${row.productId}`}>{row.productName}</Link><div><Mono>{row.sku}</Mono></div></div> },
               { title: 'Previous', dataIndex: 'previousPriceInPaise', align: 'right', render: (value: number | null) => (value === null ? <span className="muted">Created</span> : <span className="num">{formatPaise(value)}</span>) },
               { title: 'New price', dataIndex: 'newPriceInPaise', align: 'right', render: (value: number) => <strong className="num">{formatPaise(value)}</strong> },

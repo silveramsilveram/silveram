@@ -14,6 +14,7 @@ export default defineConfig({
     // Safari 15+/iOS 15+, Chrome/Edge 100+, Firefox 100+, Samsung Internet 18+: every current phone and browser.
     target: ['es2020', 'chrome100', 'safari15', 'firefox100', 'edge100'],
     sourcemap: false,
+    chunkSizeWarningLimit: 800,
   },
   test: { environment: 'node', globals: false, include: ['src/**/*.test.{ts,tsx}'] },
 });

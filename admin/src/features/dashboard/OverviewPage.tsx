@@ -29,7 +29,7 @@ function seriesLabel(key: string, groupBy: DashboardSummary['groupBy']) {
 const dueColumns = [
   { title: 'Order', render: (_: unknown, order: OrderRow) => orderRef(order), width: 150 },
   { title: 'Customer', render: (_: unknown, order: OrderRow) => order.customerName || order.email, ellipsis: true },
-  { title: 'Delivery by', dataIndex: 'estimatedDeliveryAt', render: (value: number) => <span className="num">{formatDate(value)}</span>, width: 130 },
+  { title: 'Delivery by', dataIndex: 'estimatedDeliveryAt', render: (value: number) => <span className="num sv-nowrap">{formatDate(value)}</span>, width: 130 },
   { title: 'Total', dataIndex: 'amountInPaise', align: 'right' as const, render: (value: number) => <Money paise={value} />, width: 120 },
 ];
 

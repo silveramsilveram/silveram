@@ -90,7 +90,7 @@ export function StockPage() {
               ) },
               { title: 'Held by unpaid orders', dataIndex: 'reservedQuantity', align: 'right', width: 190, render: (value: number) => <span className="num" title="Already deducted from stock; returns if the payment window expires">{value}</span> },
               { title: 'On sale', dataIndex: 'active', width: 100, render: (value: boolean) => (value ? 'Yes' : <span className="muted">Hidden</span>) },
-              { title: 'Updated', dataIndex: 'updatedAt', width: 170, render: (value: number) => <span className="num muted">{formatDateTime(value)}</span> },
+              { title: 'Updated', dataIndex: 'updatedAt', width: 170, render: (value: number) => <span className="num muted sv-nowrap">{formatDateTime(value)}</span> },
               { title: '', width: 150, fixed: 'right', render: (_: unknown, row) => <Button size="small" onClick={() => setAdjusting(row)}>Adjust stock</Button> },
             ]} />
         </div>
@@ -119,7 +119,7 @@ export function MovementsPage() {
           <DataTable<MovementRow> {...table.tableProps}
             locale={{ emptyText: 'No movements recorded yet. History starts from the first stock change after this feature was enabled.' }}
             columns={[
-              { title: 'When', dataIndex: 'createdAt', width: 170, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
+              { title: 'When', dataIndex: 'createdAt', width: 170, render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span> },
               { title: 'Product', render: (_: unknown, row) => <div>{row.productName}<div><Mono>{row.sku}</Mono></div></div> },
               { title: 'Type', dataIndex: 'type', width: 190, render: (value: string) => MOVEMENT_TYPE[value] ?? value },
               { title: 'Change', dataIndex: 'delta', align: 'right', width: 100, render: (value: number) => <strong className="num" style={{ color: value < 0 ? 'var(--danger)' : 'var(--success)' }}>{value > 0 ? `+${value}` : value}</strong> },

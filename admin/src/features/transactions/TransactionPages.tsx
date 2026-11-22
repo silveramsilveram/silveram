@@ -35,7 +35,7 @@ export function TransactionListPage() {
           <DataTable<TransactionRow> {...table.tableProps}
             locale={{ emptyText: 'No ledger entries match. The ledger records events from the time tracking began; earlier orders appear on the Orders page.' }}
             columns={[
-              { title: 'When', dataIndex: 'occurredAt', width: 170, render: (value: number) => <span className="num">{formatDateTime(value)}</span> },
+              { title: 'When', dataIndex: 'occurredAt', width: 170, render: (value: number) => <span className="num sv-nowrap">{formatDateTime(value)}</span> },
               { title: 'Type', dataIndex: 'type', width: 170, render: (value: string) => TX_TYPE[value] ?? value },
               { title: 'Status', dataIndex: 'status', width: 130, render: (value: string) => <TxStatusTag status={value} /> },
               { title: 'Amount', dataIndex: 'amountInPaise', align: 'right', width: 130, render: (value: number, row) => <Money paise={row.type === 'refund' ? -value : value} strong /> },
