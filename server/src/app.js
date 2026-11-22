@@ -62,7 +62,9 @@ export function createApp(config) {
   app.use((req, res) => res.status(404).json({ error: 'Route not found.' }));
   app.use((error, req, res, _next) => {
     if (res.headersSent) return;
-    const status = error?.status || (error?.type === 'entity.parse.failed' ? 400 : 500);
+    // Appwrite unreachable or paused (free-plan inactivity) is an outage, not a bug: say so with a 503.
+    const databaseDown = error?.type === 'project_paused' || error?.type === 'general_service_unavailable';
+    const status = databaseDown ? 503 : error?.status || (error?.type === 'entity.parse.failed' ? 400 : 500);
     if (status >= 500) {
       // Never log request bodies or headers; the provider's code/type is what makes a 500 diagnosable.
       console.error('API request failed:', `${req.method} ${req.path}`, error?.code ?? '', error?.type ?? '', error?.message || 'Unknown error');
@@ -71,6 +73,7 @@ export function createApp(config) {
       error: status === 400
         ? 'Request body is invalid.'
         : status === 403 ? 'This website origin is not allowed.'
+        : databaseDown ? 'The store database is temporarily unavailable. Please try again shortly.'
         : 'The server could not complete this request.',
     });
   });
