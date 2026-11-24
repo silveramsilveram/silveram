@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import { getDocument, listDocuments, listDocumentsPage, Query } from '../platform/appwrite.js';
 import { listAllDocuments } from '../platform/paging.js';
-import { cleanSearch, httpError, idSchema, pageQuerySchema, parse, route } from './common.js';
+import { consumeRateLimit } from '../security.js';
+import { createMarketingUnsubscribeToken } from '../marketing.js';
+import { isoOrBlank, toCsv } from './csv.js';
+import { actorOf, cleanSearch, httpError, idSchema, pageQuerySchema, parse, route, ymdIst } from './common.js';
 import { isConfirmed } from './metrics.js';
 import { serializeOrder } from './orders.js';
 
@@ -13,6 +16,8 @@ const listSchema = pageQuerySchema.extend({
 });
 
 const maskPhone = (phone) => (phone ? `${'•'.repeat(Math.max(0, phone.length - 4))}${phone.slice(-4)}` : null);
+const MAX_MARKETING_EXPORT = 5000;
+const HOUR = 60 * 60 * 1000;
 
 function aggregate(orders) {
   const confirmed = orders.filter(isConfirmed);
@@ -38,7 +43,7 @@ function serializeListRow(customer, orders) {
   };
 }
 
-export function registerCustomerRoutes(router) {
+export function registerCustomerRoutes(router, config) {
   router.get('/customers', route(async (req, res) => {
     const input = parse(listSchema, req.query, 'Check the customer filters.');
     const queries = [];
@@ -81,6 +86,40 @@ export function registerCustomerRoutes(router) {
     if (!customer) throw httpError(404, 'Customer not found.');
     return customer;
   }
+
+  router.get('/customers/marketing.csv', route(async (req, res) => {
+    if (!(await consumeRateLimit(actorOf(req), 'admin-export', 30, HOUR))) {
+      throw httpError(429, 'Too many exports. Please try again later.');
+    }
+    const result = await listAllDocuments('marketingContacts', [
+      Query.equal('status', 'subscribed'),
+      Query.orderDesc('consentedAt'),
+    ], { maxDocuments: MAX_MARKETING_EXPORT });
+    const contacts = result.documents.filter((contact) =>
+      contact.status === 'subscribed' && Number.isInteger(contact.consentedAt));
+    const baseUrl = config.storeUrl ? new URL(config.storeUrl) : null;
+    const columns = [
+      { header: 'E-mail', value: (contact) => contact.email },
+      { header: 'Name', value: (contact) => contact.name || '' },
+      { header: 'Consent recorded at (UTC ISO)', value: (contact) => isoOrBlank(contact.consentedAt) },
+      {
+        header: 'Unsubscribe URL',
+        value: (contact) => {
+          const token = createMarketingUnsubscribeToken(contact.$id, config.otpPepper);
+          const path = `/api/newsletter/unsubscribe?token=${encodeURIComponent(token)}`;
+          return baseUrl ? new URL(path, baseUrl).toString() : path;
+        },
+      },
+    ];
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="silveram-marketing-opt-ins-${ymdIst(Date.now())}.csv"`,
+      'Cache-Control': 'no-store',
+      'X-Export-Rows': String(contacts.length),
+      'X-Export-Truncated': String(result.truncated),
+    });
+    return res.send(toCsv(columns, contacts));
+  }));
 
   router.get('/customers/:id', route(async (req, res) => {
     const customer = await loadCustomer(req.params.id);

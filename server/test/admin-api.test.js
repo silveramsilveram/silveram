@@ -29,10 +29,12 @@ const config = {
   cloudinaryRootFolder: 'silveram',
   adminEmailsCount: 1,
   storeUrl: 'https://www.silveram.test',
+  otpPepper: 'admin-api-test-pepper-that-is-at-least-32-bytes',
 };
 
 let server;
 let base;
+const mailjetCalls = [];
 let resetCaches = () => {};
 let hashToken; // imported after the Appwrite mock is installed, like every module that touches it
 
@@ -40,6 +42,13 @@ before(async () => {
   mock.module(new URL('../src/platform/appwrite.js', import.meta.url).href, { namedExports: mem.named });
   mock.module(new URL('../src/mail/transport.js', import.meta.url).href, {
     namedExports: { getMailer: () => null, mailConfigured: () => false },
+  });
+  mock.module(new URL('../src/mail/mailjet.js', import.meta.url).href, {
+    namedExports: {
+      marketingConfigured: () => true,
+      subscribeContact: async (...args) => { mailjetCalls.push(['subscribe', ...args]); },
+      unsubscribeContact: async (...args) => { mailjetCalls.push(['unsubscribe', ...args]); },
+    },
   });
   ({ hashToken } = await import('../src/security.js'));
   const { resetAnalyticsCaches } = await import('../src/admin/analytics.js');
@@ -49,11 +58,13 @@ before(async () => {
   const { createProductsRouter } = await import('../src/routes/products.js');
   const { createUploadsRouter } = await import('../src/routes/uploads.js');
   const { createWebhookRouter } = await import('../src/routes/webhooks.js');
+  const { createNewsletterRouter } = await import('../src/routes/newsletter.js');
   const app = express();
   app.use(cookieParser());
   app.use('/api/webhooks', express.raw({ type: 'application/json', limit: '1mb' }));
   app.use('/api/webhooks', createWebhookRouter(config));
   app.use(express.json());
+  app.use('/api/newsletter', createNewsletterRouter(config));
   app.use('/api/admin', createAdminRouter(config));
   app.use('/api/products', createProductsRouter(config));
   app.use('/api/uploads', createUploadsRouter(config));
@@ -72,6 +83,7 @@ const day = (n) => T0 + n * 24 * 60 * 60 * 1000;
 
 beforeEach(() => {
   mem.clear();
+  mailjetCalls.length = 0;
   resetCaches();
   const future = Date.now() + 86_400_000;
   mem.seed('sessions', 's-admin', { tokenHash: hashToken('admin-token'), userId: 'u-admin', email: 'owner@silveram.test', expiresAt: future });
@@ -121,9 +133,12 @@ const ADMIN_ROUTES = [
   ['PATCH', '/admin/orders/o1/fulfilment', { shippingStatus: 'packed' }], ['POST', '/admin/orders/o1/shipping-events', { note: 'x' }],
   ['POST', '/admin/orders/o1/cod-collection', {}], ['POST', '/admin/orders/o1/cod-remittance', {}],
   ['GET', '/admin/transactions'], ['GET', '/admin/transactions/t1'], ['GET', '/admin/cod/outstanding'],
+  ['POST', '/admin/cashfree/refunds', { orderId: 'o1', providerRefundId: 'rf-1', amountInPaise: 100, occurredAt: T0, reason: 'Customer refund', confirmed: true }],
+  ['GET', '/admin/cashfree/settlements'], ['POST', '/admin/cashfree/settlements', { settlementId: 's1', settledAt: T0, grossInPaise: 100, feesInPaise: 1, taxInPaise: 0, bankReceivedInPaise: 99, bankUtr: 'UTR1' }],
   ['GET', '/admin/inventory'], ['GET', '/admin/inventory/summary'], ['GET', '/admin/inventory/movements'],
   ['POST', '/admin/inventory/p1/adjust', { requestId: 'r1', type: 'restock', mode: 'delta', value: 1, reason: 'test' }],
   ['GET', '/admin/customers'], ['GET', '/admin/customers/c1'], ['GET', '/admin/customers/c1/orders'],
+  ['GET', '/admin/customers/marketing.csv'],
   ['GET', '/admin/products'], ['GET', '/admin/products/p1'], ['GET', '/admin/products/p1/price-history'], ['GET', '/admin/price-history'],
   ['GET', '/admin/reports'], ['GET', '/admin/reports/orders.csv'], ['GET', '/admin/reports/inventory.csv'],
   ['GET', '/products/admin'], ['POST', '/products/admin', {}], ['PATCH', '/products/admin/p1', { active: false }], ['DELETE', '/products/admin/p1'],
@@ -171,7 +186,8 @@ test('state-changing admin calls need a trusted Origin (CSRF defence); reads do 
 test('admin status exposes readiness booleans and never a secret', async () => {
   const { json, text } = await api('GET', '/admin/status');
   assert.equal(json.integrations.cashfree.enabled, true);
-  assert.equal(json.capabilities.refunds, false);
+  assert.equal(json.capabilities.refunds, true);
+  assert.equal(json.capabilities.settlements, true);
   assert.ok(!text.includes('cashfree-test-secret'));
 });
 
@@ -427,6 +443,71 @@ test('cash cannot be recorded for online-paid orders', async () => {
   assert.equal((await api('POST', '/admin/orders/o1/cod-collection', { body: {} })).status, 409);
 });
 
+test('completed Cashfree refunds are manually recorded once with an audit actor and remaining-balance checks', async () => {
+  addOrder('refund-order', {
+    status: 'paid', paymentMethod: 'cashfree', amountInPaise: 250000,
+    cashfreeOrderId: 'cf-order-refund', cashfreePaymentId: 'cf-payment-refund',
+    createdAt: Date.now(), updatedAt: Date.now(),
+  });
+  const body = {
+    orderId: 'refund-order', providerRefundId: 'refund-1', amountInPaise: 100000,
+    occurredAt: Date.now() - 60_000, reason: 'Cashfree refund completed', confirmed: true,
+  };
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body })).status, 201);
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body })).json.duplicate, true);
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body: { ...body, amountInPaise: 200000 } })).status, 409);
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body: { ...body, providerRefundId: 'refund-2', amountInPaise: 150001 } })).status, 409);
+  const [refund] = mem.all('transactions');
+  assert.deepEqual(
+    [refund.eventKey, refund.providerRefundId, refund.amountInPaise, refund.source, refund.actor, refund.reconciliation],
+    ['cashfree-refund:refund-1', 'refund-1', 100000, 'manual', 'owner@silveram.test', 'operator_recorded'],
+  );
+  const today = new Date().toISOString().slice(0, 10);
+  const summary = (await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis;
+  assert.equal(summary.refunds, 100000);
+  assert.equal(summary.netCollected, 150000);
+  assert.equal((await api('POST', '/admin/cashfree/refunds', {
+    body: { ...body, orderId: 'refund-order', providerRefundId: 'bad-date', occurredAt: Date.now() + 60_000 },
+  })).status, 400);
+});
+
+test('refund reconciliation refuses COD orders and entries without affirmative completion confirmation', async () => {
+  addOrder('cod-refund');
+  addOrder('online-refund', {
+    status: 'paid', paymentMethod: 'cashfree', cashfreeOrderId: 'cf-order', cashfreePaymentId: 'cf-payment',
+  });
+  const body = { orderId: 'online-refund', providerRefundId: 'rf-1', amountInPaise: 100, occurredAt: Date.now() - 1000, reason: 'Completed in Cashfree', confirmed: false };
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body: { ...body, orderId: 'cod-refund' } })).status, 400);
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body: { ...body, confirmed: true, orderId: 'cod-refund' } })).status, 409);
+  assert.equal((await api('POST', '/admin/cashfree/refunds', { body })).status, 400);
+  assert.equal(mem.all('transactions').length, 0);
+});
+
+test('manual Cashfree settlements compare the bank payout and remain separate from the payment ledger', async () => {
+  addOrder('settlement-order', {
+    status: 'paid', paymentMethod: 'cashfree', cashfreeOrderId: 'cf-order-settlement',
+    cashfreePaymentId: 'cf-payment-settlement', createdAt: Date.now(), updatedAt: Date.now(),
+  });
+  const body = {
+    settlementId: 'settlement-20260610', settledAt: Date.now() - 60_000,
+    grossInPaise: 100000, feesInPaise: 400, taxInPaise: 72, bankReceivedInPaise: 99000,
+    bankUtr: 'UTR-20260610', note: 'From Cashfree settlement report',
+  };
+  const created = await api('POST', '/admin/cashfree/settlements', { body });
+  assert.equal(created.status, 201);
+  assert.deepEqual(
+    [created.json.settlement.netPayoutInPaise, created.json.settlement.differenceInPaise, created.json.settlement.recordedBy],
+    [99528, -528, 'owner@silveram.test'],
+  );
+  assert.equal((await api('POST', '/admin/cashfree/settlements', { body })).json.duplicate, true);
+  assert.equal((await api('POST', '/admin/cashfree/settlements', { body: { ...body, bankReceivedInPaise: 99528 } })).status, 409);
+  assert.equal((await api('POST', '/admin/cashfree/settlements', { body: { ...body, settlementId: 'invalid-net', feesInPaise: 100001 } })).status, 400);
+  assert.equal((await api('GET', '/admin/cashfree/settlements')).json.total, 1);
+  assert.equal(mem.all('transactions').length, 0);
+  const today = new Date().toISOString().slice(0, 10);
+  assert.equal((await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis.netCollected, 100000);
+});
+
 // ---------------------------------------------------------------- inventory
 
 test('inventory adjustments need a reason, never go negative, are idempotent and leave a movement', async () => {
@@ -641,4 +722,45 @@ test('transaction detail returns sanitised ledger data and the linked order', as
   assert.equal(json.order.id, 'w1');
   assert.doesNotMatch(JSON.stringify(json), /cashfree-test-secret|"shipping":|9876543210/);
   assert.equal((await api('GET', '/admin/transactions/none')).status, 404);
+});
+
+test('marketing export contains only recorded opt-ins and unsubscribe requires a deliberate POST', async () => {
+  const signedUp = await api('POST', '/newsletter/subscribe', {
+    body: { email: 'optin@example.com', name: 'Asha', consent: true },
+  });
+  assert.equal(signedUp.status, 202);
+  const [contact] = mem.all('marketingContacts');
+  assert.deepEqual([contact.email, contact.status, contact.consentSource], ['optin@example.com', 'subscribed', 'newsletter']);
+  assert.equal(mailjetCalls.filter(([type]) => type === 'subscribe').length, 1);
+
+  const exportResult = await api('GET', '/admin/customers/marketing.csv');
+  assert.equal(exportResult.status, 200);
+  assert.equal(exportResult.headers.get('x-export-rows'), '1');
+  assert.match(exportResult.text, /optin@example\.com/);
+  const unsubscribeUrl = /https:\/\/www\.silveram\.test\/api\/newsletter\/unsubscribe\?token=([^,\r\n"]+)/.exec(exportResult.text)?.[0];
+  assert.ok(unsubscribeUrl);
+  const token = new URL(unsubscribeUrl).searchParams.get('token');
+
+  const preview = await fetch(`${base}/newsletter/unsubscribe?token=${encodeURIComponent(token)}`);
+  assert.equal(preview.status, 200);
+  assert.match(await preview.text(), /method="post"/);
+  assert.equal(mem.get('marketingContacts', contact.$id).status, 'subscribed', 'a mail-scanner GET does not unsubscribe');
+
+  const unsubscribed = await fetch(`${base}/newsletter/unsubscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token }),
+  });
+  assert.equal(unsubscribed.status, 200);
+  assert.equal(mem.get('marketingContacts', contact.$id).status, 'unsubscribed');
+  assert.equal(mailjetCalls.filter(([type]) => type === 'unsubscribe').length, 1);
+  assert.equal((await api('GET', '/admin/customers/marketing.csv')).headers.get('x-export-rows'), '0');
+
+  const reOptedIn = await api('POST', '/newsletter/subscribe', {
+    body: { email: 'optin@example.com', name: 'Asha', consent: true },
+  });
+  assert.equal(reOptedIn.status, 202);
+  assert.equal(mem.get('marketingContacts', contact.$id).status, 'subscribed');
+  assert.equal(mailjetCalls.filter(([type]) => type === 'subscribe').length, 2);
+  assert.equal(mailjetCalls.findLast(([type]) => type === 'subscribe')[4].explicitResubscribe, true);
 });

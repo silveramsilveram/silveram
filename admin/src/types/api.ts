@@ -87,6 +87,11 @@ export interface TransactionRow {
   providerPaymentId: string | null; providerRefundId: string | null; test: boolean;
   eventKey?: string; providerOrderId?: string | null; note?: string | null; meta?: Record<string, unknown> | null;
 }
+export interface CashfreeSettlement {
+  id: string; settlementId: string; settledAt: number; grossInPaise: number; feesInPaise: number; taxInPaise: number;
+  adjustmentsInPaise: number; netPayoutInPaise: number; bankReceivedInPaise: number; differenceInPaise: number;
+  bankUtr: string; note: string | null; recordedBy: string; recordedAt: number;
+}
 
 export interface MediaAsset {
   publicId: string; resourceType: 'image' | 'video'; width: number; height: number; duration?: number; format?: string; alt: string; url?: string;

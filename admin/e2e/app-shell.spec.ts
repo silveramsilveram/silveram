@@ -15,7 +15,7 @@ async function mockAdminApi(page: Page) {
       await route.fulfill({ json: {
         user: { id: 'admin-test', email: 'owner@example.test' },
         permissions: ['admin'],
-        apiVersion: 1,
+        apiVersion: 2,
         store: { timezone: 'Asia/Kolkata', utcOffsetMinutes: 330, currency: 'INR', lowStockThreshold: 2 },
         schema: { ready: true, missing: [] },
       } });
@@ -35,6 +35,27 @@ async function mockAdminApi(page: Page) {
         capabilities: { refunds: false, settlements: false, courierTracking: false, partialCodCollection: false },
         adminCount: 1,
       } });
+      return;
+    }
+    if (path.endsWith('/customers/marketing.csv')) {
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'content-type': 'text/csv; charset=utf-8',
+          'content-disposition': 'attachment; filename="silveram-marketing-opt-ins.csv"',
+          'x-export-rows': '0',
+          'x-export-truncated': 'false',
+        },
+        body: 'Email,Name,Consent recorded at (UTC ISO),Unsubscribe URL\r\n',
+      });
+      return;
+    }
+    if (path.endsWith('/cashfree/settlements')) {
+      await route.fulfill({ json: { data: [], total: 0, page: 1, limit: 100 } });
+      return;
+    }
+    if (path.endsWith('/transactions')) {
+      await route.fulfill({ json: { data: [], total: 0, page: 1, limit: 50 } });
       return;
     }
     if (path.endsWith('/orders')) {
@@ -105,4 +126,35 @@ test('legacy COD cash URL redirects to Money and keeps its query', async ({ page
   await mockAdminApi(page);
   await page.goto('/transactions/cod?view=recent');
   await expect(page).toHaveURL(/\/money\/cod\?view=recent$/);
+});
+
+test('Cashfree refund and settlement pages render their recording forms', async ({ page }, testInfo: TestInfo) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await mockAdminApi(page);
+  await page.goto('/money/refunds');
+  await expect(page.getByRole('heading', { name: 'Cashfree refunds', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Record completed refund' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: /verified that this refund completed successfully/ })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('cashfree-refunds-desktop.png'), fullPage: true });
+
+  await page.goto('/money/settlements');
+  await expect(page.getByRole('heading', { name: 'Cashfree settlements', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save reconciliation' })).toBeVisible();
+  await expect(page.getByText('Expected Cashfree payout')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('cashfree-settlements-desktop.png'), fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/money/settlements');
+  await expect(page.getByRole('heading', { name: 'Cashfree settlements', exact: true })).toBeVisible();
+  const width = await page.evaluate(() => ({ viewport: window.innerWidth, document: document.documentElement.scrollWidth }));
+  expect(width.document).toBeLessThanOrEqual(width.viewport);
+  await page.screenshot({ path: testInfo.outputPath('cashfree-settlements-mobile.png'), fullPage: true });
+});
+
+test('customers can download the consent-only marketing export', async ({ page }) => {
+  await mockAdminApi(page);
+  await page.goto('/customers');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download opted-in contacts' }).click();
+  await expect(download).resolves.toBeTruthy();
 });

@@ -37,8 +37,16 @@ The JSON attribute sizes are intentionally bounded to fit Appwrite Cloud collect
 | `orders` | Order and payment records | Owner/email, status, amount, item and shipping snapshots, payment references |
 | `webhook_events` | Cashfree webhook idempotency | Hashed document ID, provider event ID/type and received timestamp |
 | `email_claims` | Order confirmation send claims | Order ID, claim timestamp and sent timestamp |
+| `product_price_history` | Immutable product price audit | Old/new paise values, reason, timestamp and server-known actor |
+| `inventory_movements` | Immutable stock audit | Delta, before/after quantities, order/reason and server-known actor |
+| `order_events` | Order timeline and admin audit | State changes and notes with server-known actor |
+| `transactions` | Payment/COD/refund ledger | Idempotent event key, order, amount in paise, provider and reconciliation source |
+| `cashfree_settlements` | Manual Cashfree payout reconciliation | Provider settlement ID, gross/fees/tax/adjustments, net payout, bank amount, UTR and difference |
+| `marketing_contacts` | Explicit newsletter consent | Email, consent time/source/version and subscribed/unsubscribed status; only subscribed rows are exportable |
 
 Database numeric timestamps are Unix milliseconds. Orders store item and shipping snapshots as JSON strings to keep private, nested customer/order data in Appwrite. Product image metadata is JSON; the image/video binaries themselves belong only in Cloudinary.
+
+Existing Mailjet contacts are not backfilled into `marketing_contacts`; they remain excluded from admin exports until they submit the explicit newsletter consent form. Exported contacts receive a signed unsubscribe URL. Opening that URL displays a confirmation form; submitting it updates Appwrite and syncs the unsubscribe to Mailjet.
 
 ## 3. Appwrite access model
 

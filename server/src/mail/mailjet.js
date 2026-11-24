@@ -21,11 +21,11 @@ async function call(config, path, body) {
 
 // Creates the contact if needed and subscribes it to the marketing list. "addnoforce" never
 // re-subscribes someone who previously unsubscribed.
-export async function subscribeContact(config, email, name) {
+export async function subscribeContact(config, email, name, { explicitResubscribe = false } = {}) {
   await call(config, '/contactslist/' + config.mailjetContactListId + '/managecontact', {
     Email: email,
     ...(name && { Name: name }),
-    Action: 'addnoforce',
+    Action: explicitResubscribe ? 'addforce' : 'addnoforce',
   });
 }
 

@@ -57,13 +57,15 @@ export default function SettingsPage() {
               <p className="muted" style={{ fontSize: 13, marginBottom: 0 }}>These are controlled by server environment variables and are not changed from the admin.</p>
             </section>
             <section className="sv-surface">
-              <h2>Not built (by design)</h2>
+              <h2>Additional operations</h2>
               <List size="small" dataSource={[
-                ['Refunds from the admin', status.data.capabilities.refunds],
-                ['Cashfree settlement reconciliation', status.data.capabilities.settlements],
+                ['Cashfree refund recording (provider action remains manual)', status.data.capabilities.refunds],
+                ['Manual Cashfree settlement reconciliation', status.data.capabilities.settlements],
                 ['Live courier tracking', status.data.capabilities.courierTracking],
                 ['Partial COD collection', status.data.capabilities.partialCodCollection],
-              ] as [string, boolean][]} renderItem={([label, enabled]) => <List.Item><NotBuilt>{label}: {enabled ? 'available' : 'not available'}</NotBuilt></List.Item>} />
+              ] as [string, boolean][]} renderItem={([label, enabled]) => <List.Item>{enabled
+                ? <State ok onLabel={`${label}: available`} offLabel="" />
+                : <NotBuilt>{label}: not available</NotBuilt>}</List.Item>} />
             </section>
           </>
         ) : null}

@@ -392,7 +392,7 @@ In Chrome: DevTools → **Network** (check `Cache-Control` and sizes) and **Ligh
 
 ```powershell
 npm run validate                      # type-check, build + SEO prerender, API syntax check, API tests
-npm --prefix server run appwrite:check # the live database has every attribute/index the code needs
+npm --prefix server run appwrite:check # verifies every attribute/index required by the checked-out code
 ```
 
 Then stage-test account creation, email OTP rate limits, session/logout, product reads, private admin access, signed Cloudinary uploads, order creation/cancellation and order email. Enable payment methods only after payment-provider webhook testing and required scheduled cleanup are verified.
@@ -412,11 +412,13 @@ It lives in [admin/](admin/) as a **separate website** (`admin.silveram.in`), bu
 | **Overview** | The big picture for any period (7/30/90 days, 6 months, year to date, custom): orders, money, sales chart, what needs attention (overdue deliveries, low stock, payments to review). Hover the **?** icons for exact definitions. |
 | **Products** | Search and filter the catalogue, add or edit products, upload photos/films, switch a product on or off sale. Every price change is saved in **Price history** with who changed it and why. |
 | **Orders** | Every order with its customer, items (at the price they were bought), payment, shipping and timeline. Set dispatch and delivery dates, courier and tracking, move the shipment forward, cancel an unshipped COD order (stock goes back automatically, exactly once). |
-| **Transactions** | The money ledger: confirmed online payments, failed attempts, COD cash collected and handed over, and refunds that Cashfree confirmed. **COD cash & reconciliation** lists cash still to collect and cash not yet handed over. |
+| **Transactions** | The money ledger: confirmed online payments, failed attempts, COD cash collected and handed over, provider-confirmed refunds and refunds manually recorded after checking Cashfree. **COD cash & reconciliation** lists cash still to collect and cash not yet handed over. |
+| **Cashfree refunds** | Record a completed refund from Cashfree with its provider ID, amount and reason. This does not initiate a refund or move money. |
+| **Cashfree settlements** | Manually compare the settlement report's net payout with the bank deposit; retain the UTR and difference without counting it as revenue. |
 | **Inventory** | Stock on hand, low and out-of-stock items, units held by unpaid orders. Stock is changed only here, always with a reason, and every change is kept in **Stock movements**. |
-| **Customers** | Who bought, how often and for how much. Phone numbers are masked in the list; open a customer to see full details. |
+| **Customers** | Who bought, how often and for how much. Phone numbers are masked in the list; open a customer to see full details. A separate export contains only contacts with recorded newsletter consent and includes unsubscribe links. |
 | **Analytics** | Sales, orders, products (best and slow sellers), customers (new vs repeat) and delivery speed. |
-| **Reports** | Download CSV files (orders, product sales, transactions, COD, inventory, stock movements). They never include names, e-mails, phones or street addresses. |
+| **Reports** | Download general CSV files (orders, product sales, transactions, COD, inventory, stock movements). They exclude personal contact details; the separate marketing export is restricted to opted-in email contacts. |
 | **Settings** | Your session and a read-only view of what is switched on (database, image storage, e-mail, Cashfree, checkout). Secrets are never shown. |
 
 ### Signing in (single owner)
@@ -473,7 +475,7 @@ $env:ADMIN_DEV_API_TARGET = "http://localhost:4010"; npm --prefix admin run dev
 - **Gross order value** = what was sold (accepted COD, paid, dispatched orders). It is *not* cash received.
 - **Confirmed online collections** = Cashfree payments the server itself confirmed. A payment that is only "pending" is never counted.
 - **COD** order value is money you are *owed*. It becomes "collected" only when you press **Record cash collected** after dispatch, and "remitted" when you record that it reached you. These entries are typed by a person, so they are marked *operator recorded, not bank-verified*.
-- **Refunds** appear only when Cashfree confirms them. An order labelled "refunded" with no confirmed refund subtracts nothing.
+- **Refunds** appear after a signed Cashfree confirmation or an operator records a completed refund after checking Cashfree. An order labelled "refunded" with no ledger entry subtracts nothing.
 - **Test payments** are always excluded from real money.
 - Times are shown in **India time**. A month with no stored orders shows **"no data"**, never a made-up zero, and screens say when the ledger started.
 
@@ -495,7 +497,7 @@ $env:ADMIN_DEV_API_TARGET = "http://localhost:4010"; npm --prefix admin run dev
 
 ### What it deliberately does not do
 
-Start refunds, read Cashfree settlement reports, track couriers live, accept part-payment for COD, or send marketing messages. The screens say so instead of showing fake data.
+Initiate refunds from the admin (refunds are processed manually in Cashfree), import settlement reports or match each settlement to individual payments, track couriers live, accept part-payment for COD, or send marketing campaigns. The screens say so instead of showing fake data.
 
 ### Checking your work
 

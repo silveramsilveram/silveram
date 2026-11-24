@@ -46,7 +46,7 @@ export function TransactionListPage() {
             ]} />
         </div>
       )}
-      <p className="muted" style={{ marginTop: 12 }}>Refunds are listed only when Cashfree confirmed them by signed webhook. Settlement reports from Cashfree are not connected, so no settlement figures are shown.</p>
+      <p className="muted" style={{ marginTop: 12 }}>Refunds include signed Cashfree confirmations and refunds recorded by an operator after checking Cashfree. Reconciled settlement payouts are tracked separately and do not add revenue.</p>
     </>
   );
 }
@@ -107,7 +107,7 @@ export function CodReconciliationPage() {
           <section className="sv-surface flush"><h2 style={{ padding: '16px 16px 0' }}>Collected, waiting to be remitted</h2>
             <DataTable<OrderRow> size="small" rowKey="id" pagination={{ pageSize: 10, hideOnSinglePage: true }} dataSource={data.heldNotRemitted.orders} scroll={{ x: 760 }} locale={{ emptyText: 'Nothing is waiting to be remitted.' }}
               columns={[...compactOrderColumns.slice(0, 3), { title: 'Cash collected', dataIndex: 'codCollectedInPaise', align: 'right', render: (value: number) => <Money paise={value} /> }]} /></section>
-          <Alert type="info" showIcon message="Settlements and refunds" description="Cashfree settlement reports and refund initiation are not connected to the admin. Refunds appear in the ledger only after Cashfree confirms them." />
+          <Alert type="info" showIcon message="Cashfree reconciliation" description="Record completed refunds and compare settlement payouts in Money. These manual records do not initiate Cashfree actions." />
         </div>
       ) : null}
     </>

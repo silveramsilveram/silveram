@@ -151,6 +151,8 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     inventoryMovements: process.env.APPWRITE_INVENTORY_MOVEMENTS_COLLECTION_ID?.trim() || 'inventory_movements',
     orderEvents: process.env.APPWRITE_ORDER_EVENTS_COLLECTION_ID?.trim() || 'order_events',
     transactions: process.env.APPWRITE_TRANSACTIONS_COLLECTION_ID?.trim() || 'transactions',
+    cashfreeSettlements: process.env.APPWRITE_CASHFREE_SETTLEMENTS_COLLECTION_ID?.trim() || 'cashfree_settlements',
+    marketingContacts: process.env.APPWRITE_MARKETING_CONTACTS_COLLECTION_ID?.trim() || 'marketing_contacts',
   };
   for (const [name, id] of Object.entries(appwriteCollections)) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/.test(id)) {

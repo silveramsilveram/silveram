@@ -268,7 +268,49 @@ export const APPWRITE_SCHEMA = {
       ['provider_occurred_idx', 'key', ['provider', 'occurredAt']],
     ],
   },
+  cashfreeSettlements: {
+    name: 'Cashfree settlement reconciliations',
+    attributes: [
+      ['settlementId', 'string', true, 100],
+      ['settledAt', 'integer', true],
+      ['grossInPaise', 'integer', true],
+      ['feesInPaise', 'integer', true],
+      ['taxInPaise', 'integer', true],
+      ['adjustmentsInPaise', 'integer', true],
+      ['netPayoutInPaise', 'integer', true],
+      ['bankReceivedInPaise', 'integer', true],
+      ['differenceInPaise', 'integer', true],
+      ['bankUtr', 'string', true, 100],
+      ['note', 'string', false, 300],
+      ['recordedBy', 'string', true, 254],
+      ['recordedAt', 'integer', true],
+    ],
+    indexes: [
+      ['settlement_id_unique', 'unique', ['settlementId']],
+      ['settled_at_idx', 'key', ['settledAt']],
+    ],
+  },
+  marketingContacts: {
+    name: 'Explicitly opted-in marketing contacts',
+    attributes: [
+      ['email', 'string', true, 254],
+      ['name', 'string', false, 100],
+      ['status', 'string', true, 16],
+      ['consentedAt', 'integer', true],
+      ['consentSource', 'string', true, 32],
+      ['consentVersion', 'string', true, 32],
+      ['lastUnsubscribedAt', 'integer', false],
+      ['createdAt', 'integer', true],
+      ['updatedAt', 'integer', true],
+    ],
+    indexes: [
+      ['marketing_email_unique', 'unique', ['email']],
+      ['marketing_status_consent_idx', 'key', ['status', 'consentedAt']],
+    ],
+  },
 };
 
 /** Collections added for the admin dashboard; /api/admin/me reports whether they are provisioned. */
-export const ADMIN_COLLECTION_KEYS = ['productPriceHistory', 'inventoryMovements', 'orderEvents', 'transactions'];
+export const ADMIN_COLLECTION_KEYS = [
+  'productPriceHistory', 'inventoryMovements', 'orderEvents', 'transactions', 'cashfreeSettlements', 'marketingContacts',
+];
