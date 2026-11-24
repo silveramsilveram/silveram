@@ -13,8 +13,8 @@ import { useApiQuery } from '@/services/useApiQuery';
 import type { DashboardSummary, OrderRow } from '@/types/api';
 import { compactOrderColumns, orderRef } from '../orders/columns';
 
-const NAVY = '#182d49';
-const CHAMPAGNE = '#a8895a';
+const NAVY = 'var(--sv-chart-1)';
+const CHAMPAGNE = 'var(--sv-chart-3)';
 const pct = (value: number | null) => (value === null ? '—' : `${Math.round(value * 1000) / 10}%`);
 
 function seriesLabel(key: string, groupBy: DashboardSummary['groupBy']) {
@@ -62,7 +62,7 @@ function Body({ data, stale }: { data: DashboardSummary; stale: boolean }) {
   }));
 
   return (
-    <div style={{ display: 'grid', gap: 16, opacity: stale ? 0.7 : 1, transition: 'opacity .2s' }} aria-busy={stale}>
+    <div className={`sv-dashboard-body${stale ? ' is-stale' : ''}`} aria-busy={stale}>
       <Caveats notes={data.caveats} />
       {data.overdueTotal > 0 ? (
         <Alert type="warning" showIcon message={`${data.overdueTotal} order${data.overdueTotal === 1 ? ' is' : 's are'} past the promised delivery date`}
@@ -113,12 +113,12 @@ function Body({ data, stale }: { data: DashboardSummary; stale: boolean }) {
             { key: 'codh', label: 'COD collected, not remitted', value: k.codHeldBeforeRemittance, display: formatPaise(k.codHeldBeforeRemittance) },
             { key: 'ref', label: 'Refunds recorded', value: k.refunds ?? 0, display: k.refunds === null ? 'Unavailable' : formatPaise(k.refunds) },
           ]} />
-          <p className="muted" style={{ fontSize: 13, marginBottom: 0 }}>COD figures are operator-recorded, not bank-verified.</p>
+          <p className="muted sv-small-note">COD figures are operator-recorded, not bank-verified.</p>
         </section>
         <section className="sv-surface" aria-label="Order pipeline">
           <h2>Order pipeline</h2>
           <HBarList items={data.pipeline.status.map((row) => ({ key: row.status, label: <OrderStatusTag status={row.status} />, value: row.count, display: row.count }))} empty="No orders in this period." />
-          <h2 style={{ marginTop: 16 }}>Shipping (confirmed orders)</h2>
+          <h2 className="sv-section-spaced">Shipping (confirmed orders)</h2>
           <HBarList items={data.pipeline.shipping.map((row) => ({ key: row.status, label: SHIPPING_STATUS[row.status]?.label ?? row.status, value: row.count, display: row.count }))} empty="No confirmed orders yet." />
         </section>
       </div>
@@ -148,29 +148,29 @@ function Body({ data, stale }: { data: DashboardSummary; stale: boolean }) {
 
       <div className="sv-grid two">
         <section className="sv-surface flush" aria-label="Overdue deliveries">
-          <h2 style={{ padding: '16px 16px 0' }}>Overdue deliveries ({data.overdueTotal})</h2>
+          <h2 className="sv-flush-heading">Overdue deliveries ({data.overdueTotal})</h2>
           <DataTable size="small" rowKey="id" pagination={false} dataSource={data.overdueOrders} columns={dueColumns} locale={{ emptyText: 'Nothing overdue.' }} scroll={{ x: 560 }} />
         </section>
         <section className="sv-surface flush" aria-label="Upcoming deliveries">
-          <h2 style={{ padding: '16px 16px 0' }}>Due in the next 7 days</h2>
+          <h2 className="sv-flush-heading">Due in the next 7 days</h2>
           <DataTable size="small" rowKey="id" pagination={false} dataSource={data.upcomingDeliveries} columns={dueColumns} locale={{ emptyText: 'No delivery dates set for the next week.' }} scroll={{ x: 560 }} />
         </section>
       </div>
 
       <div className="sv-grid two">
         <section className="sv-surface flush" aria-label="Low stock">
-          <h2 style={{ padding: '16px 16px 0' }}>Low stock</h2>
+          <h2 className="sv-flush-heading">Low stock</h2>
           <DataTable size="small" rowKey="id" pagination={false} dataSource={data.lowStock} locale={{ emptyText: 'No active product is running low.' }} columns={[
             { title: 'Product', dataIndex: 'name', ellipsis: true },
             { title: 'SKU', dataIndex: 'sku', render: (value: string) => <span className="mono">{value}</span>, width: 120 },
-            { title: 'In stock', dataIndex: 'stockQuantity', align: 'right', width: 90, render: (value: number) => <strong className="num" style={{ color: value === 0 ? 'var(--danger)' : undefined }}>{value}</strong> },
+            { title: 'In stock', dataIndex: 'stockQuantity', align: 'right', width: 90, render: (value: number) => <strong className={`num${value === 0 ? ' sv-danger-text' : ''}`}>{value}</strong> },
           ]} />
-          <div style={{ padding: 12 }}><Link to="/inventory?state=low">Open inventory</Link></div>
+          <div className="sv-table-link"><Link to="/inventory?state=low">Open inventory</Link></div>
         </section>
         <section className="sv-surface flush" aria-label="Recent orders">
-          <h2 style={{ padding: '16px 16px 0' }}>Recent orders in this period</h2>
+          <h2 className="sv-flush-heading">Recent orders in this period</h2>
           <DataTable size="small" rowKey="id" pagination={false} dataSource={data.recentOrders} columns={compactOrderColumns} locale={{ emptyText: 'No orders in this period.' }} scroll={{ x: 760 }} />
-          <div style={{ padding: 12 }}><Link to="/orders">All orders</Link></div>
+          <div className="sv-table-link"><Link to="/orders">All orders</Link></div>
         </section>
       </div>
 
@@ -178,11 +178,11 @@ function Body({ data, stale }: { data: DashboardSummary; stale: boolean }) {
         key: 'defs',
         label: 'Definitions: what each figure means',
         children: (
-          <dl style={{ margin: 0 }}>
+          <dl className="sv-definitions">
             {Object.entries(data.definitions ?? {}).map(([name, text]) => (
-              <div key={name} style={{ marginBottom: 8 }}><dt style={{ fontWeight: 600 }}>{name}</dt><dd style={{ margin: 0 }} className="muted">{text}</dd></div>
+              <div key={name}><dt>{name}</dt><dd className="muted">{text}</dd></div>
             ))}
-            <dd className="muted" style={{ margin: 0 }}>Order statuses: {Object.values(ORDER_STATUS).map((meta) => meta.label).join(', ')}. Data available from {formatDateTime(data.coverage.ordersSince)}.</dd>
+            <dd className="muted">Order statuses: {Object.values(ORDER_STATUS).map((meta) => meta.label).join(', ')}. Data available from {formatDateTime(data.coverage.ordersSince)}.</dd>
           </dl>
         ),
       }]} />

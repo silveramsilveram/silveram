@@ -47,7 +47,7 @@ export function BarChart({ data, series, format, formatAxis = format, ariaLabel,
   const hasAnyData = data.some((row) => row.values.some((value) => value !== null));
 
   return (
-    <div className="sv-chart" style={{ position: 'relative' }}>
+    <div className="sv-chart">
       <div className="sv-legend" aria-hidden="true">
         {series.map((item) => <span key={item.name}><i style={{ background: item.color }} />{item.name}</span>)}
       </div>
@@ -55,7 +55,7 @@ export function BarChart({ data, series, format, formatAxis = format, ariaLabel,
         <title id={titleId}>{ariaLabel}</title>
         {ticks.map((tick) => (
           <g key={tick}>
-            <line x1={margin.left} x2={width - margin.right} y1={y(tick)} y2={y(tick)} stroke="#e7e5e0" strokeWidth={1} />
+            <line x1={margin.left} x2={width - margin.right} y1={y(tick)} y2={y(tick)} stroke="var(--sv-chart-grid)" strokeWidth={1} />
             <text x={margin.left - 8} y={y(tick) + 4} textAnchor="end">{formatAxis(tick)}</text>
           </g>
         ))}
@@ -66,10 +66,10 @@ export function BarChart({ data, series, format, formatAxis = format, ariaLabel,
             <g key={row.key}>
               {unavailable ? (
                 <g>
-                  <rect x={left} y={y(0) - 22} width={groupW} height={22} rx={4} fill="none" stroke="#a7adb5" strokeDasharray="3 3">
+                  <rect x={left} y={y(0) - 22} width={groupW} height={22} rx={4} fill="none" stroke="var(--sv-silver)" strokeDasharray="3 3">
                     <title>{`${row.label}: no data stored for this period`}</title>
                   </rect>
-                  <text x={left + groupW / 2} y={y(0) - 7} textAnchor="middle" style={{ fontSize: 11 }}>n/a</text>
+                  <text className="sv-chart-na" x={left + groupW / 2} y={y(0) - 7} textAnchor="middle">n/a</text>
                 </g>
               ) : series.map((item, seriesIndex) => {
                 const value = row.values[seriesIndex];
@@ -102,9 +102,9 @@ export function BarChart({ data, series, format, formatAxis = format, ariaLabel,
           );
         })}
       </svg>
-      {!hasAnyData ? <div className="muted" style={{ textAlign: 'center', marginTop: -8 }}>No stored data for this period yet.</div> : null}
+      {!hasAnyData ? <div className="muted sv-chart-empty">No stored data for this period yet.</div> : null}
       {active ? (
-        <div className="sv-chart-tip" style={{ left: `clamp(8px, calc(${active.x}% - 80px), calc(100% - 170px))`, top: 40 }} role="status">
+        <div className="sv-chart-tip" style={{ left: `clamp(8px, calc(${active.x}% - 80px), calc(100% - 170px))` }} role="status">
           <strong>{data[active.index].label}</strong>
           {series.map((item, i) => {
             const value = data[active.index].values[i];
@@ -112,8 +112,8 @@ export function BarChart({ data, series, format, formatAxis = format, ariaLabel,
           })}
         </div>
       ) : null}
-      <details style={{ marginTop: 8 }}>
-        <summary style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: 13 }}>View as table</summary>
+      <details className="sv-chart-details">
+        <summary className="sv-chart-summary">View as table</summary>
         <Table
           size="small"
           pagination={false}

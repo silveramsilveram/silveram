@@ -13,7 +13,8 @@
     "preview": "vite preview --port=3100",
     "typecheck": "tsc --noEmit",
     "lint": "npm run typecheck",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@emnapi/core": "2.0.0-beta.2",
     "@emnapi/runtime": "2.0.0-beta.2",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

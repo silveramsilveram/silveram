@@ -1,23 +1,31 @@
 import type { ThemeConfig } from 'antd';
 
-/** Ant Design tokens remapped to Silveram's Midnight Editorial palette (see DESIGN.md). */
+function cssToken(name: string): string {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if (!value) throw new Error(`Missing admin design token: ${name}`);
+  return value;
+}
+
+/** Ant Design tokens resolved from the CSS palette in tokens.css. */
 export const silveramTheme: ThemeConfig = {
   token: {
-    colorPrimary: '#182d49',
-    colorInfo: '#385575',
-    colorSuccess: '#2f5d3a',
-    colorWarning: '#8a5a12',
-    colorError: '#9b2c2c',
-    colorBgBase: '#ffffff',
-    colorBgLayout: '#f8f7f4',
-    colorTextBase: '#20232b',
-    colorTextSecondary: '#4a4f5c',
-    colorTextTertiary: '#5e6471',
-    colorTextPlaceholder: '#5e6471',
-    colorBorder: '#d9dadc',
-    colorBorderSecondary: '#e7e5e0',
-    colorLink: '#182d49',
-    colorLinkHover: '#243f63',
+    colorPrimary: cssToken('--sv-primary'),
+    colorPrimaryHover: cssToken('--sv-primary-hover'),
+    colorPrimaryActive: cssToken('--sv-primary-active'),
+    colorInfo: cssToken('--sv-steel'),
+    colorSuccess: cssToken('--sv-success'),
+    colorWarning: cssToken('--sv-warning'),
+    colorError: cssToken('--sv-danger'),
+    colorBgBase: cssToken('--sv-card'),
+    colorBgLayout: cssToken('--sv-canvas'),
+    colorTextBase: cssToken('--sv-text'),
+    colorTextSecondary: cssToken('--sv-text-2'),
+    colorTextTertiary: cssToken('--sv-muted'),
+    colorTextPlaceholder: cssToken('--sv-muted'),
+    colorBorder: cssToken('--sv-card-border'),
+    colorBorderSecondary: cssToken('--sv-divider'),
+    colorLink: cssToken('--sv-primary'),
+    colorLinkHover: cssToken('--sv-primary-hover'),
     fontFamily: "'League Spartan Variable', 'League Spartan', system-ui, sans-serif",
     fontSize: 15,
     borderRadius: 8,
@@ -27,26 +35,26 @@ export const silveramTheme: ThemeConfig = {
     wireframe: false,
   },
   components: {
-    Layout: { siderBg: '#182d49', headerBg: '#f8f7f4', bodyBg: '#f8f7f4', triggerBg: '#101f34', triggerColor: '#dce6f0' },
+    Layout: { siderBg: cssToken('--sv-sidebar'), headerBg: cssToken('--sv-topbar'), bodyBg: cssToken('--sv-canvas'), triggerBg: cssToken('--sv-sidebar-deep'), triggerColor: cssToken('--sv-sidebar-text') },
     Menu: {
-      darkItemBg: '#182d49',
-      darkSubMenuItemBg: '#101f34',
-      darkItemSelectedBg: '#243f63',
-      darkItemSelectedColor: '#f8f7f4',
-      darkItemColor: '#dce6f0',
-      darkItemHoverBg: '#243f63',
-      darkItemHoverColor: '#ffffff',
+      darkItemBg: cssToken('--sv-sidebar'),
+      darkSubMenuItemBg: cssToken('--sv-sidebar-deep'),
+      darkItemSelectedBg: cssToken('--sv-sidebar-selected'),
+      darkItemSelectedColor: cssToken('--sv-sidebar-text-strong'),
+      darkItemColor: cssToken('--sv-sidebar-text'),
+      darkItemHoverBg: cssToken('--sv-sidebar-hover'),
+      darkItemHoverColor: cssToken('--sv-sidebar-text-strong'),
       itemMarginInline: 8,
     },
     Table: {
-      headerBg: '#eeece7', headerColor: '#20232b', rowHoverBg: '#f8f7f4', borderColor: '#e7e5e0', cellPaddingBlock: 12,
+      headerBg: cssToken('--sv-canvas'), headerColor: cssToken('--sv-text'), rowHoverBg: cssToken('--sv-canvas'), borderColor: cssToken('--sv-divider'), cellPaddingBlock: 12,
       // Sorting must not tint a whole column: the arrow already shows the active sort.
-      bodySortBg: 'transparent', headerSortActiveBg: '#eeece7', headerSortHoverBg: '#e6e3dc', headerSplitColor: 'transparent',
+      bodySortBg: 'transparent', headerSortActiveBg: cssToken('--sv-canvas'), headerSortHoverBg: cssToken('--sv-canvas-hover'), headerSplitColor: 'transparent',
     },
     Button: { primaryShadow: 'none', defaultShadow: 'none', fontWeight: 500 },
-    Card: { colorBorderSecondary: '#d9dadc' },
-    Tag: { defaultBg: '#eeece7', defaultColor: '#20232b' },
-    Drawer: { colorBgElevated: '#ffffff' },
-    Segmented: { itemSelectedBg: '#182d49', itemSelectedColor: '#f8f7f4' },
+    Card: { colorBorderSecondary: cssToken('--sv-card-border') },
+    Tag: { defaultBg: cssToken('--sv-canvas'), defaultColor: cssToken('--sv-text') },
+    Drawer: { colorBgElevated: cssToken('--sv-card') },
+    Segmented: { itemSelectedBg: cssToken('--sv-primary'), itemSelectedColor: cssToken('--sv-card') },
   },
 };
