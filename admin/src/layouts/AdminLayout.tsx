@@ -71,9 +71,22 @@ function Brand() {
   return (
     <div className="sv-brand">
       <span className="display">Silveram</span>
-      <span className="mono">Admin</span>
+      <span className="mono">Store administration</span>
     </div>
   );
+}
+
+function pageLabel(pathname: string): string {
+  if (pathname === '/') return 'Overview';
+  if (pathname.startsWith('/products')) return 'Products';
+  if (pathname.startsWith('/orders')) return 'Orders';
+  if (pathname.startsWith('/transactions')) return 'Transactions';
+  if (pathname.startsWith('/inventory')) return 'Inventory';
+  if (pathname.startsWith('/customers')) return 'Customers';
+  if (pathname.startsWith('/analytics')) return 'Analytics';
+  if (pathname.startsWith('/reports')) return 'Reports';
+  if (pathname.startsWith('/settings')) return 'Settings';
+  return 'Admin';
 }
 
 export function AdminLayout() {
@@ -99,16 +112,16 @@ export function AdminLayout() {
           {menu}
         </Drawer>
       ) : (
-        <Sider className="sv-sider" width={264} collapsible collapsed={collapsed} onCollapse={setCollapsed} breakpoint="lg" style={{ position: 'sticky', top: 0, overflowY: 'auto' }}>
-          {collapsed ? <div className="sv-brand" style={{ padding: '22px 0', textAlign: 'center' }}><span className="display">S</span></div> : <Brand />}
+        <Sider className="sv-sider" width={248} collapsedWidth={72} collapsible collapsed={collapsed} onCollapse={setCollapsed} breakpoint="lg" style={{ position: 'sticky', top: 0, overflowY: 'auto' }}>
+          {collapsed ? <div className="sv-brand sv-brand-collapsed"><span className="display">S</span></div> : <Brand />}
           {menu}
         </Sider>
       )}
       <Layout>
         <Header className="sv-header">
           {mobile ? <Button type="text" icon={<MenuOutlined />} aria-label="Open navigation" onClick={() => setDrawer(true)} /> : null}
-          <AppstoreOutlined aria-hidden style={{ color: 'var(--muted)' }} />
-          <span className="muted" style={{ flex: 1 }}>Store admin</span>
+          <AppstoreOutlined aria-hidden style={{ color: 'var(--steel)' }} />
+          <span className="sv-header-context" style={{ flex: 1 }}>{pageLabel(location.pathname)}</span>
           {me.data ? <Tag className="sv-header-email" style={{ margin: 0 }} title="Signed in as">{me.data.user.email}</Tag> : null}
           <Button icon={<LogoutOutlined />} loading={isPending} onClick={() => logout()}>{mobile ? '' : 'Sign out'}</Button>
         </Header>
