@@ -447,6 +447,7 @@ test('completed Cashfree refunds are manually recorded once with an audit actor 
   addOrder('refund-order', {
     status: 'paid', paymentMethod: 'cashfree', amountInPaise: 250000,
     cashfreeOrderId: 'cf-order-refund', cashfreePaymentId: 'cf-payment-refund',
+    createdAt: Date.now(), updatedAt: Date.now(),
   });
   const body = {
     orderId: 'refund-order', providerRefundId: 'refund-1', amountInPaise: 100000,
@@ -461,6 +462,10 @@ test('completed Cashfree refunds are manually recorded once with an audit actor 
     [refund.eventKey, refund.providerRefundId, refund.amountInPaise, refund.source, refund.actor, refund.reconciliation],
     ['cashfree-refund:refund-1', 'refund-1', 100000, 'manual', 'owner@silveram.test', 'operator_recorded'],
   );
+  const today = new Date().toISOString().slice(0, 10);
+  const summary = (await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis;
+  assert.equal(summary.refunds, 100000);
+  assert.equal(summary.netCollected, 150000);
   assert.equal((await api('POST', '/admin/cashfree/refunds', {
     body: { ...body, orderId: 'refund-order', providerRefundId: 'bad-date', occurredAt: Date.now() + 60_000 },
   })).status, 400);
@@ -479,6 +484,10 @@ test('refund reconciliation refuses COD orders and entries without affirmative c
 });
 
 test('manual Cashfree settlements compare the bank payout and remain separate from the payment ledger', async () => {
+  addOrder('settlement-order', {
+    status: 'paid', paymentMethod: 'cashfree', cashfreeOrderId: 'cf-order-settlement',
+    cashfreePaymentId: 'cf-payment-settlement', createdAt: Date.now(), updatedAt: Date.now(),
+  });
   const body = {
     settlementId: 'settlement-20260610', settledAt: Date.now() - 60_000,
     grossInPaise: 100000, feesInPaise: 400, taxInPaise: 72, bankReceivedInPaise: 99000,
@@ -495,6 +504,8 @@ test('manual Cashfree settlements compare the bank payout and remain separate fr
   assert.equal((await api('POST', '/admin/cashfree/settlements', { body: { ...body, settlementId: 'invalid-net', feesInPaise: 100001 } })).status, 400);
   assert.equal((await api('GET', '/admin/cashfree/settlements')).json.total, 1);
   assert.equal(mem.all('transactions').length, 0);
+  const today = new Date().toISOString().slice(0, 10);
+  assert.equal((await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis.netCollected, 100000);
 });
 
 // ---------------------------------------------------------------- inventory
