@@ -2,10 +2,11 @@ import { request } from './apiClient';
 import type {
   AdminMe, AdminStatus, AnalyticsMeta, CustomerDetail, DashboardSummary, FulfilmentStats, MediaAsset, OrderDetail,
   OrderRow, PaymentMixRow, ProductPerformance, ProductRow, SeriesPoint, Summary, TransactionRow,
+  CashfreeSettlement,
 } from '@/types/api';
 
 /** The admin API this app was built for. A different number means frontend and backend are out of step. */
-export const EXPECTED_API_VERSION = 1;
+export const EXPECTED_API_VERSION = 2;
 
 export const authApi = {
   requestOtp: (email: string) => request<{ success: true }>('/auth/otp', { method: 'POST', body: { email } }),
@@ -53,6 +54,16 @@ export const adminApi = {
     }>('/admin/cod/outstanding'),
 
   transaction: (id: string) => request<{ transaction: TransactionRow; order: OrderRow | null }>(`/admin/transactions/${id}`),
+  transactions: (query: { type?: string; provider?: string; limit?: number; page?: number }) =>
+    request<{ data: TransactionRow[]; total: number; page: number; limit: number }>('/admin/transactions', { query }),
+  recordCashfreeRefund: (body: { orderId: string; providerRefundId: string; amountInPaise: number; occurredAt: number; reason: string; confirmed: boolean }) =>
+    request<{ success: true; duplicate: boolean }>('/admin/cashfree/refunds', { method: 'POST', body }),
+  cashfreeSettlements: (query: { limit?: number; page?: number }) =>
+    request<{ data: CashfreeSettlement[]; total: number; page: number; limit: number }>('/admin/cashfree/settlements', { query }),
+  recordCashfreeSettlement: (body: {
+    settlementId: string; settledAt: number; grossInPaise: number; feesInPaise: number; taxInPaise: number;
+    adjustmentsInPaise: number; bankReceivedInPaise: number; bankUtr: string; note?: string;
+  }) => request<{ success: true; duplicate: boolean; settlement: CashfreeSettlement }>('/admin/cashfree/settlements', { method: 'POST', body }),
 
   inventorySummary: () =>
     request<{ products: number; activeProducts: number; outOfStock: number; lowStock: number; lowStockThreshold: number }>('/admin/inventory/summary'),

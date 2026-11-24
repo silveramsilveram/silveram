@@ -22,7 +22,7 @@ An editorial, premium and youthful silver jewellery brand. Unlike heavy traditio
 
 - **Market**: India only. Prices in INR. Mobile-first.
 - **How orders are placed**: on the website only. Customer flow is product, bag page, delivery details, payment, order confirmation. WhatsApp is **not** used to take orders.
-- **Payment**: **cash on delivery is the available method and the default.** UPI and debit/credit card (Razorpay) are shown as "Coming soon" until the payment gateway is approved and enabled. Online payment must stay disabled until then.
+- **Payment**: cash on delivery is available and the default. Cashfree online checkout is enabled in production; test-payment mode is off. Do not change live payment flags without the store owner's confirmation and a provider-backed test plan.
 - **Accounts**: optional. Guests check out with email, name, mobile (plus an optional alternate mobile), address, optional landmark, city, state and PIN code. Accounts use a passwordless email code.
 - **Support**: WhatsApp (+91 77669 11777) and Instagram (@silveram__) are customer-support and enquiry channels. The shop address is shown on the site.
 - **Platform**: React single-page storefront with hash routes, an Express API on Vercel, Appwrite for authentication and application data (orders, customers, products), Cloudinary for product images, and email through Mailjet when configured.

@@ -15,9 +15,10 @@ import { registerCustomerRoutes } from '../admin/customers.js';
 import { registerProductAdminRoutes } from '../admin/productsAdmin.js';
 import { registerAnalyticsRoutes } from '../admin/analytics.js';
 import { registerReportRoutes } from '../admin/reports.js';
+import { registerCashfreeRoutes } from '../admin/cashfree.js';
 
 /** Bumped when the admin API contract changes; the admin app checks it and warns on a mismatch. */
-export const ADMIN_API_VERSION = 1;
+export const ADMIN_API_VERSION = 2;
 const HOUR = 60 * 60 * 1000;
 const schemaCache = new TtlCache({ ttlMs: 60 * 1000, maxEntries: 1 });
 
@@ -61,7 +62,7 @@ function throttle(action, limit) {
   };
 }
 
-const SENSITIVE_WRITE = /\/(cod-collection|cod-remittance|cancel|adjust)$/;
+const SENSITIVE_WRITE = /\/(cod-collection|cod-remittance|cancel|adjust|refunds|settlements)$/;
 
 export function createAdminRouter(config) {
   const router = Router();
@@ -104,9 +105,8 @@ export function createAdminRouter(config) {
       },
       checkout: { live: config.liveCheckout, cod: config.codEnabled, testPayments: config.testPayments },
       capabilities: {
-        // Not built, deliberately: surfaced so the UI can show a clear "not available" state.
-        refunds: false,
-        settlements: false,
+        refunds: config.cashfreeEnabled,
+        settlements: config.cashfreeEnabled,
         courierTracking: false,
         partialCodCollection: false,
       },
@@ -117,6 +117,7 @@ export function createAdminRouter(config) {
   registerAnalyticsRoutes(router, config);
   registerOrderRoutes(router, config);
   registerTransactionRoutes(router, config);
+  registerCashfreeRoutes(router, config);
   registerInventoryRoutes(router, config, { clearCatalogueCache });
   registerCustomerRoutes(router, config);
   registerProductAdminRoutes(router, config);

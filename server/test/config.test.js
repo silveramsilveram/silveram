@@ -19,6 +19,8 @@ const configNames = [
   'APPWRITE_ORDERS_COLLECTION_ID',
   'APPWRITE_WEBHOOK_EVENTS_COLLECTION_ID',
   'APPWRITE_EMAIL_CLAIMS_COLLECTION_ID',
+  'APPWRITE_CASHFREE_SETTLEMENTS_COLLECTION_ID',
+  'APPWRITE_MARKETING_CONTACTS_COLLECTION_ID',
   'OTP_PEPPER',
   'FRONTEND_ORIGINS',
   'TRUST_PROXY_HOPS',
@@ -76,6 +78,8 @@ test('production config keeps COD checkout gated and Cashfree disabled by defaul
   assert.equal(config.liveCheckout, false);
   assert.equal(config.cashfreeEnabled, false);
   assert.equal(config.trustProxyHops, 1);
+  assert.equal(config.appwriteCollections.cashfreeSettlements, 'cashfree_settlements');
+  assert.equal(config.appwriteCollections.marketingContacts, 'marketing_contacts');
 });
 
 test('Cashfree needs live checkout, credentials and a store URL before it can be enabled', (t) => {

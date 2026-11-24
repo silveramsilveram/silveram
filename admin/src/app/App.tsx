@@ -26,6 +26,8 @@ const OrderShowPage = lazy(() => import('@/features/orders/OrderShowPage'));
 const TransactionListPage = lazy(() => import('@/features/transactions/TransactionPages').then((m) => ({ default: m.TransactionListPage })));
 const TransactionShowPage = lazy(() => import('@/features/transactions/TransactionPages').then((m) => ({ default: m.TransactionShowPage })));
 const CodReconciliationPage = lazy(() => import('@/features/transactions/TransactionPages').then((m) => ({ default: m.CodReconciliationPage })));
+const CashfreeRefundsPage = lazy(() => import('@/features/transactions/CashfreePages').then((m) => ({ default: m.CashfreeRefundsPage })));
+const CashfreeSettlementsPage = lazy(() => import('@/features/transactions/CashfreePages').then((m) => ({ default: m.CashfreeSettlementsPage })));
 const StockPage = lazy(() => import('@/features/inventory/InventoryPages').then((m) => ({ default: m.StockPage })));
 const MovementsPage = lazy(() => import('@/features/inventory/InventoryPages').then((m) => ({ default: m.MovementsPage })));
 const CustomerListPage = lazy(() => import('@/features/customers/CustomerPages').then((m) => ({ default: m.CustomerListPage })));
@@ -101,6 +103,8 @@ export default function App() {
                       <Route path="show/:id" element={page(<TransactionShowPage />)} />
                     </Route>
                     <Route path="cod" element={page(<CodReconciliationPage />)} />
+                    <Route path="refunds" element={page(<CashfreeRefundsPage />)} />
+                    <Route path="settlements" element={page(<CashfreeSettlementsPage />)} />
                     <Route path="reports" element={<Navigate to="/reports" replace />} />
                   </Route>
                   <Route path="transactions" element={<Outlet />}>

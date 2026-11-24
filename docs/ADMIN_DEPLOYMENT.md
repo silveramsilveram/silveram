@@ -11,6 +11,8 @@ The admin (`admin/`) is a separate Refine + Ant Design frontend. It has **no bac
 | Schema additions | `server/src/platform/appwrite-schema.js` (additive only) |
 | Backfill script | `server/src/scripts/admin-backfill.js` |
 | Demo fixture server (dev only) | `server/scripts/dev-fixture-server.mjs` |
+| Cashfree reconciliation | `server/src/admin/cashfree.js` (manual refund recording and settlement summaries) |
+| Marketing consent | `server/src/marketing.js` and `server/src/routes/newsletter.js` (explicit opt-in, unsubscribe, consent-only export) |
 
 Storefront code, `vercel.json`, checkout flags and the Cashfree/COD defaults are untouched. Checkout, expiry and webhook code gained **best-effort, idempotent bookkeeping** (stock-movement rows, ledger rows, searchable name/phone) that runs after the order commits and can never fail a checkout or a payment webhook.
 
@@ -24,7 +26,7 @@ Pre-existing bug fixed on the way: `PATCH /api/products/admin/:id` threw on zod 
    npm --prefix server run appwrite:setup
    npm --prefix server run appwrite:check
    ```
-   Creates `product_price_history`, `inventory_movements`, `order_events`, `transactions`; adds optional attributes to `orders` (`customerName`, `customerPhone`, `shippingStatus`, `expectedDispatchAt`, `dispatchedAt`, `estimatedDeliveryAt`, `deliveredAt`, `carrier`, `trackingNumber`, `trackingUrl`, `codCollectedInPaise`, `codRemittedInPaise`) and new indexes (including fulltext `name_search` on products/customers and `customer_name_search` on orders). Wait until the script reports every index available.
+   Creates `product_price_history`, `inventory_movements`, `order_events`, `transactions`, `cashfree_settlements`, and `marketing_contacts`; adds optional attributes to `orders` (`customerName`, `customerPhone`, `shippingStatus`, `expectedDispatchAt`, `dispatchedAt`, `estimatedDeliveryAt`, `deliveredAt`, `carrier`, `trackingNumber`, `trackingUrl`, `codCollectedInPaise`, `codRemittedInPaise`) and new indexes (including fulltext `name_search` on products/customers and `customer_name_search` on orders). Wait until the script reports every index available.
 2. **Backfill searchable order fields** (dry run first; fills only missing values, never overwrites):
    ```bash
    npm --prefix server run admin:backfill
@@ -67,19 +69,22 @@ All money is integer paise; test-payment orders are excluded from every real-mon
 * **Confirmed order / gross order value**: status `placed_cod`, `paid`, `fulfilled` or `refunded` (value of what was sold, not cash).
 * **Confirmed online collections**: Cashfree orders that are `paid`, `fulfilled` or `refunded`. `pending_payment` never counts.
 * **COD order value** is owed money. **COD collected / remitted** only exist once an operator records them (operator-entered, not bank-verified). **COD awaiting** = order value - collected.
-* **Refunds**: only Cashfree refunds confirmed by signed webhook and stored in the ledger. A `refunded` label alone subtracts nothing.
+* **Refunds**: signed Cashfree webhook confirmations and operator-recorded refunds checked as successful in Cashfree are stored in the ledger. A `refunded` label alone subtracts nothing.
 * **Net collected (recorded)** = online collections + COD cash collected - recorded refunds.
+* **Manual refund reconciliation**: an administrator may record a completed Cashfree refund after checking its successful status in Cashfree. The provider refund ID is the idempotency key; the entry is marked operator-recorded and changes no provider state.
+* **Cashfree settlements**: each manual record stores gross, fees, tax, signed adjustments, Cashfree net payout, bank amount, UTR and the difference. Settlement rows are kept outside the payment ledger and never count as revenue.
+* **Marketing exports**: only records with affirmative newsletter consent in `marketing_contacts` are exported. Existing Mailjet contacts without a recorded Appwrite consent are excluded. Export rows include signed unsubscribe links; opening a link does not unsubscribe until the recipient confirms by POST.
 * Periods use `Asia/Kolkata`. A month before the first stored order is shown as **unavailable**, never as zero. The ledger starts when tracking began; screens say so.
 
 ## 7. Not built (deliberate)
 
-Refund initiation, Cashfree settlement reconciliation, live courier tracking, partial COD collection, category analytics, customer-summary exports and marketing messages. The UI states this where relevant rather than showing fake screens.
+Refund initiation in the admin (refunds are processed manually in Cashfree), automated settlement imports or transaction-level settlement matching, live courier tracking, partial COD collection, category analytics, customer-summary exports and marketing campaign sending. The UI states this where relevant rather than showing fake screens.
 
 ## 8. Rollback
 
 * **Admin frontend**: redeploy the previous Vercel deployment; nothing else depends on it.
 * **API**: redeploy the previous deployment. New collections/attributes stay in place harmlessly (the old code ignores them). Nothing was renamed or removed, so no data rollback is needed.
-* **Schema**: do not delete the new collections; they hold audit history. Optional attributes on `orders` can stay unused indefinitely.
+* **Schema**: do not delete the new collections; they hold audit history and consent records. Optional attributes on `orders` can stay unused indefinitely.
 * **Backfill** only fills empty fields; to undo, clear `customerName`/`customerPhone` on the affected orders (storefront does not read them).
 
 ## 9. Tests
@@ -89,4 +94,4 @@ npm run typecheck && npm run build         # storefront (unchanged)
 npm --prefix server run check && npm --prefix server test
 npm --prefix admin run typecheck && npm --prefix admin test && npm --prefix admin run build
 ```
-Server tests include: 401/403 on every admin route, CSRF origin checks, order filters/pagination/search, the shipping state machine, COD cancel restoring stock once (including two simultaneous requests), COD cash rules, price-history audit, stock adjustment idempotency, analytics definitions, CSV formula injection, and webhook signature/replay/ledger behaviour.
+Server tests include: 401/403 on every admin route, CSRF origin checks, order filters/pagination/search, the shipping state machine, COD cancel restoring stock once (including two simultaneous requests), COD cash rules, manual Cashfree refund idempotency and balance checks, settlement difference calculations, explicit newsletter consent, signed unsubscribe links and opt-in-only exports, price-history audit, stock adjustment idempotency, analytics definitions, CSV formula injection, and webhook signature/replay/ledger behaviour.

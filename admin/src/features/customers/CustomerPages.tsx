@@ -1,22 +1,55 @@
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, DownloadOutlined } from '@ant-design/icons';
 import { DataTable } from '@/components/DataTable';
 import { useOne } from '@refinedev/core';
-import { Alert, Descriptions, Tag } from 'antd';
+import { Alert, App, Button, Descriptions, Tag } from 'antd';
 import { Link, useParams } from 'react-router';
+import { useState } from 'react';
 import { ClearFilters, SearchBox, SelectFilter } from '@/components/FilterControls';
 import { ErrorState, KpiTile, LoadingBlock, Money, PageHeader } from '@/components/primitives';
 import { formatDate, formatDateTime } from '@/lib/dates';
+import { ApiError, download } from '@/services/apiClient';
 import { useUrlTable } from '@/services/useUrlTable';
 import type { CustomerDetail, CustomerRow, OrderRow } from '@/types/api';
 import { orderListColumns } from '../orders/columns';
 
 export function CustomerListPage() {
+  const { message } = App.useApp();
   const table = useUrlTable<CustomerRow>('customers', { filterKeys: ['search', 'source'], defaultSort: { field: 'createdAt', order: 'desc' } });
   const { values } = table;
   const note = (table.query.data as { aggregateNote?: string | null } | undefined)?.aggregateNote;
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function exportMarketingContacts() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { blob, filename, rows, truncated } = await download('/admin/customers/marketing.csv', undefined);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      message.success(`${rows.toLocaleString('en-IN')} opted-in contact${rows === 1 ? '' : 's'} downloaded${truncated ? '; export limit reached' : ''}`);
+    } catch (caught) {
+      setExportError(caught instanceof ApiError ? caught.message : 'The customer export failed.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <>
-      <PageHeader title="Customers" description="People who have placed or started an order, guests included. Phone numbers are masked here; open a customer to see full contact details." />
+      <PageHeader
+        title="Customers"
+        description="People who have placed or started an order, guests included. Phone numbers are masked here; open a customer to see full contact details."
+        actions={<Button icon={<DownloadOutlined />} loading={exporting} onClick={exportMarketingContacts}>Download opted-in contacts</Button>}
+      />
+      <Alert className="sv-customer-export-note" type="info" showIcon message="Marketing export is consent-only" description="Only addresses with a recorded, affirmative newsletter opt-in are included. Legacy Mailjet contacts without an Appwrite consent record are excluded. The file includes an unsubscribe link for every contact." />
+      {exportError ? <Alert className="sv-customer-export-error" type="error" showIcon message={exportError} role="alert" /> : null}
       <div className="sv-filters" role="search" aria-label="Customer filters">
         <SearchBox label="Search customers" placeholder="Name, e-mail or 10-digit phone" value={values.search} onChange={(value) => table.setFilter('search', value)} />
         <SelectFilter label="Customer type" placeholder="Guest or account" value={values.source} onChange={(value) => table.setFilter('source', value)} options={[{ value: 'guest', label: 'Guest' }, { value: 'account', label: 'Account holder' }]} width={180} />
