@@ -15,23 +15,23 @@ export function PageHeader({ title, description, actions }: { title: string; des
         <h1>{title}</h1>
         {description ? <p>{description}</p> : null}
       </div>
-      {actions ? <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{actions}</div> : null}
+      {actions ? <div className="sv-page-actions">{actions}</div> : null}
     </div>
   );
 }
 
 export const Money = ({ paise, strong }: { paise: number | null | undefined; strong?: boolean }) => (
-  <span className="num" style={strong ? { fontWeight: 600 } : undefined}>{formatPaise(paise)}</span>
+  <span className={`num${strong ? ' is-strong' : ''}`}>{formatPaise(paise)}</span>
 );
 
 export const Mono = ({ children, title }: { children: ReactNode; title?: string }) => <span className="mono" title={title}>{children}</span>;
 
-const TONE: Record<Tone, { color: string; bg: string; icon: ReactNode }> = {
-  neutral: { color: '#4a4f5c', bg: '#eeece7', icon: <MinusCircleOutlined /> },
-  info: { color: '#243f63', bg: '#dce6f0', icon: <InfoCircleOutlined /> },
-  success: { color: '#2f5d3a', bg: '#e4efe6', icon: <CheckCircleOutlined /> },
-  warning: { color: '#7a4b08', bg: '#f6ead3', icon: <ClockCircleOutlined /> },
-  danger: { color: '#9b2c2c', bg: '#f6e3e3', icon: <CloseCircleOutlined /> },
+const TONE: Record<Tone, { className: string; icon: ReactNode }> = {
+  neutral: { className: 'is-neutral', icon: <MinusCircleOutlined /> },
+  info: { className: 'is-info', icon: <InfoCircleOutlined /> },
+  success: { className: 'is-success', icon: <CheckCircleOutlined /> },
+  warning: { className: 'is-warning', icon: <ClockCircleOutlined /> },
+  danger: { className: 'is-danger', icon: <CloseCircleOutlined /> },
 };
 
 /** Text label + icon + tinted border: meaning never depends on colour alone. */
@@ -39,7 +39,7 @@ export function StatusTag({ meta, fallback }: { meta: StatusMeta | undefined; fa
   const resolved = meta ?? { label: fallback, tone: 'neutral' as Tone };
   const tone = TONE[resolved.tone];
   const tag = (
-    <Tag icon={tone.icon} style={{ color: tone.color, background: tone.bg, borderColor: tone.color, margin: 0, fontWeight: 500 }}>
+    <Tag className={`sv-status-tag ${tone.className}`} icon={tone.icon}>
       {resolved.label}
     </Tag>
   );
@@ -54,7 +54,7 @@ export const ReconciliationTag = ({ value }: { value: string }) => <StatusTag me
 export function HelpTip({ text }: { text: ReactNode }) {
   return (
     <Tooltip title={text}>
-      <QuestionCircleOutlined aria-label="Definition" tabIndex={0} style={{ color: 'var(--muted)', cursor: 'help' }} />
+      <QuestionCircleOutlined className="sv-help-tip" aria-label="Definition" tabIndex={0} />
     </Tooltip>
   );
 }

@@ -110,9 +110,9 @@ function ProductForm({ mode, product }: { mode: 'create' | 'edit'; product?: Pro
         title={mode === 'create' ? 'Add product' : product?.name ?? 'Edit product'}
         description={<><Link to="/products"><ArrowLeftOutlined /> All products</Link>{product ? <> · <Mono>{product.sku}</Mono> · updated {formatDateTime(product.updatedAt)}</> : null}</>}
       />
-      {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} role="alert" /> : null}
+      {error ? <Alert className="sv-alert-spaced" type="error" showIcon message={error} role="alert" /> : null}
       <Form form={form} layout="vertical" initialValues={initial} onFinish={save} requiredMark="optional" scrollToFirstError>
-        <div className="sv-grid sv-split" style={{ alignItems: 'start' }}>
+        <div className="sv-grid sv-split sv-form-split">
           <div className="sv-grid">
             <section className="sv-surface" aria-label="Details">
               <h2>Details</h2>
@@ -143,7 +143,7 @@ function ProductForm({ mode, product }: { mode: 'create' | 'edit'; product?: Pro
               </Form.Item>
               {mode === 'create' ? (
                 <Form.Item label="Opening stock" name="stockQuantity" rules={[{ required: true, type: 'number', min: 0, message: 'Stock must be 0 or more.' }]}>
-                  <InputNumber min={0} max={1_000_000} precision={0} style={{ width: '100%' }} />
+                  <InputNumber className="sv-full-width" min={0} max={1_000_000} precision={0} />
                 </Form.Item>
               ) : (
                 <Form.Item label="Stock on hand" extra={<Link to={`/inventory?search=${encodeURIComponent(product?.sku ?? '')}`}>Adjust stock in Inventory</Link>}>
@@ -156,12 +156,12 @@ function ProductForm({ mode, product }: { mode: 'create' | 'edit'; product?: Pro
 
             {product ? (
               <section className="sv-surface flush" aria-label="Price history">
-                <h2 style={{ padding: '16px 16px 0' }}>Price history</h2>
-                {history.isError ? <div style={{ padding: 16 }}><ErrorState error={history.error} onRetry={() => history.refetch()} /></div> : (
-                  <div style={{ padding: 16 }}>
+                <h2 className="sv-flush-heading">Price history</h2>
+                {history.isError ? <div className="sv-pad-16"><ErrorState error={history.error} onRetry={() => history.refetch()} /></div> : (
+                  <div className="sv-pad-16">
                     {history.data && history.data.data.length > 1 ? (
                       <BarChart height={180} ariaLabel={`Price of ${product.name} over time`} format={formatPaise} formatAxis={formatPaiseCompact}
-                        series={[{ name: 'Price', color: '#182d49' }]}
+                        series={[{ name: 'Price', color: 'var(--sv-chart-1)' }]}
                         data={[...history.data.data].reverse().map((row) => ({ key: row.id, label: formatDate(row.changedAt), values: [row.newPriceInPaise] }))} />
                     ) : null}
                     <Table size="small" rowKey="id" pagination={false} loading={history.isLoading} dataSource={history.data?.data ?? []} scroll={{ x: 460 }}
@@ -171,7 +171,7 @@ function ProductForm({ mode, product }: { mode: 'create' | 'edit'; product?: Pro
                         { title: 'From → to', render: (_: unknown, row) => <span className="num">{row.previousPriceInPaise === null ? 'Created at' : formatPaise(row.previousPriceInPaise)} → <strong>{formatPaise(row.newPriceInPaise)}</strong></span> },
                         { title: 'By', dataIndex: 'changedBy', ellipsis: true },
                       ]} />
-                    {history.data?.trackingStartedAt ? <p className="muted" style={{ fontSize: 13, marginBottom: 0 }}>History tracking started on {formatDate(history.data.trackingStartedAt)}. Earlier price changes were not recorded.</p> : null}
+                    {history.data?.trackingStartedAt ? <p className="muted sv-small-note">History tracking started on {formatDate(history.data.trackingStartedAt)}. Earlier price changes were not recorded.</p> : null}
                   </div>
                 )}
               </section>

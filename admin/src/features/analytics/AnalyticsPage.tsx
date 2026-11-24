@@ -22,10 +22,10 @@ function Frame<T extends AnalyticsMeta>({ query, children }: { query: { isLoadin
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   if (!query.data) return null;
   return (
-    <div style={{ display: 'grid', gap: 16, opacity: query.isFetching ? 0.7 : 1 }}>
+    <div className={`sv-dashboard-body${query.isFetching ? ' is-stale' : ''}`}>
       <Caveats notes={query.data.caveats} />
       {children(query.data)}
-      <p className="muted" style={{ fontSize: 13, margin: 0 }}>Data available from {formatDateTime(query.data.coverage.ordersSince)} · {query.data.coverage.ordersAnalysed.toLocaleString('en-IN')} orders analysed · India time</p>
+      <p className="muted sv-small-note">Data available from {formatDateTime(query.data.coverage.ordersSince)} · {query.data.coverage.ordersAnalysed.toLocaleString('en-IN')} orders analysed · India time</p>
     </div>
   );
 }
@@ -45,13 +45,13 @@ function SalesTab({ range }: { range: Range }) {
       <section className="sv-surface">
         <h2>Gross order value and online collections by {d.groupBy}</h2>
         <BarChart ariaLabel="Sales over time" format={formatPaise} formatAxis={formatPaiseCompact}
-          series={[{ name: 'Gross order value', color: '#182d49' }, { name: 'Online collections', color: '#a8895a' }]}
+          series={[{ name: 'Gross order value', color: 'var(--sv-chart-1)' }, { name: 'Online collections', color: 'var(--sv-chart-3)' }]}
           data={d.series.map((p) => ({ key: p.key, label: bucket(p.key), values: [p.grossOrderValue, p.onlineCollections] }))} />
       </section>
       <section className="sv-surface">
         <h2>Orders and units by {d.groupBy}</h2>
         <BarChart ariaLabel="Orders and units over time" format={(v) => v.toLocaleString('en-IN')} formatAxis={(v) => String(Math.round(v))}
-          series={[{ name: 'Confirmed orders', color: '#182d49' }, { name: 'Units sold', color: '#a8895a' }]}
+          series={[{ name: 'Confirmed orders', color: 'var(--sv-chart-1)' }, { name: 'Units sold', color: 'var(--sv-chart-3)' }]}
           data={d.series.map((p) => ({ key: p.key, label: bucket(p.key), values: [p.confirmedOrders, p.unitsSold] }))} />
       </section>
     </>
@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
   return (
     <>
       <PageHeader title="Analytics" description="Sales, orders, products, customers and fulfilment. Hover the help icons for exact definitions." actions={<Link to={`/reports?from=${range.from}&to=${range.to}`}>Export reports</Link>} />
-      <div style={{ marginBottom: 16 }}><DateRangeControl {...dateRange} /></div>
+      <div className="sv-date-range-block"><DateRangeControl {...dateRange} /></div>
       <Tabs activeKey={items.some((item) => item.key === tab) ? tab : 'sales'} items={items} destroyInactiveTabPane
         onChange={(key) => setParams((current) => { const next = new URLSearchParams(current); next.set('tab', key); return next; }, { replace: true })} />
     </>

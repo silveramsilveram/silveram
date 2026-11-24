@@ -5,7 +5,7 @@ import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { App as AntdApp, ConfigProvider } from 'antd';
 import enGB from 'antd/locale/en_GB';
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useParams } from 'react-router';
 import { LoadingBlock } from '@/components/primitives';
 import { AccessDeniedPage, LoginPage, NotFoundPage, UnavailablePage } from '@/features/auth/AuthPages';
 import { AdminLayout } from '@/layouts/AdminLayout';
@@ -17,6 +17,7 @@ import { ErrorBoundary } from './ErrorBoundary';
 
 // Route-level code splitting keeps the first screen small.
 const OverviewPage = lazy(() => import('@/features/dashboard/OverviewPage'));
+const SetupPage = lazy(() => import('@/features/dashboard/SetupPage'));
 const ProductListPage = lazy(() => import('@/features/products/ProductListPage'));
 const ProductFormPage = lazy(() => import('@/features/products/ProductFormPage'));
 const PriceHistoryPage = lazy(() => import('@/features/products/PriceHistoryPage'));
@@ -47,6 +48,13 @@ const queryClient = new QueryClient({
 
 const page = (element: React.ReactNode) => <ErrorBoundary><Suspense fallback={<LoadingBlock rows={8} />}>{element}</Suspense></ErrorBoundary>;
 
+function LegacyTransactionRedirect({ destination }: { destination: string }) {
+  const location = useLocation();
+  const { id } = useParams();
+  const pathname = id ? `${destination}/${encodeURIComponent(id)}` : destination;
+  return <Navigate to={`${pathname}${location.search}`} replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -60,7 +68,7 @@ export default function App() {
             resources={[
               { name: 'products', list: '/products', create: '/products/create', edit: '/products/edit/:id', meta: { label: 'Products' } },
               { name: 'orders', list: '/orders', show: '/orders/show/:id', meta: { label: 'Orders' } },
-              { name: 'transactions', list: '/transactions', show: '/transactions/show/:id', meta: { label: 'Transactions' } },
+              { name: 'transactions', list: '/money/payments', show: '/money/payments/show/:id', meta: { label: 'Payments' } },
               { name: 'customers', list: '/customers', show: '/customers/show/:id', meta: { label: 'Customers' } },
               { name: 'inventory', list: '/inventory', meta: { label: 'Inventory' } },
               { name: 'inventory-movements', list: '/inventory/movements', meta: { label: 'Stock movements' } },
@@ -75,6 +83,7 @@ export default function App() {
                 <Route path="/unavailable" element={<UnavailablePage />} />
                 <Route element={<Authenticated key="admin" loading={<LoadingBlock rows={6} />}><AdminLayout /></Authenticated>}>
                   <Route index element={page(<OverviewPage />)} />
+                  <Route path="setup" element={page(<SetupPage />)} />
                   <Route path="products" element={<Outlet />}>
                     <Route index element={page(<ProductListPage />)} />
                     <Route path="create" element={page(<ProductFormPage mode="create" />)} />
@@ -85,10 +94,19 @@ export default function App() {
                     <Route index element={page(<OrderListPage />)} />
                     <Route path="show/:id" element={page(<OrderShowPage />)} />
                   </Route>
-                  <Route path="transactions" element={<Outlet />}>
-                    <Route index element={page(<TransactionListPage />)} />
-                    <Route path="show/:id" element={page(<TransactionShowPage />)} />
+                  <Route path="money" element={<Outlet />}>
+                    <Route index element={<Navigate to="payments" replace />} />
+                    <Route path="payments" element={<Outlet />}>
+                      <Route index element={page(<TransactionListPage />)} />
+                      <Route path="show/:id" element={page(<TransactionShowPage />)} />
+                    </Route>
                     <Route path="cod" element={page(<CodReconciliationPage />)} />
+                    <Route path="reports" element={<Navigate to="/reports" replace />} />
+                  </Route>
+                  <Route path="transactions" element={<Outlet />}>
+                    <Route index element={<LegacyTransactionRedirect destination="/money/payments" />} />
+                    <Route path="show/:id" element={<LegacyTransactionRedirect destination="/money/payments/show" />} />
+                    <Route path="cod" element={<LegacyTransactionRedirect destination="/money/cod" />} />
                   </Route>
                   <Route path="inventory" element={<Outlet />}>
                     <Route index element={page(<StockPage />)} />
