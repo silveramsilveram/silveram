@@ -2,7 +2,9 @@
 
 ## How it works
 1. Customer picks "UPI, QR code, debit or credit card" at checkout; `POST /api/orders` reserves stock and
-   creates a Cashfree order (id = our order id, amount always recomputed from Appwrite prices).
+   creates a Cashfree order (id = our order id, amount always recomputed from Appwrite prices). It returns
+   the payment session without waiting for optional customer/inventory bookkeeping or expired-reservation cleanup;
+   Vercel `waitUntil` runs those tasks after the response.
 2. The browser redirects to Cashfree's hosted checkout with the returned `payment_session_id` (QR, UPI apps, cards).
    The pending order reference is retained so a guest can resume the same order if they return without paying.
 3. When Cashfree returns to the order page, the browser calls `POST /api/orders/:id/verify-cashfree`; the server asks
