@@ -7,11 +7,11 @@ import { clip, deterministicId } from './common.js';
  * a second row: the second attempt hits a 409 and is treated as "already recorded".
  */
 
-async function createOnce(collection, id, data, transactionId) {
+async function createOnce(collection, id, data, transactionId, ignoreTransactionalConflict = false) {
   try {
     return { created: true, doc: await createDocument(collection, id, data, transactionId) };
   } catch (error) {
-    if (error?.code === 409) return { created: false, doc: null };
+    if (error?.code === 409 && (!transactionId || ignoreTransactionalConflict)) return { created: false, doc: null };
     throw error;
   }
 }
@@ -96,7 +96,7 @@ export function recordTransaction({
     ...(clip(note, 300) && { note: clip(note, 300) }),
     ...(meta && { metaJson: JSON.stringify(meta).slice(0, 1000) }),
     test,
-  }, transactionId);
+  }, transactionId, true);
 }
 
 /** Never let bookkeeping break a payment or checkout: log a diagnostic code only (no PII). */

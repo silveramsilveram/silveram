@@ -121,6 +121,7 @@ function addOrder(id, over = {}) {
 }
 
 const RANGE = 'from=2026-06-01&to=2026-06-30';
+const todayIst = () => new Date(Date.now() + 330 * 60 * 1000).toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------- authorisation
 
@@ -462,7 +463,7 @@ test('completed Cashfree refunds are manually recorded once with an audit actor 
     [refund.eventKey, refund.providerRefundId, refund.amountInPaise, refund.source, refund.actor, refund.reconciliation],
     ['cashfree-refund:refund-1', 'refund-1', 100000, 'manual', 'owner@silveram.test', 'operator_recorded'],
   );
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIst();
   const summary = (await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis;
   assert.equal(summary.refunds, 100000);
   assert.equal(summary.netCollected, 150000);
@@ -504,7 +505,7 @@ test('manual Cashfree settlements compare the bank payout and remain separate fr
   assert.equal((await api('POST', '/admin/cashfree/settlements', { body: { ...body, settlementId: 'invalid-net', feesInPaise: 100001 } })).status, 400);
   assert.equal((await api('GET', '/admin/cashfree/settlements')).json.total, 1);
   assert.equal(mem.all('transactions').length, 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIst();
   assert.equal((await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis.netCollected, 100000);
 });
 
