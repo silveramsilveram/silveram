@@ -10,6 +10,7 @@ import { Query } from 'node-appwrite';
 
 const store = new Map(); // `${collection}/${id}` -> document
 const sent = []; // captured e-mails
+let successfulCashfreePayment = null;
 
 const key = (collection, id) => `${collection}/${id}`;
 const docsOf = (collection) => [...store.entries()].filter(([k]) => k.startsWith(`${collection}/`)).map(([, v]) => v);
@@ -73,6 +74,12 @@ const fakeAppwrite = {
 };
 
 const fakeMailer = { sendMail: async (message) => void sent.push(message) };
+const fakeCashfree = {
+  channelFor: (group) => group === 'upi' ? 'upi' : undefined,
+  createCashfreeOrder: async (_config, order) => ({ order_id: order._id, payment_session_id: 'cf-session-test' }),
+  findSuccessfulPayment: async () => successfulCashfreePayment,
+  getCashfreeOrder: async (_config, orderId) => ({ order_id: orderId, payment_session_id: 'cf-session-test' }),
+};
 
 let server;
 let base;
@@ -80,6 +87,7 @@ const config = {
   liveCheckout: true,
   codEnabled: true,
   cashfreeEnabled: false,
+  cashfreeEnv: 'sandbox',
   testPayments: true,
   storeName: 'Silveram',
   storeUrl: 'https://silveram.example',
@@ -92,6 +100,9 @@ before(async () => {
   mock.module(new URL('../src/platform/appwrite.js', import.meta.url).href, { namedExports: fakeAppwrite });
   mock.module(new URL('../src/mail/transport.js', import.meta.url).href, {
     namedExports: { getMailer: () => fakeMailer, mailConfigured: () => true },
+  });
+  mock.module(new URL('../src/payments/cashfree/client.js', import.meta.url).href, {
+    namedExports: fakeCashfree,
   });
   const { createOrdersRouter } = await import('../src/routes/orders.js');
   const { createCartRouter } = await import('../src/routes/cart.js');
@@ -112,6 +123,7 @@ after(() => server?.close());
 function seed() {
   store.clear();
   sent.length = 0;
+  successfulCashfreePayment = null;
   store.set('products/product-1', {
     $id: 'product-1', sku: 'SV-001', name: 'Silver Frame', active: true, currency: 'INR',
     priceInPaise: 99900, stockQuantity: 5,
@@ -265,6 +277,36 @@ test('test payments are refused when test mode is off', async () => {
     assert.equal(res.status, 503);
   } finally {
     config.testPayments = true;
+  }
+});
+
+test('Cashfree: provider-confirmed payments atomically update the order and admin ledger', async () => {
+  seed();
+  config.cashfreeEnabled = true;
+  successfulCashfreePayment = {
+    cf_payment_id: 'cf-payment-test',
+    payment_status: 'SUCCESS',
+    payment_amount: 1998,
+    payment_currency: 'INR',
+    payment_group: 'upi',
+  };
+  try {
+    const placed = await (await call('/orders', order('guest-cashfree', { paymentMethod: 'cashfree' }))).json();
+    assert.equal(placed.status, 'pending_payment');
+    assert.equal(placed.cashfreePaymentSessionId, 'cf-session-test');
+    assert.equal(store.get('orders/guest-cashfree').cashfreeOrderId, 'guest-cashfree');
+
+    const verified = await call('/orders/guest-cashfree/verify-cashfree', { email: 'asha@example.com' });
+    assert.equal(verified.status, 200);
+    assert.equal((await verified.json()).order.status, 'paid');
+    const [transaction] = docsOf('transactions');
+    assert.deepEqual(
+      [transaction.provider, transaction.type, transaction.status, transaction.amountInPaise, transaction.channel, transaction.source],
+      ['cashfree', 'payment', 'success', 199800, 'upi', 'verify'],
+    );
+  } finally {
+    config.cashfreeEnabled = false;
+    successfulCashfreePayment = null;
   }
 });
 

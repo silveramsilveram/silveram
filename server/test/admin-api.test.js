@@ -121,6 +121,7 @@ function addOrder(id, over = {}) {
 }
 
 const RANGE = 'from=2026-06-01&to=2026-06-30';
+const todayIst = () => new Date(Date.now() + 330 * 60 * 1000).toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------- authorisation
 
@@ -462,7 +463,7 @@ test('completed Cashfree refunds are manually recorded once with an audit actor 
     [refund.eventKey, refund.providerRefundId, refund.amountInPaise, refund.source, refund.actor, refund.reconciliation],
     ['cashfree-refund:refund-1', 'refund-1', 100000, 'manual', 'owner@silveram.test', 'operator_recorded'],
   );
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIst();
   const summary = (await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis;
   assert.equal(summary.refunds, 100000);
   assert.equal(summary.netCollected, 150000);
@@ -504,7 +505,7 @@ test('manual Cashfree settlements compare the bank payout and remain separate fr
   assert.equal((await api('POST', '/admin/cashfree/settlements', { body: { ...body, settlementId: 'invalid-net', feesInPaise: 100001 } })).status, 400);
   assert.equal((await api('GET', '/admin/cashfree/settlements')).json.total, 1);
   assert.equal(mem.all('transactions').length, 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIst();
   assert.equal((await api('GET', `/admin/dashboard/summary?from=${today}&to=${today}`)).json.kpis.netCollected, 100000);
 });
 
@@ -670,6 +671,20 @@ test('webhook: bad signatures are rejected; a verified payment is recorded once,
   assert.equal((await webhook(paymentEvent())).status, 200, 'replay is accepted');
   assert.equal(mem.all('transactions').length, 1, 'and does not add a second ledger row');
   assert.equal(mem.all('webhookEvents').length, 1);
+});
+
+test('webhook: a ledger write failure rolls back the payment and remains retryable', async () => {
+  addOrder('w1', { paymentMethod: 'cashfree', status: 'pending_payment', amountInPaise: 250000, cashfreeOrderId: 'cf-order-1', reservationExpiresAt: Date.now() + 600_000 });
+  mem.failNextCreate('transactions', Object.assign(new Error('ledger unavailable'), { status: 503 }));
+
+  assert.equal((await webhook(paymentEvent())).status, 503);
+  assert.equal(mem.get('orders', 'w1').status, 'pending_payment');
+  assert.equal(mem.all('transactions').length, 0);
+  assert.equal(mem.all('webhookEvents').length, 0);
+
+  assert.equal((await webhook(paymentEvent())).status, 200);
+  assert.equal(mem.get('orders', 'w1').status, 'paid');
+  assert.equal(mem.all('transactions').length, 1);
 });
 
 test('webhook: failed attempts are attempts, not collections; several attempts never double count a sale', async () => {

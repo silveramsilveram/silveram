@@ -301,20 +301,30 @@ function ownsOrder(order, user, email) {
 }
 
 async function markPaid(config, order, patch) {
-  const latest = await getDocument('orders', order.$id);
-  if (latest?.status === 'pending_payment') {
-    await updateDocument('orders', order.$id, { status: 'paid', ...patch, updatedAt: Date.now() });
-    // Ledger row for the confirmed payment (idempotent; shares its key with the webhook's row).
-    await bestEffort('Recording payment ledger entry', () => recordTransaction(paymentLedgerEntry(order, {
+  const paid = await runTransaction(async (transactionId) => {
+    const latest = await getDocument('orders', order.$id, transactionId);
+    if (latest?.status === 'paid') return true;
+    if (latest?.status !== 'pending_payment') return false;
+
+    const { databases, databaseId, collections } = getAppwrite();
+    const update = { status: 'paid', ...patch, updatedAt: Date.now() };
+    await databases.updateDocument({
+      databaseId,
+      collectionId: collections.orders,
+      documentId: order.$id,
+      data: update,
+      transactionId,
+    });
+    await recordTransaction(paymentLedgerEntry({ ...latest, ...update }, {
       provider: order.paymentMethod === 'test' ? 'test' : 'cashfree',
       providerPaymentId: patch.cashfreePaymentId,
       channel: patch.paymentChannel,
       occurredAt: Date.now(),
       source: 'verify',
-    })));
-  } else if (latest?.status !== 'paid') {
-    return false;
-  }
+    }), transactionId);
+    return true;
+  });
+  if (!paid) return false;
   await sendOrderConfirmationBestEffort(config, order.$id);
   return true;
 }
@@ -492,10 +502,15 @@ export function createOrdersRouter(config) {
         return res.status(202).json({ success: false, pending: true, order: publicOrder(order) });
       }
       const channel = channelFor(payment.payment_group);
-      await markPaid(config, order, {
+      if (!(await markPaid(config, order, {
         cashfreePaymentId: String(payment.cf_payment_id).slice(0, 100),
         ...(channel && { paymentChannel: channel }),
-      });
+      }))) {
+        return res.status(409).json({
+          error: 'Payment was received but this order needs review. Please contact the store before trying again.',
+          order: publicOrder(await getDocument('orders', order.$id)),
+        });
+      }
       return res.json({ success: true, order: publicOrder(await getDocument('orders', order.$id)) });
     } catch (error) {
       next(error);
