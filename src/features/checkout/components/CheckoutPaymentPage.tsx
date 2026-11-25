@@ -147,10 +147,17 @@ export default function CheckoutPaymentPage() {
         if (!user) rememberGuestOrder({ id: placed.orderId, email });
         await openCashfreeCheckout(placed.cashfreePaymentSessionId, placed.cashfreeMode ?? 'production');
         // Closing or returning from hosted checkout is not proof of payment; the server verifies it.
-        const checked = await apiRequest<{ success: boolean; order: Order }>(
-          `/orders/${encodeURIComponent(placed.orderId)}/verify-cashfree`,
-          { method: 'POST', body: JSON.stringify(user ? {} : { email }) },
-        );
+        let checked: { success: boolean; order: Order };
+        try {
+          checked = await apiRequest<{ success: boolean; order: Order }>(
+            `/orders/${encodeURIComponent(placed.orderId)}/verify-cashfree`,
+            { method: 'POST', body: JSON.stringify(user ? {} : { email }) },
+          );
+        } catch {
+          setError('We could not verify your payment right now. If money was deducted, do not pay again; contact the store.');
+          setBusy(false);
+          return;
+        }
         if (checked.success) {
           complete(checked.order);
           return;

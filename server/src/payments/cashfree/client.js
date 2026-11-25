@@ -77,13 +77,28 @@ export async function getCashfreeOrder(config, orderId) {
  * for exactly the expected amount. Returns the payment, or null.
  */
 export async function findSuccessfulPayment(config, order) {
-  const response = await fetch(`${cashfreeBaseUrl(config)}/orders/${encodeURIComponent(order.$id)}/payments`, {
-    headers: headers(config),
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok) return null;
-  const payments = await response.json();
-  if (!Array.isArray(payments)) return null;
+  let response;
+  try {
+    response = await fetch(`${cashfreeBaseUrl(config)}/orders/${encodeURIComponent(order.$id)}/payments`, {
+      headers: headers(config),
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    throw providerError('Payment status could not be checked. If you may have been charged, do not pay again; contact the store.');
+  }
+  if (!response.ok) {
+    console.error('Cashfree payment verification failed:', response.status);
+    throw providerError('Payment status could not be checked. If you may have been charged, do not pay again; contact the store.');
+  }
+  let payments;
+  try {
+    payments = await response.json();
+  } catch {
+    throw providerError('Cashfree returned an invalid payment status. Please contact the store before trying again.');
+  }
+  if (!Array.isArray(payments)) {
+    throw providerError('Cashfree returned an invalid payment status. Please contact the store before trying again.');
+  }
   return payments.find((payment) =>
     payment.payment_status === 'SUCCESS' &&
     payment.payment_currency === 'INR' &&
