@@ -7,11 +7,63 @@ import type { Order } from './types';
  */
 const GUEST_KEY = 'silveram_guest_orders';
 const LAST_KEY = 'silveram_last_order';
+const CHECKOUT_REQUEST_KEY = 'silveram_checkout_request';
 const MAX_GUEST_ORDERS = 5;
 
 export interface GuestOrderRef {
   id: string;
   email: string;
+}
+
+interface CheckoutRequestRef {
+  id: string;
+  key: string;
+}
+
+function readCheckoutRequest(): CheckoutRequestRef | null {
+  try {
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(CHECKOUT_REQUEST_KEY) || 'null');
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      'id' in parsed &&
+      typeof parsed.id === 'string' &&
+      'key' in parsed &&
+      typeof parsed.key === 'string'
+    ) {
+      return { id: parsed.id, key: parsed.key };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Reuses an in-progress order after the payment provider returns to the storefront. */
+export function getCheckoutRequestId(key: string): string {
+  const saved = readCheckoutRequest();
+  if (saved?.key === key) return saved.id;
+
+  const id = crypto.randomUUID();
+  try {
+    sessionStorage.setItem(CHECKOUT_REQUEST_KEY, JSON.stringify({ id, key }));
+  } catch {
+    // The order still works; a blocked session store only prevents retrying the same request.
+  }
+  return id;
+}
+
+export function isActiveCheckoutOrder(id: string): boolean {
+  return readCheckoutRequest()?.id === id;
+}
+
+export function clearCheckoutRequest(id: string): void {
+  if (readCheckoutRequest()?.id !== id) return;
+  try {
+    sessionStorage.removeItem(CHECKOUT_REQUEST_KEY);
+  } catch {
+    // The completed order remains available from the API.
+  }
 }
 
 export function getGuestOrders(): GuestOrderRef[] {

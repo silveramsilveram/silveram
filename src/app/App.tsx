@@ -107,7 +107,7 @@ function Storefront() {
   }, []);
 
   // The Cashfree SDK is ~100 kB from another origin: fetch it while the customer reads the
-  // payment page so the popup opens instantly on "Pay".
+  // payment page so hosted checkout opens quickly after "Pay".
   useEffect(() => {
     if (route.name === 'payment' || route.name === 'checkout') preloadCashfree();
   }, [route.name]);

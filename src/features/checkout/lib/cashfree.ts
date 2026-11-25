@@ -32,6 +32,7 @@ export function loadCashfree(): Promise<void> {
       script.onload = () => {
         window.clearTimeout(timeout);
         if (!window.Cashfree) {
+          script.remove();
           scriptPromise = undefined;
           reject(new Error('Payment could not be loaded. Please try again.'));
           return;
@@ -59,5 +60,5 @@ export function preloadCashfree(): void {
 export async function openCashfreeCheckout(paymentSessionId: string, mode: 'sandbox' | 'production'): Promise<void> {
   await loadCashfree();
   if (!window.Cashfree) throw new Error('Payment could not be loaded. Please try again.');
-  await window.Cashfree({ mode }).checkout({ paymentSessionId, redirectTarget: '_modal' });
+  await window.Cashfree({ mode }).checkout({ paymentSessionId, redirectTarget: '_self' });
 }

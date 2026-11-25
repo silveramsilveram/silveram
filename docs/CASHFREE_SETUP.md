@@ -3,11 +3,13 @@
 ## How it works
 1. Customer picks "UPI, QR code, debit or credit card" at checkout; `POST /api/orders` reserves stock and
    creates a Cashfree order (id = our order id, amount always recomputed from Appwrite prices).
-2. The browser opens Cashfree's hosted popup with the returned `payment_session_id` (QR, UPI apps, cards).
-3. When the popup closes the browser calls `POST /api/orders/:id/verify-cashfree`; the server asks Cashfree
-   for the payment itself and only then marks the order `paid`.
+2. The browser redirects to Cashfree's hosted checkout with the returned `payment_session_id` (QR, UPI apps, cards).
+   The pending order reference is retained so a guest can resume the same order if they return without paying.
+3. When Cashfree returns to the order page, the browser calls `POST /api/orders/:id/verify-cashfree`; the server asks
+   Cashfree for the payment itself and only then marks the order `paid`. A browser/SDK result is never treated as proof.
 4. Cashfree also calls `POST /api/webhooks/cashfree` (signed with your secret key). The webhook is the
-   safety net for customers who close the tab after paying. Events are idempotent.
+   safety net for customers who close the tab after paying. Order status and its transaction ledger entry are committed
+   together in Appwrite; if persistence fails, the webhook is not acknowledged and Cashfree can retry it.
 5. A payment for an expired order or a wrong amount sets the order to `payment_review` for manual action.
 
 ## Go-live checklist

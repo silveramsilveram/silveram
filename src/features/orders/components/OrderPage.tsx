@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/store/authStore';
+import { useCart } from '@/features/cart/store/cartStore';
+import { useCheckout } from '@/features/checkout/context/CheckoutContext';
 import { WhatsAppButton } from '@/features/whatsapp';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import { buttonClasses } from '@/shared/ui/Button';
 import { CheckIcon } from '@/shared/ui/icons';
 import { fetchMyOrder, lookupGuestOrder, verifyCashfreePayment } from '../api';
-import { getGuestOrders, loadLastOrder, saveLastOrder } from '../storage';
+import { clearCheckoutRequest, getGuestOrders, isActiveCheckoutOrder, loadLastOrder, saveLastOrder } from '../storage';
 import { PAYMENT_LABEL, STATUS_LABEL, type Order } from '../types';
 import OrderLookupForm from './OrderLookupForm';
 
@@ -26,6 +28,8 @@ function paymentText(order: Order): string {
 
 export default function OrderPage({ orderId }: { orderId: string }) {
   const { user, status: authStatus } = useAuth();
+  const { clearCart } = useCart();
+  const { clearInfo } = useCheckout();
   const [state, setState] = useState<LoadState>(() => {
     const cached = loadLastOrder(orderId);
     return cached ? { kind: 'ready', order: cached } : { kind: 'loading' };
@@ -41,6 +45,11 @@ export default function OrderPage({ orderId }: { orderId: string }) {
     let active = true;
     const show = (order: Order, email?: string) => {
       saveLastOrder(order);
+      if (isActiveCheckoutOrder(order.id) && (order.status === 'paid' || order.status === 'placed_cod')) {
+        clearCheckoutRequest(order.id);
+        clearCart();
+        clearInfo();
+      }
       if (active) setState({ kind: 'ready', order });
       // Returned from a UPI app / redirect before the payment was confirmed: ask the server to re-check.
       if (order.paymentMethod === 'cashfree' && order.status === 'pending_payment') {
@@ -80,7 +89,7 @@ export default function OrderPage({ orderId }: { orderId: string }) {
     return () => {
       active = false;
     };
-  }, [orderId, user, authStatus]);
+  }, [orderId, user, authStatus, clearCart, clearInfo]);
 
   return (
     <main id="main-content" tabIndex={-1} className="focus:outline-none">
@@ -103,13 +112,20 @@ export default function OrderPage({ orderId }: { orderId: string }) {
           </div>
         )}
 
-        {state.kind === 'ready' && <OrderDetails order={state.order} />}
+        {state.kind === 'ready' && (
+          <OrderDetails
+            order={state.order}
+            canRetryPayment={state.order.paymentMethod === 'cashfree' &&
+              state.order.status === 'pending_payment' &&
+              isActiveCheckoutOrder(state.order.id)}
+          />
+        )}
       </div>
     </main>
   );
 }
 
-function OrderDetails({ order }: { order: Order }) {
+function OrderDetails({ order, canRetryPayment }: { order: Order; canRetryPayment: boolean }) {
   const status = STATUS_LABEL[order.status];
   const justPlaced = Date.now() - order.createdAt < 10 * 60 * 1000;
   const confirmed = order.status === 'placed_cod' || order.status === 'paid';
@@ -153,6 +169,19 @@ function OrderDetails({ order }: { order: Order }) {
         </div>
         <p className="text-text-secondary sm:col-span-3">{status.detail}</p>
       </dl>
+
+      {canRetryPayment && (
+        <section className="mt-6 border border-border bg-surface-white p-5">
+          <h2 className="font-semibold">Payment is still pending</h2>
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+            If you completed payment, do not pay again; this order will update when Cashfree confirms it.
+            If you did not complete payment, you can safely return to checkout and try again.
+          </p>
+          <a href="/checkout/payment" className={buttonClasses('secondary', 'md', 'mt-4')}>
+            Return to payment
+          </a>
+        </section>
+      )}
 
       {order.status === 'placed_cod' && (
         <section aria-labelledby="next-heading" className="mt-8 border border-border bg-surface-white p-6">

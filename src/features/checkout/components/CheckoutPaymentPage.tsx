@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useAuth } from '@/features/auth/store/authStore';
 import { useCart } from '@/features/cart/store/cartStore';
-import { rememberGuestOrder, saveLastOrder } from '@/features/orders/storage';
+import { clearCheckoutRequest, getCheckoutRequestId, rememberGuestOrder, saveLastOrder } from '@/features/orders/storage';
 import type { Order } from '@/features/orders/types';
 import { orderPath, navigate } from '@/shared/routing/router';
-import { apiRequest, isCashfreeEnabled, isCheckoutEnabled, isCodEnabled, isTestPaymentEnabled } from '@/shared/lib/api';
+import { ApiError, apiRequest, isCashfreeEnabled, isCheckoutEnabled, isCodEnabled, isTestPaymentEnabled } from '@/shared/lib/api';
 import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import Button, { buttonClasses } from '@/shared/ui/Button';
@@ -79,11 +79,12 @@ export default function CheckoutPaymentPage() {
   const canSubmit = option === 'cod' ? isCodEnabled : onlineAvailable;
 
   const requestIdFor = (key: string) => {
-    if (requestRef.current.key !== key) requestRef.current = { key, id: crypto.randomUUID() };
+    if (requestRef.current.key !== key) requestRef.current = { key, id: getCheckoutRequestId(key) };
     return requestRef.current.id;
   };
 
   const complete = (order: Order) => {
+    clearCheckoutRequest(order.id);
     saveLastOrder(order);
     if (order.guest) rememberGuestOrder({ id: order.id, email: order.email });
     clearCart();
@@ -143,8 +144,9 @@ export default function CheckoutPaymentPage() {
         if (!placed.cashfreePaymentSessionId) {
           throw new Error('The payment provider is not configured. Please contact the store.');
         }
+        if (!user) rememberGuestOrder({ id: placed.orderId, email });
         await openCashfreeCheckout(placed.cashfreePaymentSessionId, placed.cashfreeMode ?? 'production');
-        // The popup closing is not proof of payment: the server asks Cashfree before confirming.
+        // Closing or returning from hosted checkout is not proof of payment; the server verifies it.
         const checked = await apiRequest<{ success: boolean; order: Order }>(
           `/orders/${encodeURIComponent(placed.orderId)}/verify-cashfree`,
           { method: 'POST', body: JSON.stringify(user ? {} : { email }) },
@@ -171,6 +173,10 @@ export default function CheckoutPaymentPage() {
       throw new Error('This payment method is not available.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to complete your payment. Please try again.');
+      if (reason instanceof ApiError && reason.status === 409) {
+        clearCheckoutRequest(requestRef.current.id);
+        requestRef.current = { key: '', id: '' };
+      }
       setBusy(false);
     }
   };
