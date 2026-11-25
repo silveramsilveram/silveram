@@ -28,13 +28,14 @@ export function isNotFound(error) {
   return error?.code === 404;
 }
 
-export async function getDocument(collectionId, documentId) {
+export async function getDocument(collectionId, documentId, transactionId) {
   assertConfigured();
   try {
     return await databases.getDocument({
       databaseId: config.appwriteDatabaseId,
       collectionId: config.appwriteCollections[collectionId],
       documentId,
+      ...(transactionId && { transactionId }),
     });
   } catch (error) {
     if (isNotFound(error)) return null;

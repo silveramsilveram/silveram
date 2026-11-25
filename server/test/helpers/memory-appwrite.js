@@ -9,6 +9,7 @@ import { Query } from 'node-appwrite';
 export function createMemoryAppwrite() {
   const store = new Map();
   let counter = 0;
+  const createFailures = new Map();
   const key = (collection, id) => `${collection}/${id}`;
   const rows = (collection) => [...store.entries()].filter(([k]) => k.startsWith(`${collection}/`)).map(([, v]) => v);
   const conflict = () => Object.assign(new Error('Document already exists'), { code: 409 });
@@ -92,6 +93,11 @@ export function createMemoryAppwrite() {
 
   const direct = {
     createDocument: async (collection, id, data, transactionId) => {
+      if (createFailures.has(collection)) {
+        const error = createFailures.get(collection);
+        createFailures.delete(collection);
+        throw error;
+      }
       if (transactionId) {
         stage(transactionId, { kind: 'create', collection, id, data });
         return { $id: id, ...data };
@@ -186,6 +192,7 @@ export function createMemoryAppwrite() {
     named,
     store,
     seed: (collection, id, data) => store.set(key(collection, id), { $id: id, ...data }),
+    failNextCreate: (collection, error) => createFailures.set(collection, error),
     get: (collection, id) => store.get(key(collection, id)),
     all: rows,
     accounts,

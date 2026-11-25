@@ -11,7 +11,7 @@ async function createOnce(collection, id, data, transactionId) {
   try {
     return { created: true, doc: await createDocument(collection, id, data, transactionId) };
   } catch (error) {
-    if (error?.code === 409 && !transactionId) return { created: false, doc: null };
+    if (error?.code === 409) return { created: false, doc: null };
     throw error;
   }
 }

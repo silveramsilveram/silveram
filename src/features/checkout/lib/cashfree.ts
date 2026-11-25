@@ -24,8 +24,23 @@ export function loadCashfree(): Promise<void> {
       const script = document.createElement('script');
       script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
       script.async = true;
-      script.onload = () => resolve();
+      const timeout = window.setTimeout(() => {
+        script.remove();
+        scriptPromise = undefined;
+        reject(new Error('Payment could not be loaded. Please try again.'));
+      }, 15_000);
+      script.onload = () => {
+        window.clearTimeout(timeout);
+        if (!window.Cashfree) {
+          scriptPromise = undefined;
+          reject(new Error('Payment could not be loaded. Please try again.'));
+          return;
+        }
+        resolve();
+      };
       script.onerror = () => {
+        window.clearTimeout(timeout);
+        script.remove();
         scriptPromise = undefined;
         reject(new Error('Payment could not be loaded. Please try again.'));
       };
@@ -40,10 +55,9 @@ export function preloadCashfree(): void {
   void loadCashfree().catch(() => undefined);
 }
 
-/** Opens the Cashfree payment popup. Resolves when it closes; the server decides whether money arrived. */
+/** Opens Cashfree checkout. Its result is not proof of payment; the server verifies after it closes. */
 export async function openCashfreeCheckout(paymentSessionId: string, mode: 'sandbox' | 'production'): Promise<void> {
   await loadCashfree();
   if (!window.Cashfree) throw new Error('Payment could not be loaded. Please try again.');
-  const result = await window.Cashfree({ mode }).checkout({ paymentSessionId, redirectTarget: '_modal' });
-  if (result?.error?.message) throw new Error(result.error.message);
+  await window.Cashfree({ mode }).checkout({ paymentSessionId, redirectTarget: '_modal' });
 }

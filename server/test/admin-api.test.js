@@ -672,6 +672,20 @@ test('webhook: bad signatures are rejected; a verified payment is recorded once,
   assert.equal(mem.all('webhookEvents').length, 1);
 });
 
+test('webhook: a ledger write failure rolls back the payment and remains retryable', async () => {
+  addOrder('w1', { paymentMethod: 'cashfree', status: 'pending_payment', amountInPaise: 250000, cashfreeOrderId: 'cf-order-1', reservationExpiresAt: Date.now() + 600_000 });
+  mem.failNextCreate('transactions', Object.assign(new Error('ledger unavailable'), { status: 503 }));
+
+  assert.equal((await webhook(paymentEvent())).status, 503);
+  assert.equal(mem.get('orders', 'w1').status, 'pending_payment');
+  assert.equal(mem.all('transactions').length, 0);
+  assert.equal(mem.all('webhookEvents').length, 0);
+
+  assert.equal((await webhook(paymentEvent())).status, 200);
+  assert.equal(mem.get('orders', 'w1').status, 'paid');
+  assert.equal(mem.all('transactions').length, 1);
+});
+
 test('webhook: failed attempts are attempts, not collections; several attempts never double count a sale', async () => {
   addOrder('w1', { createdAt: day(1), paymentMethod: 'cashfree', status: 'pending_payment', amountInPaise: 250000, cashfreeOrderId: 'cf-order-1', reservationExpiresAt: Date.now() + 600_000 });
   await webhook(paymentEvent({ cf_payment_id: 1, payment_status: 'FAILED' }).data && { type: 'PAYMENT_FAILED_WEBHOOK', data: paymentEvent({ cf_payment_id: 1, payment_status: 'FAILED' }).data });
