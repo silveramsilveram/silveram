@@ -17,7 +17,7 @@ const products = [
     name: 'Silver Kada',
     description: 'Intricately patterned traditional bangles for festive and everyday styling.',
     category: 'bangle',
-    priceInPaise: 99900,
+    priceInPaise: 100,
   },
   {
     id: 'product-3',
