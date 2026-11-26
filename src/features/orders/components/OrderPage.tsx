@@ -53,12 +53,19 @@ export default function OrderPage({ orderId }: { orderId: string }) {
       if (active) setState({ kind: 'ready', order });
       // Returned from a UPI app / redirect before the payment was confirmed: ask the server to re-check.
       if (order.paymentMethod === 'cashfree' && order.status === 'pending_payment') {
-        verifyCashfreePayment(order.id, email)
-          .then((paid) => {
-            saveLastOrder(paid);
-            if (active) setState({ kind: 'ready', order: paid });
-          })
-          .catch(() => undefined);
+        void (async () => {
+          for (let attempt = 0; attempt < 10 && active; attempt += 1) {
+            try {
+              const checked = await verifyCashfreePayment(order.id, email);
+              saveLastOrder(checked);
+              if (active) setState({ kind: 'ready', order: checked });
+              if (checked.status === 'paid') return;
+            } catch {
+              // Provider settlement and verification can lag; keep the pending order visible.
+            }
+            if (attempt < 9) await new Promise((resolve) => window.setTimeout(resolve, 2000));
+          }
+        })();
       }
     };
     const fallback = () => {
