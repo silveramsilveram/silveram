@@ -10,7 +10,10 @@ import { Query } from 'node-appwrite';
 
 const store = new Map(); // `${collection}/${id}` -> document
 const sent = []; // captured e-mails
+const backgroundTasks = [];
 let successfulCashfreePayment = null;
+let customerReadBarrier = null;
+let reservationSweepBarrier = null;
 
 const key = (collection, id) => `${collection}/${id}`;
 const docsOf = (collection) => [...store.entries()].filter(([k]) => k.startsWith(`${collection}/`)).map(([, v]) => v);
@@ -53,7 +56,10 @@ const fakeAppwrite = {
       },
     },
   }),
-  getDocument: async (collection, id) => store.get(key(collection, id)) ?? null,
+  getDocument: async (collection, id) => {
+    if (collection === 'customers' && customerReadBarrier) await customerReadBarrier;
+    return store.get(key(collection, id)) ?? null;
+  },
   createDocument: async (collection, id, data) => {
     if (store.has(key(collection, id))) throw conflict();
     const doc = { $id: id, ...data };
@@ -68,7 +74,10 @@ const fakeAppwrite = {
     return doc;
   },
   deleteDocument: async (collection, id) => store.delete(key(collection, id)),
-  listDocuments: async (collection, queries = []) => applyQueries(docsOf(collection), queries),
+  listDocuments: async (collection, queries = []) => {
+    if (collection === 'orders' && reservationSweepBarrier) await reservationSweepBarrier;
+    return applyQueries(docsOf(collection), queries);
+  },
   findDocument: async (collection, field, value) => docsOf(collection).find((d) => d[field] === value) ?? null,
   runTransaction: async (work) => work('txn'),
 };
@@ -104,6 +113,9 @@ before(async () => {
   mock.module(new URL('../src/payments/cashfree/client.js', import.meta.url).href, {
     namedExports: fakeCashfree,
   });
+  mock.module('@vercel/functions', {
+    namedExports: { waitUntil: (promise) => backgroundTasks.push(promise) },
+  });
   const { createOrdersRouter } = await import('../src/routes/orders.js');
   const { createCartRouter } = await import('../src/routes/cart.js');
   const { createMaintenanceRouter } = await import('../src/routes/maintenance.js');
@@ -123,6 +135,9 @@ after(() => server?.close());
 function seed() {
   store.clear();
   sent.length = 0;
+  backgroundTasks.length = 0;
+  customerReadBarrier = null;
+  reservationSweepBarrier = null;
   successfulCashfreePayment = null;
   store.set('products/product-1', {
     $id: 'product-1', sku: 'SV-001', name: 'Silver Frame', active: true, currency: 'INR',
@@ -308,6 +323,42 @@ test('Cashfree: provider-confirmed payments atomically update the order and admi
     config.cashfreeEnabled = false;
     successfulCashfreePayment = null;
   }
+});
+
+test('Cashfree checkout responds without waiting for optional bookkeeping or cleanup', async () => {
+  seed();
+  config.cashfreeEnabled = true;
+  const previousVercel = process.env.VERCEL;
+  let releaseBackgroundWork;
+  const backgroundBarrier = new Promise((resolve) => { releaseBackgroundWork = resolve; });
+  customerReadBarrier = backgroundBarrier;
+  reservationSweepBarrier = backgroundBarrier;
+  process.env.VERCEL = '1';
+
+  try {
+    const response = await Promise.race([
+      call('/orders', order('guest-cashfree-fast', {
+        paymentMethod: 'cashfree',
+        paymentChannel: undefined,
+      })),
+      new Promise((resolve) => setTimeout(() => resolve(null), 1000)),
+    ]);
+
+    assert.ok(response, 'checkout should return while customer bookkeeping and reservation cleanup are pending');
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).cashfreePaymentSessionId, 'cf-session-test');
+    assert.ok(backgroundTasks.length >= 3);
+  } finally {
+    releaseBackgroundWork();
+    customerReadBarrier = null;
+    reservationSweepBarrier = null;
+    if (previousVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = previousVercel;
+    await Promise.allSettled(backgroundTasks);
+    config.cashfreeEnabled = false;
+  }
+
+  assert.equal(docsOf('customers').length, 1);
 });
 
 test('signed-in customer: order is tied to the account and listed; a guest cannot read it', async () => {

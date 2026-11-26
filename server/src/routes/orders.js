@@ -6,6 +6,7 @@ import { sendOrderConfirmationBestEffort } from '../mail/orderConfirmation.js';
 import { consumeRateLimit } from '../security.js';
 import { recordCustomerOrder } from '../customers.js';
 import { bestEffort, paymentLedgerEntry, recordCheckoutBookkeeping, recordReleaseMovements, recordTransaction } from '../admin/ledger.js';
+import { afterResponse } from '../platform/after-response.js';
 import {
   channelFor,
   createCashfreeOrder,
@@ -17,6 +18,11 @@ const emailSchema = z.string().trim().email().max(254).transform((email) => emai
 const orderIdSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,35}$/);
 const GUEST_ID = 'guest';
 const HOUR = 60 * 60 * 1000;
+
+function logSlowCheckoutStage(stage, startedAt) {
+  const duration = Date.now() - startedAt;
+  if (duration >= 3000) console.warn(`Checkout ${stage} took ${duration}ms`);
+}
 
 const requestSchema = z.object({
   requestId: orderIdSchema,
@@ -209,8 +215,8 @@ async function reserveOrder(config, input, identity) {
     }
   }
 
-  // A brand-new order: log the stock reservation and make name/phone searchable (best effort).
-  if (!existing) await recordCheckoutBookkeeping(order);
+  // A brand-new order: defer stock and searchable-customer bookkeeping from checkout.
+  if (!existing) await afterResponse('Checkout inventory bookkeeping', () => recordCheckoutBookkeeping(order));
 
   if (order.paymentMethod === 'cod' || order.paymentMethod === 'test') return order;
   if (order.paymentMethod === 'cashfree') {
@@ -403,35 +409,37 @@ export function createOrdersRouter(config) {
         return res.status(400).json({ error: 'Enter your email address to check out as a guest.' });
       }
 
+      const rateLimitStartedAt = Date.now();
       const [ipAllowed, emailAllowed] = await Promise.all([
         consumeRateLimit(req.ip, 'order-ip', 30, HOUR),
         consumeRateLimit(identity.email, 'order-email', 15, HOUR),
       ]);
+      logSlowCheckoutStage('rate limiting', rateLimitStartedAt);
       if (!ipAllowed || !emailAllowed) {
         return res.status(429).json({ error: 'Too many order attempts. Please try again later.' });
       }
 
-      // Hobby-plan crons run once a day, so also free expired reservations as customers check out.
-      await sweepExpiredReservations();
+      const reservationStartedAt = Date.now();
       const order = await reserveOrder(config, input, identity);
-      // Keep the contact (e-mail + phone) in Appwrite for guests and members alike. Best effort:
-      // a bookkeeping failure must never undo an order that has already been placed.
-      try {
-        await recordCustomerOrder({
-          email: identity.email,
-          name: input.customer.name,
-          phone: input.customer.phone,
-          altPhone: input.customer.altPhone,
-          address: input.customer,
-          userId: req.user?.id,
-          source: req.user ? 'account' : 'guest',
-        });
-      } catch (error) {
-        console.error('Saving customer contact failed:', error?.message || error);
+      logSlowCheckoutStage('reservation and provider setup', reservationStartedAt);
+      await afterResponse('Checkout customer record', () => recordCustomerOrder({
+        email: identity.email,
+        name: input.customer.name,
+        phone: input.customer.phone,
+        altPhone: input.customer.altPhone,
+        address: input.customer,
+        userId: req.user?.id,
+        source: req.user ? 'account' : 'guest',
+      }));
+      if (order.status === 'placed_cod') {
+        await afterResponse('COD order confirmation email', () => sendOrderConfirmationBestEffort(config, order.$id));
       }
-      if (order.status === 'placed_cod') await sendOrderConfirmationBestEffort(config, order.$id);
+      await afterResponse('Reservation expiry sweep', sweepExpiredReservations);
       return res.json(orderResponse(order, config));
     } catch (error) {
+      if (error?.status === 409) {
+        await afterResponse('Reservation expiry sweep', sweepExpiredReservations);
+      }
       if (error?.status) return res.status(error.status).json({ error: error.message });
       next(error);
     }

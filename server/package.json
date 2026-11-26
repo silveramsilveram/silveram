@@ -17,6 +17,7 @@
     "admin:backfill": "node --env-file-if-exists=.env src/scripts/admin-backfill.js"
   },
   "dependencies": {
+    "@vercel/functions": "^3.11.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^5.1.0",

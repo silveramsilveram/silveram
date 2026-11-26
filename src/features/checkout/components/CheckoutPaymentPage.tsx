@@ -179,7 +179,11 @@ export default function CheckoutPaymentPage() {
 
       throw new Error('This payment method is not available.');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to complete your payment. Please try again.');
+      setError(
+        reason instanceof ApiError && reason.status === 504
+          ? 'Checkout is taking longer than expected. Your order may already be reserved; retry to resume it. If money was deducted, do not pay again; contact the store.'
+          : reason instanceof Error ? reason.message : 'Unable to complete your payment. Please try again.',
+      );
       if (reason instanceof ApiError && reason.status === 409) {
         clearCheckoutRequest(requestRef.current.id);
         requestRef.current = { key: '', id: '' };
