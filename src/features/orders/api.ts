@@ -13,6 +13,17 @@ export const verifyCashfreePayment = (id: string, email?: string) =>
     body: JSON.stringify(email ? { email } : {}),
   }).then((r) => r.order);
 
+export const resumeCashfreePayment = (id: string, email?: string) =>
+  apiRequest<{
+    order: Order;
+    paid?: boolean;
+    cashfreePaymentSessionId?: string;
+    cashfreeMode?: 'sandbox' | 'production';
+  }>(`/orders/${encodeURIComponent(id)}/resume-cashfree`, {
+    method: 'POST',
+    body: JSON.stringify(email ? { email } : {}),
+  });
+
 export const lookupGuestOrder = (orderId: string, email: string) =>
   apiRequest<{ order: Order }>('/orders/lookup', {
     method: 'POST',

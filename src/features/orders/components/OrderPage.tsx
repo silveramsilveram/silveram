@@ -7,10 +7,11 @@ import { formatINR } from '@/shared/lib/money';
 import { setPageMeta } from '@/shared/lib/seo';
 import { buttonClasses } from '@/shared/ui/Button';
 import { CheckIcon } from '@/shared/ui/icons';
-import { fetchMyOrder, lookupGuestOrder, verifyCashfreePayment } from '../api';
+import { fetchMyOrder, lookupGuestOrder, resumeCashfreePayment, verifyCashfreePayment } from '../api';
 import { clearCheckoutRequest, getGuestOrders, isActiveCheckoutOrder, loadLastOrder, saveLastOrder } from '../storage';
 import { PAYMENT_LABEL, STATUS_LABEL, type Order } from '../types';
 import OrderLookupForm from './OrderLookupForm';
+import { openCashfreeCheckout } from '@/features/checkout/lib/cashfree';
 
 type LoadState =
   | { kind: 'loading' }
@@ -23,6 +24,7 @@ function paymentText(order: Order): string {
   const channel = order.paymentChannel === 'upi' ? 'UPI' : order.paymentChannel === 'card' ? 'Card' : '';
   if (order.paymentMethod === 'test') return `Test payment${channel ? ` (${channel})` : ''} - no money charged`;
   if (order.paymentMethod === 'cod') return PAYMENT_LABEL.cod;
+  if (order.status === 'pending_payment') return 'Cashfree - awaiting payment';
   return channel ? `Paid online by ${channel}` : PAYMENT_LABEL.cashfree;
 }
 
@@ -30,6 +32,14 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   const { user, status: authStatus } = useAuth();
   const { clearCart } = useCart();
   const { clearInfo } = useCheckout();
+  const updateOrder = (order: Order) => {
+    if (order.status === 'paid' || order.status === 'placed_cod') {
+      clearCheckoutRequest(order.id);
+      clearCart();
+      clearInfo();
+    }
+    setState({ kind: 'ready', order });
+  };
   const [state, setState] = useState<LoadState>(() => {
     const cached = loadLastOrder(orderId);
     return cached ? { kind: 'ready', order: cached } : { kind: 'loading' };
@@ -123,8 +133,8 @@ export default function OrderPage({ orderId }: { orderId: string }) {
           <OrderDetails
             order={state.order}
             canRetryPayment={state.order.paymentMethod === 'cashfree' &&
-              state.order.status === 'pending_payment' &&
-              isActiveCheckoutOrder(state.order.id)}
+              state.order.status === 'pending_payment'}
+            onOrderUpdate={updateOrder}
           />
         )}
       </div>
@@ -132,10 +142,63 @@ export default function OrderPage({ orderId }: { orderId: string }) {
   );
 }
 
-function OrderDetails({ order, canRetryPayment }: { order: Order; canRetryPayment: boolean }) {
+function OrderDetails({
+  order,
+  canRetryPayment,
+  onOrderUpdate,
+}: {
+  order: Order;
+  canRetryPayment: boolean;
+  onOrderUpdate: (order: Order) => void;
+}) {
   const status = STATUS_LABEL[order.status];
   const justPlaced = Date.now() - order.createdAt < 10 * 60 * 1000;
   const confirmed = order.status === 'placed_cod' || order.status === 'paid';
+  const [resumingPayment, setResumingPayment] = useState(false);
+  const [resumeError, setResumeError] = useState('');
+
+  const resumePayment = async () => {
+    if (resumingPayment) return;
+    setResumingPayment(true);
+    setResumeError('');
+    try {
+      const resumed = await resumeCashfreePayment(order.id, order.guest ? order.email : undefined);
+      if (resumed.paid || resumed.order.status === 'paid') {
+        saveLastOrder(resumed.order);
+        onOrderUpdate(resumed.order);
+        return;
+      }
+      if (!resumed.cashfreePaymentSessionId) {
+        throw new Error('The payment provider did not return a session. Please contact the store.');
+      }
+      const checkoutResult = await openCashfreeCheckout(
+        resumed.cashfreePaymentSessionId,
+        resumed.cashfreeMode ?? 'production',
+      );
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        try {
+          const checked = await verifyCashfreePayment(order.id, order.guest ? order.email : undefined);
+          saveLastOrder(checked);
+          if (checked.status === 'paid') {
+            onOrderUpdate(checked);
+            return;
+          }
+        } catch {
+          // Keep checking: provider settlement can lag after the checkout modal closes.
+        }
+        if (attempt < 7) await new Promise((resolve) => window.setTimeout(resolve, 1500));
+      }
+      setResumeError(
+        checkoutResult?.error
+          ? 'Cashfree could not complete checkout. If money was deducted, do not pay again; the order will update when confirmed, or contact the store.'
+          : 'Payment is not confirmed yet. If money was deducted, do not pay again; wait for confirmation or contact the store.',
+      );
+    } catch (reason) {
+      setResumeError(reason instanceof Error ? reason.message : 'Unable to resume payment. Please contact the store.');
+    } finally {
+      setResumingPayment(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -182,11 +245,17 @@ function OrderDetails({ order, canRetryPayment }: { order: Order; canRetryPaymen
           <h2 className="font-semibold">Payment is still pending</h2>
           <p className="mt-2 text-sm leading-relaxed text-text-secondary">
             If you completed payment, do not pay again; this order will update when Cashfree confirms it.
-            If you did not complete payment, you can safely return to checkout and try again.
+            If you did not complete payment, resume this order to try again without creating another order.
           </p>
-          <a href="/checkout/payment" className={buttonClasses('secondary', 'md', 'mt-4')}>
-            Return to payment
-          </a>
+          <button
+            type="button"
+            className={buttonClasses('secondary', 'md', 'mt-4')}
+            onClick={() => void resumePayment()}
+            disabled={resumingPayment}
+          >
+            {resumingPayment ? 'Reconnecting to Cashfree…' : 'Resume payment'}
+          </button>
+          <p className="mt-2 min-h-5 text-sm text-danger" role="alert">{resumeError}</p>
         </section>
       )}
 
