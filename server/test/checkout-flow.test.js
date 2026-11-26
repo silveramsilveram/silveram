@@ -87,7 +87,12 @@ const fakeCashfree = {
   channelFor: (group) => group === 'upi' ? 'upi' : undefined,
   createCashfreeOrder: async (_config, order) => ({ order_id: order._id, payment_session_id: 'cf-session-test' }),
   findSuccessfulPayment: async () => successfulCashfreePayment,
-  getCashfreeOrder: async (_config, orderId) => ({ order_id: orderId, payment_session_id: 'cf-session-test' }),
+  getCashfreeOrder: async (_config, orderId) => ({
+    order_id: orderId,
+    order_amount: store.get(`orders/${orderId}`)?.amountInPaise / 100,
+    payment_session_id: 'cf-session-test',
+  }),
+  toPaise: (amount) => Math.round(Number(amount) * 100),
 };
 
 let server;
@@ -322,6 +327,33 @@ test('Cashfree: provider-confirmed payments atomically update the order and admi
   } finally {
     config.cashfreeEnabled = false;
     successfulCashfreePayment = null;
+  }
+});
+
+test('Cashfree resume reuses the pending order session and refuses expired or unauthorized orders', async () => {
+  seed();
+  config.cashfreeEnabled = true;
+  try {
+    const placed = await (await call('/orders', order('guest-cashfree-resume', { paymentMethod: 'cashfree' }))).json();
+    assert.equal(placed.status, 'pending_payment');
+    const stockAfterPlacement = store.get('products/product-1').stockQuantity;
+
+    const unauthorized = await call('/orders/guest-cashfree-resume/resume-cashfree', { email: 'other@example.com' });
+    assert.equal(unauthorized.status, 404);
+
+    const resumed = await call('/orders/guest-cashfree-resume/resume-cashfree', { email: 'asha@example.com' });
+    assert.equal(resumed.status, 200);
+    const body = await resumed.json();
+    assert.equal(body.cashfreePaymentSessionId, 'cf-session-test');
+    assert.equal(body.cashfreeMode, 'sandbox');
+    assert.equal(body.order.status, 'pending_payment');
+    assert.equal(store.get('products/product-1').stockQuantity, stockAfterPlacement);
+
+    store.get('orders/guest-cashfree-resume').reservationExpiresAt = Date.now() - 1;
+    const expired = await call('/orders/guest-cashfree-resume/resume-cashfree', { email: 'asha@example.com' });
+    assert.equal(expired.status, 409);
+  } finally {
+    config.cashfreeEnabled = false;
   }
 });
 

@@ -12,6 +12,7 @@ import {
   createCashfreeOrder,
   findSuccessfulPayment,
   getCashfreeOrder,
+  toPaise,
 } from '../payments/cashfree/client.js';
 
 const emailSchema = z.string().trim().email().max(254).transform((email) => email.toLowerCase());
@@ -477,6 +478,71 @@ export function createOrdersRouter(config) {
         return res.status(409).json({ error: 'The order status changed while payment was being processed.' });
       }
       return res.json({ success: true, order: publicOrder(await getDocument('orders', order.$id)) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post('/:id/resume-cashfree', optionalUser, async (req, res, next) => {
+    try {
+      if (!config.liveCheckout || !config.cashfreeEnabled) {
+        return res.status(503).json({ error: 'Online payments are not available right now. Please try again soon.' });
+      }
+      const input = z.object({ email: emailSchema.optional() }).strict().safeParse(req.body ?? {});
+      if (!input.success || !orderIdSchema.safeParse(req.params.id).success) {
+        return res.status(400).json({ error: 'The payment request is invalid.' });
+      }
+      let order = await getDocument('orders', req.params.id);
+      const isGuestOwner = order?.userId === GUEST_ID && sameEmail(order.email, input.data.email);
+      if ((!isGuestOwner && !ownsOrder(order, req.user)) || order.paymentMethod !== 'cashfree') {
+        return res.status(404).json({ error: 'Order not found.' });
+      }
+      if (order.status === 'paid') {
+        return res.json({ success: true, paid: true, order: publicOrder(order) });
+      }
+      if (order.status !== 'pending_payment') {
+        return res.status(409).json({ error: 'This order is no longer awaiting payment.', order: publicOrder(order) });
+      }
+      if (!(await consumeRateLimit(order.$id, 'cashfree-resume-order', 20, HOUR))) {
+        return res.status(429).json({ error: 'Too many payment attempts. Please try again later.' });
+      }
+
+      const payment = await findSuccessfulPayment(config, order);
+      if (payment) {
+        if (!(await markPaid(config, order, {
+          cashfreePaymentId: String(payment.cf_payment_id).slice(0, 100),
+          ...(channelFor(payment.payment_group) && { paymentChannel: channelFor(payment.payment_group) }),
+        }))) {
+          order = await getDocument('orders', order.$id);
+          if (order?.status !== 'paid') {
+            return res.status(409).json({
+              error: 'Payment may have been received. Do not pay again; contact the store while it is confirmed.',
+            });
+          }
+        } else {
+          order = await getDocument('orders', order.$id);
+        }
+        return res.json({ success: true, paid: true, order: publicOrder(order) });
+      }
+      if (typeof order.reservationExpiresAt !== 'number' || order.reservationExpiresAt <= Date.now()) {
+        return res.status(409).json({ error: 'This payment session has expired. Please contact the store before placing another order.' });
+      }
+
+      const cashfreeOrder = await getCashfreeOrder(config, order.$id);
+      if (
+        cashfreeOrder.order_id !== order.$id ||
+        toPaise(cashfreeOrder.order_amount) !== order.amountInPaise ||
+        typeof cashfreeOrder.payment_session_id !== 'string' ||
+        !cashfreeOrder.payment_session_id
+      ) {
+        return res.status(503).json({ error: 'The payment provider returned an invalid session. Please contact the store.' });
+      }
+      return res.json({
+        success: true,
+        order: publicOrder(order),
+        cashfreePaymentSessionId: cashfreeOrder.payment_session_id,
+        cashfreeMode: config.cashfreeEnv,
+      });
     } catch (error) {
       next(error);
     }
