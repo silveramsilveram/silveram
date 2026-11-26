@@ -4,6 +4,7 @@
  */
 
 import { lazy, Suspense, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 
 import { restoreSession } from '@/features/auth/store/authStore';
 import { useSignedInCartSync } from '@/features/cart/lib/syncCart';
@@ -163,6 +164,7 @@ export default function App() {
   return (
     <CheckoutProvider>
       <Storefront />
+      <Analytics />
     </CheckoutProvider>
   );
 }
