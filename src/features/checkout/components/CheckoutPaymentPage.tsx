@@ -145,7 +145,7 @@ export default function CheckoutPaymentPage() {
           throw new Error('The payment provider is not configured. Please contact the store.');
         }
         if (!user) rememberGuestOrder({ id: placed.orderId, email });
-        await openCashfreeCheckout(placed.cashfreePaymentSessionId, placed.cashfreeMode ?? 'production');
+        const checkoutResult = await openCashfreeCheckout(placed.cashfreePaymentSessionId, placed.cashfreeMode ?? 'production');
         // A gateway close can precede provider settlement. Poll the server-side provider check,
         // rather than treating the first "pending" response as a final failed payment.
         for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -162,6 +162,11 @@ export default function CheckoutPaymentPage() {
             // Keep polling: a short provider/API delay must not immediately tell the customer to pay again.
           }
           if (attempt < 7) await new Promise((resolve) => window.setTimeout(resolve, 1500));
+        }
+        if (checkoutResult?.error) {
+          setError('Cashfree could not complete checkout. If money was deducted, do not pay again; your order will update when confirmed, or contact the store. Otherwise, you can try again.');
+          setBusy(false);
+          return;
         }
         navigate(orderPath(placed.orderId));
         return;
