@@ -98,7 +98,7 @@ export const PRODUCTS: Product[] = [
     isPlaceholder: false,
     category: 'bangle',
     categoryLabel: 'Kada & bangles',
-    price: 1,
+    price: 999,
     shortDescription:
       'Intricately patterned traditional bangles that bring timeless elegance to festive and everyday styling.',
     description:
