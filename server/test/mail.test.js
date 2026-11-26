@@ -65,6 +65,7 @@ test('mailjet derives a domain sender in production', () => {
     MAILJET_API_KEY: 'k',
     MAILJET_SECRET_KEY: 's',
     STORE_URL: 'https://www.silveram.in',
+    FRONTEND_ORIGINS: 'https://www.silveram.in',
   });
   try {
     const c = loadConfig();
@@ -76,6 +77,6 @@ test('mailjet derives a domain sender in production', () => {
 });
 
 function t_env(values) {
-  for (const k of ['NODE_ENV', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM', 'MAILJET_CONTACT_LIST_ID', 'STORE_URL']) delete process.env[k];
+  for (const k of ['NODE_ENV', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM', 'MAILJET_CONTACT_LIST_ID', 'STORE_URL', 'FRONTEND_ORIGINS']) delete process.env[k];
   Object.assign(process.env, values);
 }
