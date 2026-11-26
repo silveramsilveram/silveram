@@ -77,6 +77,7 @@ export function createAuthRouter(config) {
         await mailer.sendMail({
           from: config.smtpFrom,
           to: email,
+          ...(config.supportEmail && { replyTo: config.supportEmail }),
           subject: 'Your Silveram verification code',
           text: `Your Silveram verification code is ${code}. It expires in ${config.otpTtlMinutes} minutes. If you did not request this, you can ignore this email.`,
           html: `<p>Your Silveram verification code is <strong>${code}</strong>.</p><p>It expires in ${config.otpTtlMinutes} minutes. If you did not request this, you can ignore this email.</p>`,
