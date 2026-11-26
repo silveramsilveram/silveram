@@ -1,4 +1,4 @@
-interface CashfreeCheckoutResult {
+export interface CashfreeCheckoutResult {
   error?: { message?: string };
   paymentDetails?: unknown;
   redirect?: boolean;
@@ -57,8 +57,11 @@ export function preloadCashfree(): void {
 }
 
 /** Opens Cashfree checkout. Its result is not proof of payment; the server verifies after it closes. */
-export async function openCashfreeCheckout(paymentSessionId: string, mode: 'sandbox' | 'production'): Promise<void> {
+export async function openCashfreeCheckout(
+  paymentSessionId: string,
+  mode: 'sandbox' | 'production',
+): Promise<CashfreeCheckoutResult | undefined> {
   await loadCashfree();
   if (!window.Cashfree) throw new Error('Payment could not be loaded. Please try again.');
-  await window.Cashfree({ mode }).checkout({ paymentSessionId, redirectTarget: '_self' });
+  return window.Cashfree({ mode }).checkout({ paymentSessionId, redirectTarget: '_modal' });
 }
