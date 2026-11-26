@@ -146,24 +146,24 @@ export default function CheckoutPaymentPage() {
         }
         if (!user) rememberGuestOrder({ id: placed.orderId, email });
         await openCashfreeCheckout(placed.cashfreePaymentSessionId, placed.cashfreeMode ?? 'production');
-        // Closing or returning from hosted checkout is not proof of payment; the server verifies it.
-        let checked: { success: boolean; order: Order };
-        try {
-          checked = await apiRequest<{ success: boolean; order: Order }>(
-            `/orders/${encodeURIComponent(placed.orderId)}/verify-cashfree`,
-            { method: 'POST', body: JSON.stringify(user ? {} : { email }) },
-          );
-        } catch {
-          setError('We could not verify your payment right now. If money was deducted, do not pay again; contact the store.');
-          setBusy(false);
-          return;
+        // A gateway close can precede provider settlement. Poll the server-side provider check,
+        // rather than treating the first "pending" response as a final failed payment.
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          try {
+            const checked = await apiRequest<{ success: boolean; order: Order }>(
+              `/orders/${encodeURIComponent(placed.orderId)}/verify-cashfree`,
+              { method: 'POST', body: JSON.stringify(user ? {} : { email }) },
+            );
+            if (checked.success) {
+              complete(checked.order);
+              return;
+            }
+          } catch {
+            // Keep polling: a short provider/API delay must not immediately tell the customer to pay again.
+          }
+          if (attempt < 7) await new Promise((resolve) => window.setTimeout(resolve, 1500));
         }
-        if (checked.success) {
-          complete(checked.order);
-          return;
-        }
-        setError('We have not received your payment yet. If money was deducted, do not pay again: it will confirm automatically, or contact the store. Otherwise you can try again.');
-        setBusy(false);
+        navigate(orderPath(placed.orderId));
         return;
       }
 
