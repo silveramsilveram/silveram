@@ -76,7 +76,7 @@ export const PRODUCTS: Product[] = [
     isPlaceholder: false,
     category: 'frame',
     categoryLabel: 'Devotional frames',
-    price: 1,
+    price: 999,
     shortDescription:
       'A devotional frame featuring Goddess Lakshmi and Lord Ganesha, designed for meaningful gifting and home décor.',
     description:
