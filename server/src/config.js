@@ -33,6 +33,15 @@ function mailConfig() {
   if (contactListId && !/^\d{1,12}$/.test(contactListId)) {
     throw new Error('MAILJET_CONTACT_LIST_ID must be the numeric Mailjet contact list ID.');
   }
+  const storeUrl = (process.env.STORE_URL?.trim() || '').replace(/\/+$/, '');
+  let smtpFrom = process.env.SMTP_FROM?.trim() || '';
+  if (!smtpFrom && mailjet && storeUrl) {
+    try {
+      smtpFrom = `Silveram <orders@${new URL(storeUrl).hostname.replace(/^www\./, '')}>`;
+    } catch {
+      smtpFrom = '';
+    }
+  }
   return {
     mailjetApiKey,
     mailjetSecretKey,
@@ -42,7 +51,7 @@ function mailConfig() {
     smtpSecure: process.env.SMTP_SECURE === 'true',
     smtpUser: process.env.SMTP_USER || mailjetApiKey,
     smtpPassword: process.env.SMTP_PASSWORD || mailjetSecretKey,
-    smtpFrom: process.env.SMTP_FROM?.trim() || '',
+    smtpFrom,
     storeName: process.env.STORE_NAME?.trim() || 'Silveram',
     storeUrl: (process.env.STORE_URL?.trim() || '').replace(/\/+$/, ''),
     supportEmail: process.env.SUPPORT_EMAIL?.trim() || '',
@@ -96,6 +105,13 @@ export function loadConfig({ allowSetupKey = false } = {}) {
     console.warn('PAYMENT_TEST_MODE is ON: orders can be marked paid without real payment. Turn it off before launch.');
   }
   const mail = mailConfig();
+  if (nodeEnv === 'production' && mail.mailjetApiKey && mail.smtpFrom) {
+    const senderAddress = mail.smtpFrom.match(/<([^>]+)>/)?.[1] || mail.smtpFrom;
+    const senderDomain = senderAddress.split('@')[1]?.trim().toLowerCase();
+    if (!senderDomain || /(gmail|googlemail|outlook|hotmail|yahoo)\./.test(senderDomain)) {
+      throw new Error('Production Mailjet email must use a verified address on your own domain, not a public mailbox.');
+    }
+  }
   if (liveCheckout && (!mail.smtpHost || !mail.smtpUser || !mail.smtpPassword || !mail.smtpFrom)) {
     // Orders are stored in Appwrite either way; without SMTP the customer simply gets no email
     // (they still see the confirmation page and can track by order reference + email).

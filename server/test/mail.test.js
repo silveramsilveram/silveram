@@ -54,7 +54,29 @@ test('mailjet keys derive SMTP settings and must come as a pair', () => {
   }
 });
 
+test('mailjet derives a domain sender in production', () => {
+  const saved = { ...process.env };
+  t_env({
+    NODE_ENV: 'production',
+    APPWRITE_ENDPOINT: 'https://cloud.appwrite.io/v1',
+    APPWRITE_PROJECT_ID: 'project',
+    APPWRITE_API_KEY: 'appwrite-server-key',
+    OTP_PEPPER: 'p'.repeat(32),
+    MAILJET_API_KEY: 'k',
+    MAILJET_SECRET_KEY: 's',
+    STORE_URL: 'https://www.silveram.in',
+    FRONTEND_ORIGINS: 'https://www.silveram.in',
+  });
+  try {
+    const c = loadConfig();
+    assert.equal(c.smtpFrom, 'Silveram <orders@silveram.in>');
+  } finally {
+    for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
+    Object.assign(process.env, saved);
+  }
+});
+
 function t_env(values) {
-  for (const k of ['NODE_ENV', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM', 'MAILJET_CONTACT_LIST_ID', 'STORE_URL']) delete process.env[k];
+  for (const k of ['NODE_ENV', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM', 'MAILJET_CONTACT_LIST_ID', 'STORE_URL', 'FRONTEND_ORIGINS']) delete process.env[k];
   Object.assign(process.env, values);
 }
