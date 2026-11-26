@@ -29,10 +29,10 @@ export default async function handler(req, res) {
     const app = await init();
     return app(req, res);
   } catch (error) {
-    // Message is logged for "View Logs" in Vercel; the client only gets a generic body.
+    // Return the setting-name diagnostic; config errors never include secret values.
     console.error('Silveram API failed to start:', error?.message || error);
     res.statusCode = 503;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'The API is not configured correctly.' }));
+    res.end(JSON.stringify({ error: error?.message || 'The API is not configured correctly.' }));
   }
 }
